@@ -6,18 +6,16 @@
   "scripts": {
     "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20220510 jakartabox start",
     "clean": "rm -rf ./build",
-    "compile": "ts-node scripts/cli.ts compile -f json",
-    "full-compile": "yarn clean && yarn compile",
+    "compile": "yarn clean && ts-node scripts/cli.ts compile -f json",
     "migrate": "ts-node scripts/cli.ts migrate -n development",
     "migrate-ghostnet": "ts-node scripts/cli.ts migrate -n ghostnet",
     "migrate-jakartanet": "yarn compile && ts-node scripts/cli.ts migrate -n jakartanet",
     "migrate-mainnet": "ts-node scripts/cli.ts migrate -n mainnet",
-    "test-compile": "ts-node scripts/cli.ts compile -f json -p contracts/test -o test/contracts -c flash_swap_agent",
     "test": "ts-mocha --bail"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/madfish-solutions/quipuswap-core-v2.git"
+    "url": "git+https://github.com/madfish-solutions/quipuswap-core-v3.git"
   },
   "dependencies": {
     "@taquito/http-utils": "^13.0.0",
@@ -43,9 +41,9 @@
     "yargs": "^17.2.1"
   },
   "bugs": {
-    "url": "https://github.com/madfish-solutions/quipuswap-core-v2/issues"
+    "url": "https://github.com/madfish-solutions/quipuswap-core-v3/issues"
   },
-  "homepage": "https://github.com/madfish-solutions/quipuswap-core-v2#readme",
+  "homepage": "https://github.com/madfish-solutions/quipuswap-core-v3#readme",
   "keywords": [
     "tezos",
     "ligo",
