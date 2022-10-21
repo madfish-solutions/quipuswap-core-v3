@@ -1,0 +1,12 @@
+build/
+node_modules/
+output/
+.vscode/
+venv/
+.idea/
+__pycache__/
+contracts/compiled/*.tz
+
+.DS_Store
+yarn.lock
+.pytest_cache
