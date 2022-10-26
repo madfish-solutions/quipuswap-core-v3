@@ -6,7 +6,7 @@
   "scripts": {
     "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20220510 jakartabox start",
     "clean": "rm -rf ./build",
-    "compile": "yarn clean && ts-node scripts/cli.ts compile -f json",
+    "compile": "yarn clean && ts-node scripts/cli.ts compile -f text && ts-node scripts/cli.ts compile -f json",
     "migrate": "ts-node scripts/cli.ts migrate -n development",
     "migrate-ghostnet": "ts-node scripts/cli.ts migrate -n ghostnet",
     "migrate-jakartanet": "yarn compile && ts-node scripts/cli.ts migrate -n jakartanet",
