@@ -13,6 +13,8 @@ type create_dex_t =
     x_token_address : address ;
     y_token_id : nat ;
     y_token_address : address ;
+    fee_bps : nat ;
+    metadata: metadata_map ;
   }
 
 type parameter_t =

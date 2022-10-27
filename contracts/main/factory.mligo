@@ -1,5 +1,6 @@
 #include "../partial/types.mligo"
 #include "../partial/factory/types.mligo"
+#include "../partial/defaults.mligo"
 #include "../partial/factory/helpers.mligo"
 #include "../partial/factory/methods.mligo"
 
