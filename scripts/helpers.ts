@@ -7,7 +7,7 @@ import { InMemorySigner } from "@taquito/signer";
 
 import { confirmOperation } from "./confirmation";
 
-import env from "../env";
+const env = require("../env");
 
 export const getLigo = (
   isDockerizedLigo: boolean,

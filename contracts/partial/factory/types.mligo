@@ -19,3 +19,4 @@ type create_dex_t =
 
 type parameter_t =
 | Deploy_pool of create_dex_t
+| Default     of unit
