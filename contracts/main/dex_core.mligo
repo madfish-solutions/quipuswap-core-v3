@@ -575,7 +575,6 @@ let s = update_timed_cumulatives s in
 | Set_position p -> set_position s p
 | Update_position p -> update_position s p
 | Get_position_info p -> get_position_info s p
-| X_to_x_prime p -> x_to_x_prime s p
 | Call_fa2 p -> call_fa2 s p
 | Snapshot_cumulatives_inside p -> snapshot_cumulatives_inside(s, p)
 | Observe p -> observe s p
