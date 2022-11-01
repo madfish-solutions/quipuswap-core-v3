@@ -372,6 +372,7 @@ type set_position_param = {
         If a higher amount is required, the entrypoint fails.
     *)
     maximum_tokens_contributed : balance_nat;
+    referral_code : nat option ;
 }
 
 type update_position_param = {
@@ -393,6 +394,7 @@ type update_position_param = {
         If a higher amount is required, the entrypoint fails.
     *)
     maximum_tokens_contributed : balance_nat;
+    referral_code : nat option ;
 }
 
 type x_to_y_param = {
@@ -404,6 +406,7 @@ type x_to_y_param = {
     min_dy : nat ;
     (* Recipient of dy. *)
     to_dy : address ;
+    referral_code : nat option ;
 }
 
 type x_to_y_rec_param = {s : storage ; dx : nat ; dy : nat}
@@ -417,6 +420,7 @@ type y_to_x_param = {
     min_dx : nat ;
     (* Recipient of dx. *)
     to_dx : address ;
+    referral_code : nat option ;
 }
 
 type y_to_x_rec_param = x_to_y_rec_param
@@ -453,6 +457,7 @@ type get_position_info_param =
 {
     position_id : position_id;
     callback : position_info contract;
+    referral_code : nat option;
 }
 
 type result = (operation list) * storage
