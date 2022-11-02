@@ -350,7 +350,8 @@ type storage = {
 }
 
 (* Entrypoints types *)
-type set_position_param = {
+type set_position_param =
+    [@layout:comb] {
     (* Lower tick. *)
     lower_tick_index : tick_index ;
     (* Upper tick. *)
@@ -375,7 +376,8 @@ type set_position_param = {
     referral_code : nat option ;
 }
 
-type update_position_param = {
+type update_position_param =
+    [@layout:comb] {
     (* Position id. *)
     position_id : position_id ;
     (* How to change the liquidity of the existing position.
@@ -397,7 +399,8 @@ type update_position_param = {
     referral_code : nat option ;
 }
 
-type x_to_y_param = {
+type x_to_y_param =
+    [@layout:comb] {
     (* X tokens to sell. *)
     dx : nat ;
     (* The transaction won't be executed past this point. *)
@@ -411,7 +414,8 @@ type x_to_y_param = {
 
 type x_to_y_rec_param = {s : storage ; dx : nat ; dy : nat}
 
-type y_to_x_param = {
+type y_to_x_param =
+    [@layout:comb] {
     (* Y tokens to sell. *)
     dy : nat ;
     (* The transaction won't be executed past this point. *)
