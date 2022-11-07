@@ -27,7 +27,7 @@ let check_sender (from_ , token_id, operators : address * token_id * operators):
 (* A function that combines the usual FA2's `debit_from` and `credit_to`. *)
 [@inline]
 let change_position_owner (from_, tx, positions: address * transfer_destination * position_map): position_map =
-  if tx.amount = 0n then
+  if tx.amount_ = 0n then
     positions // We allow 0 transfer
   else
     let position = get_position(tx.token_id, positions) in
@@ -35,10 +35,10 @@ let change_position_owner (from_, tx, positions: address * transfer_destination 
     // Ensure `from_` is the owner of the position.
     let owned_amount = if position.owner = from_ then 1n else 0n in
     let _ : unit =
-        if (owned_amount = 1n && tx.amount = 1n) then unit
+        if (owned_amount = 1n && tx.amount_ = 1n) then unit
         else
           ([%Michelson ({| { FAILWITH } |} : string * (nat * nat) -> unit)]
-            ("FA2_INSUFFICIENT_BALANCE", (tx.amount, owned_amount))) in
+            ("FA2_INSUFFICIENT_BALANCE", (tx.amount_, owned_amount))) in
 
     let new_position = { position with owner = tx.to_ } in
     Big_map.add tx.token_id new_position positions

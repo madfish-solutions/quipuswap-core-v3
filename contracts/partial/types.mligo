@@ -23,11 +23,13 @@ type position_id = nat
 
 type token_id = nat
 
+type fa12_transfer_t = address * (address * nat)
+
 type transfer_destination =
   [@layout:comb]
   { to_ : address
   ; token_id : position_id
-  ; amount : nat
+  ; amount_ : nat
   }
 
 type transfer_item =
@@ -289,10 +291,8 @@ type metadata_map = (string, bytes) big_map
 type constants = {
     fee_bps : nat ;
     ctez_burn_fee_bps : nat ;
-    x_token_id : token_id ;
-    y_token_id : token_id ;
-    x_token_address : address ;
-    y_token_address : address ;
+    token_x : asset_standard_t;
+    token_y : asset_standard_t;
     tick_spacing : nat ;
 }
 
