@@ -102,9 +102,9 @@ let get_tick (ticks : (tick_index, tick_state) big_map) (index: tick_index) (err
 (* Check if a request has expired. *)
 [@inline]
 let check_deadline (deadline : timestamp) : unit =
-    if Tezos.now > deadline
+    if Tezos.get_now() > deadline
         then ([%Michelson ({| { FAILWITH } |} : nat * (timestamp * timestamp) -> unit)]
-            (past_deadline_err, (deadline, Tezos.now)) : unit)
+            (past_deadline_err, (deadline, Tezos.get_now())) : unit)
         else unit
 
 [@inline]
