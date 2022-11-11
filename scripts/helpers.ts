@@ -7,7 +7,7 @@ import { InMemorySigner } from "@taquito/signer";
 
 import { confirmOperation } from "./confirmation";
 
-const env = require("../env");
+import env from "./../env";
 
 export const getLigo = (
   isDockerizedLigo: boolean,
@@ -174,7 +174,7 @@ export const migrate = async (
         return null;
       });
 
-    await confirmOperation(tezos, operation.hash);
+    await confirmOperation(tezos, operation!.hash);
 
     artifacts.networks[network] = { [contract]: operation.contractAddress };
 

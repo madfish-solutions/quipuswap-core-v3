@@ -1,14 +1,14 @@
 import { MichelsonMap } from "@taquito/michelson-encoder";
-import accounts from "./scripts/sandbox/accounts";
+import { accounts } from "./sandbox/accounts";
 
-module.exports = {
+export default {
   confirmationPollingTimeoutSecond: 500000,
   syncInterval: 0, // 0 for tests, 5000 for deploying
   confirmTimeout: 90000, // 90000 for tests, 180000 for deploying
   buildDir: "build",
   migrationsDir: "migrations",
   contractsDir: "contracts/main",
-  ligoVersion: "0.54.0",
+  ligoVersion: "0.54.1",
   network: "development",
   networks: {
     development: {
@@ -122,11 +122,11 @@ module.exports = {
         },
       },
     },
-    mainnet: {
-      rpc: "https://mainnet.api.tez.ie",
-      port: 443,
-      network_id: "*",
-      secretKey: accounts.deployer.sk,
-    },
+    // mainnet: {
+    //   rpc: "https://mainnet.api.tez.ie",
+    //   port: 443,
+    //   network_id: "*",
+    //   secretKey: accounts.deployer.sk,
+    // },
   },
 };

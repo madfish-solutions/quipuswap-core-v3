@@ -9,6 +9,7 @@
 #include "../partial/math.mligo"
 #include "../partial/swaps.mligo"
 #include "../partial/token/fa2.mligo"
+#define DEBUG
 
 let rec initialize_tick ((ticks, tick_index, tick_witness,
     initial_tick_cumulative_outside,

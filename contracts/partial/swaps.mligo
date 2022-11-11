@@ -347,7 +347,7 @@ let x_to_y (s : storage) (p : x_to_y_param) : result =
           (smaller_than_min_asset_err, (p.min_dy, dy_received)) : result)
     else
         let op_receive_x = wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) dx_spent s.constants.token_x in
-        let op_send_y =  wrap_transfer (Tezos.get_sender()) p.to_dy dy_received s.constants.token_y in
+        let op_send_y =  wrap_transfer (Tezos.get_self_address ()) p.to_dy dy_received s.constants.token_y in
         ([op_receive_x ; op_send_y], s_new)
 
 

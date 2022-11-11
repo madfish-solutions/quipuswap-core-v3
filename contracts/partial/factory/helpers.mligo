@@ -4,7 +4,7 @@ let init_pool_storage (p : create_dex_t) : storage =
     ctez_burn_fee_bps = ctez_burn_fee_bps ;
     token_x = p.token_x ;
     token_y = p.token_y ;
-    tick_spacing = tick_spacing ;
+    tick_spacing = p.tick_spacing ;
   } in
 
   ( default_storage (constants) (0n) (p.metadata) : storage)
