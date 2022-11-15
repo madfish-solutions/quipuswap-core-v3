@@ -1,3 +1,4 @@
+#include "../partial/common_types.mligo"
 #include "../partial/types.mligo"
 #include "../partial/factory/types.mligo"
 #include "../partial/defaults.mligo"

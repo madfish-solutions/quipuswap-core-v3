@@ -68,8 +68,8 @@ export const compile = async (
     const michelson: string = execSync(
       `${ligo} compile contract $PWD/${contractsDir}/${contract}.mligo ${
         format === "json" ? "--michelson-format json" : ""
-      } --protocol ithaca --syntax reasonligo`,
-      { maxBuffer: 2024 * 1000 },
+      } --protocol ithaca --syntax cameLigo`,
+      { maxBuffer: 8024 * 4000 },
     ).toString();
 
     try {

@@ -218,18 +218,18 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
         (* The amount of dy after the swap fee is taken. *)
         let dy_minus_fee = assert_nat (p.dy - fee, internal_fee_more_than_100_percent_err) in
         (* The amount of dy that will be converted to dx as a result of the swap. *)
-#if Y_IS_CTEZ
-        (* If Y is CTEZ then the 'Y' to convert (that are left after the swap fee)
-        * needs to be reduced by the protocol fee percentage/bps.
-        * Note: it's important to modify this _while_ updating the storage because
-        * we want to "burn" this fee and not convert it to 'X' token.
-        * This contract will continue to hold these 'Y' tokens indefinitely, but
-        * this amount won't be part of the usable balance.
-        *)
-        let dy_to_convert = floordiv (dy_minus_fee * (one_minus_ctez_burn_fee_bps(p.s.constants))) 10000n in
-#else
+// #if Y_IS_CTEZ
+//         (* If Y is CTEZ then the 'Y' to convert (that are left after the swap fee)
+//         * needs to be reduced by the protocol fee percentage/bps.
+//         * Note: it's important to modify this _while_ updating the storage because
+//         * we want to "burn" this fee and not convert it to 'X' token.
+//         * This contract will continue to hold these 'Y' tokens indefinitely, but
+//         * this amount won't be part of the usable balance.
+//         *)
+//         let dy_to_convert = floordiv (dy_minus_fee * (one_minus_ctez_burn_fee_bps(p.s.constants))) 10000n in
+// #else
+// #endif
         let dy_to_convert = dy_minus_fee in
-#endif
         (* What the new price will be, assuming it's within the current tick. *)
         let sqrt_price_new = sqrt_price_move_y p.s.liquidity p.s.sqrt_price dy_to_convert in
         (* What the new value of cur_tick_index will be. *)
@@ -268,14 +268,15 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
                         (p.s.liquidity * (assert_nat (sqrt_price_new.x80 - p.s.sqrt_price.x80, internal_bad_sqrt_price_move_x_direction)))
                         pow_2_80n in
             (* The amount of dy without the swap fee. *)
-#if Y_IS_CTEZ
-            (* In the case of CTEZ, the amount of dy needed increses by the
-               protocol fee _before_ the swap fee.
-             *)
-            let dy_minus_fee = ceildiv (dy_for_dx * 10000n) (one_minus_ctez_burn_fee_bps(p.s.constants)) in
-#else
+// #if Y_IS_CTEZ
+//             (* In the case of CTEZ, the amount of dy needed increses by the
+//                protocol fee _before_ the swap fee.
+//              *)
+//             let dy_minus_fee = ceildiv (dy_for_dx * 10000n) (one_minus_ctez_burn_fee_bps(p.s.constants)) in
+// #else
+//#endif
             let dy_minus_fee = dy_for_dx in
-#endif
+
             (* We will have to consume more dy than that because a fee will be applied. *)
             let dy_consumed = ceildiv (dy_minus_fee * 10000n) (one_minus_fee_bps(p.s.constants)) in
             (* Deduct the fee we will actually be paying. *)
@@ -321,18 +322,19 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
 let update_storage_x_to_y (s : storage) (dx : nat) : (nat * nat * storage) =
     let r = x_to_y_rec {s = s ; dx = dx ; dy = 0n} in
     let dx_spent = assert_nat (dx - r.dx, internal_309) in
-#if Y_IS_CTEZ
-    (* If Y is CTEZ then the received Y are the total converted ones minus
-    * the protocol fee percentage/bps.
-    * Note: it's important to remove this _after_ updating the storage because
-    * we want to "burn" this fee, in the sense that this contract will continue
-    * to hold these tokens indefinitely, but this amount won't be part of the
-    * usable balance.
-    *)
-    let dy_received = floordiv (r.dy * one_minus_ctez_burn_fee_bps(s.constants)) 10000n in
-#else
+// #if Y_IS_CTEZ
+//     (* If Y is CTEZ then the received Y are the total converted ones minus
+//     * the protocol fee percentage/bps.
+//     * Note: it's important to remove this _after_ updating the storage because
+//     * we want to "burn" this fee, in the sense that this contract will continue
+//     * to hold these tokens indefinitely, but this amount won't be part of the
+//     * usable balance.
+//     *)
+//     let dy_received = floordiv (r.dy * one_minus_ctez_burn_fee_bps(s.constants)) 10000n in
+// #else
+// #endif
     let dy_received = r.dy in
-#endif
+
     (dx_spent, dy_received, r.s)
 
 
@@ -344,8 +346,8 @@ let x_to_y (s : storage) (p : x_to_y_param) : result =
         ([%Michelson ({| { FAILWITH } |} : nat * (nat * nat) -> result)]
           (smaller_than_min_asset_err, (p.min_dy, dy_received)) : result)
     else
-        let op_receive_x = x_transfer Tezos.sender Tezos.self_address dx_spent s.constants in
-        let op_send_y = y_transfer Tezos.self_address p.to_dy dy_received s.constants in
+        let op_receive_x = wrap_transfer Tezos.sender Tezos.self_address dx_spent s.constants.token_x in
+        let op_send_y =  wrap_transfer Tezos.sender p.to_dy dy_received s.constants.token_y in
         ([op_receive_x ; op_send_y], s_new)
 
 
@@ -359,6 +361,6 @@ let y_to_x (s : storage) (p : y_to_x_param) : result =
         ([%Michelson ({| { FAILWITH } |} : nat * (nat * nat) -> result)]
           (smaller_than_min_asset_err, (p.min_dx, dx_received)) : result)
     else
-        let op_receive_y = y_transfer Tezos.sender Tezos.self_address dy_spent s.constants in
-        let op_send_x = x_transfer Tezos.self_address p.to_dx dx_received s.constants in
+        let op_receive_y = wrap_transfer Tezos.sender  Tezos.self_address dy_spent s.constants.token_y in
+        let op_send_x = wrap_transfer Tezos.self_address p.to_dx dx_received s.constants.token_x in
         ([op_receive_y ; op_send_x], r.s)

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2021 Arthur Breitman
 // SPDX-License-Identifier: LicenseRef-MIT-Arthur-Breitman
 
+#include "../partial/common_types.mligo"
 #include "../partial/types.mligo"
 #include "../partial/consts.mligo"
 #include "../partial/helpers.mligo"
@@ -188,20 +189,20 @@ let update_balances_after_position_change
         else unit in
 
     let op_x = if delta.x > 0 then
-        x_transfer Tezos.sender Tezos.self_address (abs delta.x) s.constants
+        wrap_transfer Tezos.sender Tezos.self_address (abs delta.x) s.constants.token_x
     else
 #if DEBUG
         let _ : unit = if delta.x <> 0 && to_x = Tezos.self_address then failwith internal_unexpected_income_err else unit in
 #endif
-        x_transfer Tezos.self_address to_x (abs delta.x) s.constants in
+        wrap_transfer Tezos.self_address to_x (abs delta.x) s.constants.token_x in
 
     let op_y = if delta.y > 0 then
-        y_transfer Tezos.sender Tezos.self_address (abs delta.y) s.constants
+        wrap_transfer Tezos.sender Tezos.self_address (abs delta.y) s.constants.token_y
     else
 #if DEBUG
         let _ : unit = if delta.y <> 0 && to_x = Tezos.self_address then failwith internal_unexpected_income_err else unit in
 #endif
-        y_transfer Tezos.self_address to_y (abs delta.y) s.constants in
+        wrap_transfer Tezos.self_address to_y (abs delta.y) s.constants.token_y in
 
     ([op_x ; op_y], s )
 
