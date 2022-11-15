@@ -179,7 +179,7 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
                 y = { x128 = assert_nat (fee_growth_new.y.x128 - tick.fee_growth_outside.y.x128, internal_flip_fee_growth_outside_err) };
                 } in
             (* Flip time growth. *)
-            let seconds_outside_new = assert_nat ((Tezos.now - epoch_time) - tick.seconds_outside, internal_negative_seconds_outside_err) in
+            let seconds_outside_new = assert_nat ((Tezos.get_now() - epoch_time) - tick.seconds_outside, internal_negative_seconds_outside_err) in
             (* Flip seconds_per_liquidity_outside *)
             let seconds_per_liquidity_outside_new =
                 { x128 = assert_nat(sums.spl.sum.x128 - tick.seconds_per_liquidity_outside.x128, internal_flip_seconds_per_liquidity_outside_err)
@@ -292,7 +292,7 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
                 y = { x128 = assert_nat (fee_growth_new.y.x128 - next_tick.fee_growth_outside.y.x128, internal_flip_fee_growth_outside_err) };
                 } in
             (* Flip time growth. *)
-            let seconds_outside_new = assert_nat ((Tezos.now - epoch_time) - next_tick.seconds_outside, internal_negative_seconds_outside_err) in
+            let seconds_outside_new = assert_nat ((Tezos.get_now() - epoch_time) - next_tick.seconds_outside, internal_negative_seconds_outside_err) in
             (* Flip seconds_per_liquidity_outside *)
             let seconds_per_liquidity_outside_new =
                 { x128 = assert_nat(sums.spl.sum.x128 - next_tick.seconds_per_liquidity_outside.x128, internal_flip_seconds_per_liquidity_outside_err)
@@ -346,8 +346,8 @@ let x_to_y (s : storage) (p : x_to_y_param) : result =
         ([%Michelson ({| { FAILWITH } |} : nat * (nat * nat) -> result)]
           (smaller_than_min_asset_err, (p.min_dy, dy_received)) : result)
     else
-        let op_receive_x = wrap_transfer Tezos.sender Tezos.self_address dx_spent s.constants.token_x in
-        let op_send_y =  wrap_transfer Tezos.sender p.to_dy dy_received s.constants.token_y in
+        let op_receive_x = wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) dx_spent s.constants.token_x in
+        let op_send_y =  wrap_transfer (Tezos.get_sender()) p.to_dy dy_received s.constants.token_y in
         ([op_receive_x ; op_send_y], s_new)
 
 
@@ -361,6 +361,6 @@ let y_to_x (s : storage) (p : y_to_x_param) : result =
         ([%Michelson ({| { FAILWITH } |} : nat * (nat * nat) -> result)]
           (smaller_than_min_asset_err, (p.min_dx, dx_received)) : result)
     else
-        let op_receive_y = wrap_transfer Tezos.sender  Tezos.self_address dy_spent s.constants.token_y in
-        let op_send_x = wrap_transfer Tezos.self_address p.to_dx dx_received s.constants.token_x in
+        let op_receive_y = wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) dy_spent s.constants.token_y in
+        let op_send_x = wrap_transfer (Tezos.get_self_address ()) p.to_dx dx_received s.constants.token_x in
         ([op_receive_y ; op_send_x], r.s)

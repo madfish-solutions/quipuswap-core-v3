@@ -189,20 +189,20 @@ let update_balances_after_position_change
         else unit in
 
     let op_x = if delta.x > 0 then
-        wrap_transfer Tezos.sender Tezos.self_address (abs delta.x) s.constants.token_x
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x
     else
 #if DEBUG
-        let _ : unit = if delta.x <> 0 && to_x = Tezos.self_address then failwith internal_unexpected_income_err else unit in
+        let _ : unit = if delta.x <> 0 && to_x = (Tezos.get_self_address ()) then failwith internal_unexpected_income_err else unit in
 #endif
-        wrap_transfer Tezos.self_address to_x (abs delta.x) s.constants.token_x in
+        wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x in
 
     let op_y = if delta.y > 0 then
-        wrap_transfer Tezos.sender Tezos.self_address (abs delta.y) s.constants.token_y
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y
     else
 #if DEBUG
-        let _ : unit = if delta.y <> 0 && to_x = Tezos.self_address then failwith internal_unexpected_income_err else unit in
+        let _ : unit = if delta.y <> 0 && to_x = (Tezos.get_self_address () ) then failwith internal_unexpected_income_err else unit in
 #endif
-        wrap_transfer Tezos.self_address to_y (abs delta.y) s.constants.token_y in
+        wrap_transfer (Tezos.get_self_address () ) to_y (abs delta.y) s.constants.token_y in
 
     ([op_x ; op_y], s )
 
@@ -233,7 +233,7 @@ let set_position (s : storage) (p : set_position_param) : result =
                 let sums = get_last_cumulatives s.cumulatives_buffer in
                 ( sums.tick.sum
                 , s.fee_growth
-                , assert_nat (Tezos.now - epoch_time, internal_epoch_bigger_than_now_err)
+                , assert_nat (Tezos.get_now () - epoch_time, internal_epoch_bigger_than_now_err)
                 , sums.spl.sum
                 )
             else
@@ -260,7 +260,7 @@ let set_position (s : storage) (p : set_position_param) : result =
                 let sums = get_last_cumulatives s.cumulatives_buffer in
                 ( sums.tick.sum
                 , s.fee_growth
-                , assert_nat (Tezos.now - epoch_time, internal_epoch_bigger_than_now_err)
+                , assert_nat (Tezos.get_now () - epoch_time, internal_epoch_bigger_than_now_err)
                 , sums.spl.sum
                 )
             else
@@ -291,7 +291,7 @@ let set_position (s : storage) (p : set_position_param) : result =
     let position =
         {   liquidity = p.liquidity;
             fee_growth_inside_last = calc_fee_growth_inside s p.lower_tick_index p.upper_tick_index;
-            owner = Tezos.sender;
+            owner = Tezos.get_sender ();
             lower_tick_index = p.lower_tick_index;
             upper_tick_index = p.upper_tick_index;
         } in
@@ -309,7 +309,7 @@ let set_position (s : storage) (p : set_position_param) : result =
     update_balances_after_position_change
         s p.lower_tick_index p.upper_tick_index
         p.maximum_tokens_contributed
-        Tezos.self_address Tezos.self_address  // Shouldn't be used
+        (Tezos.get_self_address ()) (Tezos.get_self_address ()) // Shouldn't be used
         (int p.liquidity) {x = 0n; y = 0n}
 
 let update_position (s : storage) (p : update_position_param) : result =
@@ -359,7 +359,7 @@ let snapshot_cumulatives_inside (s, p : storage * snapshot_cumulatives_inside_pa
     let sums = get_last_cumulatives s.cumulatives_buffer in
     let cums_total =
             { tick = sums.tick.sum
-            ; seconds = Tezos.now - epoch_time
+            ; seconds = Tezos.get_now() - epoch_time
             ; seconds_per_liquidity = {x128 = int sums.spl.sum.x128}
             } in
 
@@ -519,9 +519,9 @@ let update_timed_cumulatives (s : storage) : storage =
 
     let last_value = get_last_cumulatives buffer in
     (* Update not more often than once per block *)
-    if last_value.time = Tezos.now then s
+    if last_value.time = Tezos.get_now() then s
     else
-        let time_passed = abs (Tezos.now - last_value.time) in
+        let time_passed = abs (Tezos.get_now() - last_value.time) in
         let new_value =
             { tick =
                 { block_start_value = s.cur_tick_index
@@ -534,7 +534,7 @@ let update_timed_cumulatives (s : storage) : storage =
                         eval_seconds_per_liquidity_x128(s.liquidity, time_passed) in
                     {x128 = last_value.spl.sum.x128 + spl_since_last_block_x128};
                 }
-            ; time = Tezos.now
+            ; time = Tezos.get_now()
             } in
 
         let new_last = buffer.last + 1n in
@@ -566,7 +566,7 @@ let get_position_info (s : storage) (p : get_position_info_param) : result =
     in ([Tezos.transaction result 0mutez p.callback], s)
 
 let main ((p, s) : parameter * storage) : result =
-let _: unit = if Tezos.amount = 0tez then unit else failwith non_zero_transfer_err in
+let _: unit = if Tezos.get_amount () = 0tez then unit else failwith non_zero_transfer_err in
 (* start by updating the oracles *)
 let s = update_timed_cumulatives s in
 (* dispatch call to the proper entrypoint *)

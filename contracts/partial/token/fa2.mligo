@@ -16,9 +16,9 @@ let get_position (position_id, positions : position_id * position_map) : positio
 
 [@inline]
 let check_sender (from_ , token_id, operators : address * token_id * operators): unit =
-  if (Tezos.sender = from_) then unit
+  if (Tezos.get_sender() = from_) then unit
   else
-    let key: operator_param = { owner = from_; operator = Tezos.sender; token_id = token_id } in
+    let key: operator_param = { owner = from_; operator = Tezos.get_sender(); token_id = token_id } in
     if Big_map.mem key operators then unit
     else
      ([%Michelson ({| { FAILWITH } |} : string * unit -> unit)]
@@ -84,7 +84,7 @@ let update_one (operators, param: operators * update_operator): operators =
     | Add_operator p -> (Some unit, p)
     | Remove_operator p -> ((None : unit option), p) in
   let _ : unit =
-    if (Tezos.sender = operator_param.owner) then unit
+    if (Tezos.get_sender() = operator_param.owner) then unit
     else ([%Michelson ({| { FAILWITH } |} : string * unit -> unit)]
           ("FA2_NOT_OWNER", ()) : unit)
   in Big_map.update operator_param operator_update operators
