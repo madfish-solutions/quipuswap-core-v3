@@ -289,7 +289,9 @@ let init_cumulatives_buffer (extra_reserved_slots : nat) : timed_cumulatives_buf
 type metadata_map = (string, bytes) big_map
 
 type constants = {
+    factory_address : address ;
     fee_bps : nat ;
+    dev_fee_bps: nat ;
     ctez_burn_fee_bps : nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
@@ -323,6 +325,8 @@ type storage = {
         over the entire history of the contract.
     *)
     fee_growth : balance_nat_x128 ;
+
+    dev_fee : balance_nat;
 
     (* States of all initialized ticks. *)
     ticks : tick_map ;
@@ -478,6 +482,7 @@ type parameter =
   | Set_position of set_position_param
   | Update_position of update_position_param
   | Get_position_info of get_position_info_param
+  | Claim_dev_fee of address
   | Call_fa2 of fa2_parameter
   | Snapshot_cumulatives_inside of snapshot_cumulatives_inside_param
   | Observe of observe_param

@@ -120,6 +120,7 @@ let default_storage
   ; cur_tick_index = { i = 0 }
   ; cur_tick_witness  = { i = -const_max_tick }
   ; fee_growth = { x = { x128 = 0n }; y = { x128 = 0n } }
+  ; dev_fee = { x = 0n ; y = 0n }
   ; ticks = ticks
   ; positions = (Big_map.empty : position_map)
   ; cumulatives_buffer = init_cumulatives_buffer init_cumulatives_buffer_extra_slots

@@ -127,7 +127,7 @@ let check_multiple_of_tick_spacing (tick_index, tick_spacing: tick_index * nat) 
 
 #endif
 
-// let unwrap (type a) (x : a option) (error : string) : a =
-//     match x with
-//     | None -> failwith error
-//     | Some x -> x
+[@inline] let unwrap (type a) (x : a option) (error : string) : a =
+    match x with
+    | None -> failwith error
+    | Some x -> x
