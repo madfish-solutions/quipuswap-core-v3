@@ -23,6 +23,10 @@ export const fa12Storage: fa12Types.FA12Storage = {
       balance: totalSupply.dividedBy(3).integerValue(BigNumber.ROUND_DOWN),
       allowances: MichelsonMap.fromLiteral({}),
     },
+    [accounts.eve.pkh]: {
+      balance: totalSupply.dividedBy(3).integerValue(BigNumber.ROUND_DOWN),
+      allowances: MichelsonMap.fromLiteral({}),
+    },
   }),
   metadata: MichelsonMap.fromLiteral({}),
   token_metadata: MichelsonMap.fromLiteral({}),

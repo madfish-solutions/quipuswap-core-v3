@@ -110,9 +110,9 @@ export class FA2 {
   ): Promise<BigNumber> {
     const storage = (await this.contract.storage()) as any;
     try {
-      return new BigNumber(
-        await storage.account_info.get([user, tokenId.toString()]),
-      );
+      const account = await storage.account_info.get(user);
+      const balance = await account.balances.get(tokenId.toString());
+      return balance;
     } catch (ex) {
       return new BigNumber(0);
     }

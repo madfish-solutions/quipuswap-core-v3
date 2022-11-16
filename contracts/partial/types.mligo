@@ -29,7 +29,7 @@ type transfer_destination =
   [@layout:comb]
   { to_ : address
   ; token_id : position_id
-  ; amount_ : nat
+  ; amount : nat
   }
 
 type transfer_item =

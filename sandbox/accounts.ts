@@ -19,10 +19,11 @@ export const accounts = {
     pk: "",
   },
   eve: {
-    pkh: "tz1gKYy8uwdBHp9iw1PNiH7AJmzsvcVtmpwR",
+    pkh: "tz1MnmtP4uAcgMpeZN6JtyziXeFqqwQG6yn6",
     sk: "edsk3Sb16jcx9KrgMDsbZDmKnuN11v4AbTtPBgBSBTqYftd8Cq3i1e",
     pk: "edpku9qEgcyfNNDK6EpMvu5SqXDqWRLuxdMxdyH12ivTUuB1KXfGP4",
   },
+
   dev: {
     pkh: process.env.DEV_PKH!,
     sk: process.env.DEV_SK!,

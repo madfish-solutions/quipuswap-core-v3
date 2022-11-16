@@ -28,6 +28,12 @@ export const fa2Storage: fa2Types.FA2Storage = {
       }),
       allowances: [],
     },
+    [accounts.eve.pkh]: {
+      balances: MichelsonMap.fromLiteral({
+        [0]: totalSupply.dividedBy(4).integerValue(BigNumber.ROUND_DOWN),
+      }),
+      allowances: [],
+    },
   }),
   token_info: MichelsonMap.fromLiteral({}),
   metadata: MichelsonMap.fromLiteral({}),
