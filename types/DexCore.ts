@@ -168,7 +168,6 @@ export namespace quipuswapV3Types {
 
   export type Constants = {
     fee_bps: BigNumber;
-    ctez_burn_fee_bps: BigNumber;
     x_token_id: BigNumber;
     y_token_id: BigNumber;
     x_token_address: Address;
