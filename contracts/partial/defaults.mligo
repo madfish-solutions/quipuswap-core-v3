@@ -135,5 +135,4 @@ let default_storage
 let entrypoint (_param, store : parameter * storage) : result =
   (([] : operation list), store)
 
-let ctez_burn_fee_bps: nat = 5n
 let tick_spacing: nat = 1n

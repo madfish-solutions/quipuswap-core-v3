@@ -292,7 +292,6 @@ type constants = {
     factory_address : address ;
     fee_bps : nat ;
     dev_fee_bps: nat ;
-    ctez_burn_fee_bps : nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
     tick_spacing : nat ;
