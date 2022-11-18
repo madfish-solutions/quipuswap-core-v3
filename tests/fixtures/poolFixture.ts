@@ -1,6 +1,5 @@
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { MichelsonMap, TransferParams } from "@taquito/taquito";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallMode } from "@madfish/quipuswap-v3/dist/types";
 import { sendBatch } from "@madfish/quipuswap-v3/dist/utils";
 import DexFactory from "./../helpers/factoryFacade";
 import { fa12Storage } from "./../../storage/test/FA12";
@@ -25,61 +24,31 @@ export async function poolsFixture(
 
   const factory = await new DexFactory(tezos, "development").initialize();
   const paramsList: TransferParams[] = [];
-  let transferParams: TransferParams = await factory.deployPool(
-    fa12TokenX.contract.address,
-    "fa12",
-    fa12TokenY.contract.address,
-    "fa12",
-    fees[0],
-    tickSpacing[0],
-    MichelsonMap.fromLiteral({}),
-    0,
-    0,
-    true,
-  );
-  paramsList.push(transferParams);
-
-  transferParams = await factory.deployPool(
-    fa2TokenX.contract.address,
-    "fa2",
-    fa2TokenY.contract.address,
-    "fa2",
-    fees[1],
-    tickSpacing[1],
-    MichelsonMap.fromLiteral({}),
-    0,
-    0,
-    true,
-  );
-  paramsList.push(transferParams);
-
-  transferParams = await factory.deployPool(
-    fa12TokenX.contract.address,
-    "fa12",
-    fa2TokenY.contract.address,
-    "fa2",
-    fees[2],
-    tickSpacing[2],
-    MichelsonMap.fromLiteral({}),
-    0,
-    0,
-    true,
-  );
-  paramsList.push(transferParams);
-
-  transferParams = await factory.deployPool(
-    fa2TokenX.contract.address,
-    "fa2",
-    fa12TokenY.contract.address,
-    "fa12",
-    fees[3],
-    tickSpacing[3],
-    MichelsonMap.fromLiteral({}),
-    0,
-    0,
-    true,
-  );
-  paramsList.push(transferParams);
+  const poolList = [
+    [fa12TokenX, fa12TokenY],
+    [fa2TokenX, fa2TokenY],
+    [fa12TokenX, fa12TokenY],
+    [fa2TokenX, fa12TokenY],
+  ];
+  for (const pair of poolList) {
+    const xToken = pair[0];
+    const yToken = pair[1];
+    const xTokenType = xToken instanceof FA12 ? "fa12" : "fa2";
+    const yTokenType = yToken instanceof FA12 ? "fa12" : "fa2";
+    const transferParams: TransferParams = await factory.deployPool(
+      xToken.contract.address,
+      xTokenType,
+      yToken.contract.address,
+      yTokenType,
+      fees[paramsList.length],
+      tickSpacing[0],
+      MichelsonMap.fromLiteral({}),
+      0,
+      0,
+      true,
+    );
+    paramsList.push(transferParams);
+  }
 
   const operation = await sendBatch(tezos, paramsList);
 
