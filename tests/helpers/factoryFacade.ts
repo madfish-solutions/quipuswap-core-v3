@@ -1,8 +1,8 @@
 import { Contract, MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import { migrate } from "../../scripts/helpers";
+import { migrate } from "./../../scripts/helpers";
 
-import factoryStorage from "../../storage/factoryStorage";
-import { confirmOperation } from "../../scripts/confirmation";
+import factoryStorage from "./../../storage/factoryStorage";
+import { confirmOperation } from "./../../scripts/confirmation";
 import { BytesLiteral } from "@taquito/michel-codec";
 import { MichelsonMapKey } from "@taquito/michelson-encoder";
 

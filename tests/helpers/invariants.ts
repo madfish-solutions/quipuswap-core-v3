@@ -9,13 +9,14 @@ import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 
 export async function checkAllInvariants(
   cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
+  signers: Object,
   positionIds: Nat[],
   tickIndices: Int[],
-  signers: Object,
+  bufferMapIndices: Nat[],
 ): Promise<void> {
-  await checkBalanceInvariants(cfmm, storage, positionIds, signers);
-  //await checkAccumulatorsInvariants(cfmm, storage, tickIndices);
+  const st = await cfmm.getStorage(positionIds, tickIndices, bufferMapIndices);
+  //await checkBalanceInvariants(cfmm, storage, positionIds, signers);
+  await checkAccumulatorsInvariants(cfmm, st, tickIndices);
 }
 
 export async function checkAccumulatorsInvariants(
@@ -30,12 +31,14 @@ export async function checkAccumulatorsInvariants(
 
   const insideAccumulators = await Promise.all(
     tickIndicesPaired.map(async ([ti1, ti2]) => {
-      console.log("ti1", ti1, "ti2", ti2);
       return await tickAccumulatorsInside(cfmm, storage, ti1, ti2);
     }),
   );
 
+  console.log("insideAccumulators", insideAccumulators);
   const sumInsideAccumulators = insideAccumulators.reduce((acc, cur) => {
+    console.log(1312312);
+    console.log(acc, cur);
     return {
       aSeconds: acc.aSeconds.plus(cur.aSeconds),
       aTickCumulative: acc.aTickCumulative.plus(cur.aTickCumulative),
@@ -45,23 +48,28 @@ export async function checkAccumulatorsInvariants(
       ),
     };
   });
-  const currentTIme = new BigNumber(Math.floor(Date.now() / 1000)).plus(1);
+  const bh = await cfmm.tezos.rpc.getBlockHeader();
+
+  // const currentTime = new BigNumber(
+  //   Math.floor(Date.parse(bh.timestamp) / 1000),
+  // ).plus(1);
+  const currentTime = new BigNumber(Math.floor(Date.now() / 1000));
   const {
     tick_cumulative: cvTickCumulative,
     seconds_per_liquidity_cumulative: cvSecondsPerLiquidityCumulative,
-  } = (await cfmm.observe([currentTIme.toString()]))[0];
+  } = (await cfmm.observe([currentTime.toString()]))[0];
 
   const globalAccumulators = {
-    aSeconds: currentTIme,
+    aSeconds: currentTime,
     aTickCumulative: cvTickCumulative,
     aFeeGrowth: storage.feeGrowth.x.plus(storage.feeGrowth.y),
     aSecondsPerLiquidity: cvSecondsPerLiquidityCumulative,
   };
 
-  // equal(
-  //   globalAccumulators.aSeconds.toFixed(),
-  //   sumInsideAccumulators.aSeconds.toFixed(),
-  // );
+  equal(
+    globalAccumulators.aSeconds.toFixed(),
+    sumInsideAccumulators.aSeconds.toFixed(),
+  );
   equal(
     globalAccumulators.aTickCumulative.toFixed(),
     sumInsideAccumulators.aTickCumulative.toFixed(),
