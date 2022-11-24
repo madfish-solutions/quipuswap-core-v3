@@ -103,11 +103,11 @@ export async function poolsFixture(
   console.log("34124214124242123333");
 
   const pools = await factory.getPools([0, 1, 2, 3, 4, 5, 6, 7]);
-
   const poolFa12 = await new QuipuswapV3().init(tezos, pools[0]);
   const poolFa2 = await new QuipuswapV3().init(tezos, pools[1]);
   const poolFa1_2 = await new QuipuswapV3().init(tezos, pools[2]);
   const poolFa2_1 = await new QuipuswapV3().init(tezos, pools[3]);
+
   let deployedPoolList = [poolFa12, poolFa2, poolFa1_2, poolFa2_1];
   let poolFa12Dublicate;
   let poolFa2Dublicate;
@@ -164,15 +164,13 @@ export async function poolsFixture(
 
     if (dublicate) {
       const part1 = approvesParamsList.slice(0, 8);
-      console.log("SendBatchDub");
       let approvesOperation = await sendBatch(tezos, part1);
       await confirmOperation(tezos, approvesOperation.opHash);
 
       const part2 = approvesParamsList.slice(8, 17);
-      console.log("SendBatchDub2");
+
       approvesOperation = await sendBatch(tezos, part2);
       await confirmOperation(tezos, approvesOperation.opHash);
-      console.log("confrimDub");
     } else {
       const approvesOperation = await sendBatch(tezos, approvesParamsList);
       await confirmOperation(tezos, approvesOperation.opHash);
