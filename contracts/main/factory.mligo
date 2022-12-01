@@ -4,6 +4,7 @@
 #include "../partial/defaults.mligo"
 #include "../partial/factory/helpers.mligo"
 #include "../partial/factory/methods.mligo"
+#include "../partial/factory/views.mligo"
 
 let main (action, s : parameter_t * factory_storage_t) : return_t =
  // No operations

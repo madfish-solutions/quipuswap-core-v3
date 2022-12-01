@@ -9,6 +9,7 @@
 #include "../partial/math.mligo"
 #include "../partial/swaps.mligo"
 #include "../partial/token/fa2.mligo"
+#define DEBUG
 
 let rec initialize_tick ((ticks, tick_index, tick_witness,
     initial_tick_cumulative_outside,
@@ -505,6 +506,18 @@ let get_cumulatives (buffer : timed_cumulatives_buffer) (t : timestamp) : cumula
         ; seconds_per_liquidity_cumulative = r_v.spl.sum
         }
 
+let claim_dev_fee (s : storage) (recipient : address) : result =
+    let owner = unwrap (Tezos.call_view "%get_owner" unit s.constants.factory_address : address option ) "not_owner" in
+    let _: unit = if Tezos.get_sender () <> owner
+        then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
+            (not_owner_err : nat) : unit)
+        else unit in
+
+    let op_withdraw_x = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
+    let op_withdraw_y = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
+    let updated_s = { s with dev_fee = { x = 0n; y = 0n } }
+    in ([op_withdraw_x; op_withdraw_y], updated_s)
+
 let observe (s : storage) (p : observe_param) : result =
     let value = List.map (get_cumulatives s.cumulatives_buffer) p.times
     in ([Tezos.transaction value 0mutez p.callback], s)
@@ -576,6 +589,7 @@ let s = update_timed_cumulatives s in
 | Set_position p -> set_position s p
 | Update_position p -> update_position s p
 | Get_position_info p -> get_position_info s p
+| Claim_dev_fee p -> claim_dev_fee s p
 | Call_fa2 p -> call_fa2 s p
 | Snapshot_cumulatives_inside p -> snapshot_cumulatives_inside(s, p)
 | Observe p -> observe s p

@@ -1,4 +1,8 @@
-export default {
+import dotenv from "dotenv";
+import { resolve } from "path";
+dotenv.config({ path: resolve(__dirname, "..", "..", ".env") });
+dotenv.config();
+export const accounts = {
   alice: {
     pkh: "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb",
     sk: "edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq",
@@ -10,18 +14,24 @@ export default {
     pk: "edpkurPsQ8eUApnLUJ9ZPDvu98E8VNj4KtJa1aZr16Cr5ow5VHKnz4",
   },
   carol: {
+    pkh: "tz1R2oNqANNy2vZhnZBJc8iMEqW79t85Fv7L",
+    sk: "edsk3W5Fz1yWK39sLY6vidmgkfmGAXh6V2JqUiri9W1pFeeYWbFbJL",
+    pk: "",
+  },
+  eve: {
     pkh: "tz1MnmtP4uAcgMpeZN6JtyziXeFqqwQG6yn6",
     sk: "edsk3Sb16jcx9KrgMDsbZDmKnuN11v4AbTtPBgBSBTqYftd8Cq3i1e",
     pk: "edpku9qEgcyfNNDK6EpMvu5SqXDqWRLuxdMxdyH12ivTUuB1KXfGP4",
   },
+
   dev: {
-    pkh: "tz1LnrQ9ebos2LF2MUpAitJL6uUHX1uQhjzj",
-    sk: "edskRgqqDmwpVgfUq2Eai8LXGkpWx8MN1MR6EaoZFYAxtsXnUP5eE2xy8NaPSMYUBAySEdCKiJjc1DHxV9wb4RM8qxubqXghp4",
+    pkh: process.env.DEV_PKH!,
+    sk: process.env.DEV_SK!,
     pk: "",
   },
-  deployer: {
-    pkh: "tz1MNTuEajy76ALxGTWHFhc3SUCDJ7M8xoE6",
-    sk: "edskRqWjtqAkoPirES2zV5FRVKqRM5V1cHYdyvzgUUcifZ65piJCBwN3RdWGyrfNUsBNdHoEJ5mdnYcf54u1m1buvkJDQ4XgHy",
+  mainnetDeployer: {
+    pkh: process.env.MAINNET_DEPLOYER_PKH!,
+    sk: process.env.MAINNET_DEPLOYER_SK!,
     pk: "",
   },
 };
