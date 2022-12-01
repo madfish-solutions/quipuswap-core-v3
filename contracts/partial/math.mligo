@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: 2021 Arthur Breitman
 // SPDX-License-Identifier: LicenseRef-MIT-Arthur-Breitman
 
-#if MATH_MLIGO
-#else
-#define MATH_MLIGO
-
-#include "types.mligo"
 
 [@inline] let fixed_point_mul (a : fixed_point) (b : fixed_point) : fixed_point =
     { v = a.v * b.v ; offset = a.offset + b.offset }
@@ -97,5 +92,3 @@ let half_bps_pow (tick, ladder : int * ladder) : x80n =
     else
         (* This branch should almost never happen, in general the price we get is not a round number. *)
         {x80 = stepped_shift_left (product.v, abs doffset)}
-
-#endif
