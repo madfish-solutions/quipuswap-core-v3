@@ -119,6 +119,7 @@ let default_storage
   ; dev_fee = { x = 0n ; y = 0n }
   ; ticks = ticks
   ; positions = (Big_map.empty : position_map)
+  ; position_ids = (Big_map.empty : position_ids_map)
   ; cumulatives_buffer = init_cumulatives_buffer init_cumulatives_buffer_extra_slots
   ; metadata = metadata_map
   ; new_position_id = 0n

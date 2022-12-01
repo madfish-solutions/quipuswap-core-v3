@@ -95,6 +95,12 @@ let get_tick (ticks : (tick_index, tick_state) big_map) (index: tick_index) (err
     | None -> failwith error_code
     | Some state -> state
 
+[@inline]
+let get_positions (position_ids: position_ids_map) (owner: address) : nat set =
+    match Big_map.find_opt owner position_ids with
+    | None -> Set.empty
+    | Some ids -> ids
+
 (* Check if a request has expired. *)
 [@inline]
 let check_deadline (deadline : timestamp) : unit =
@@ -216,7 +222,10 @@ let garbage_collect_tick (s : storage) (tick_index : tick_index) : storage =
 let garbage_collection (s : storage) (position : position_state) (position_id : position_id) : storage =
     let s = if position.liquidity = 0n
                 then
+                    let owner_positions = get_positions s.position_ids (position.owner) in
+                    let updated_owner_positions = Set.remove position_id owner_positions in
                     { s with
+                        position_ids = Big_map.update (position.owner) (Some updated_owner_positions) s.position_ids;
                         positions = Big_map.remove position_id s.positions;
                     }
                 else s in

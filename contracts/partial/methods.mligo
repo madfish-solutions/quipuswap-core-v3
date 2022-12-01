@@ -196,9 +196,12 @@ let set_position (s : storage) (p : set_position_param) : result =
     let ticks = cover_tick_with_position ticks p.upper_tick_index 1 (-p.liquidity) in
     let s = { s with ticks = ticks } in
 
+    let user_positions: nat set = get_positions s.position_ids (Tezos.get_sender ()) in
+    let new_position_ids = Set.add s.new_position_id user_positions in
     let s =
         { s with
             positions = Big_map.add s.new_position_id position s.positions;
+            position_ids = Big_map.add (Tezos.get_sender ()) new_position_ids s.position_ids;
             new_position_id = s.new_position_id + 1n;
         } in
 
