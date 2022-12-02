@@ -201,6 +201,7 @@ type position_state = {
 (* Map containing Liquidity providers. *)
 type position_map = (position_id, position_state) big_map
 
+type position_ids_map = (address, position_id set ) big_map
 // What we return when someone requests for the values of cumulatives.
 type cumulatives_value =
     { tick_cumulative : int
@@ -332,6 +333,8 @@ type storage = {
 
     (* States of positions (with non-zero liquidity). *)
     positions : position_map ;
+
+    position_ids : position_ids_map ;
 
     (* Cumulative values stored for the recent timestamps. *)
     cumulatives_buffer : timed_cumulatives_buffer ;
