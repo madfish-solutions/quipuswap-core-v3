@@ -51,6 +51,64 @@ const getTypedUpdateOperator = async (
   }
 };
 
+// export const batchUpdateOperator = async (
+//   tezos: TezosToolkit,
+//   signers: any[],
+// ) => {
+//   for (let i = 0; i < signers.length; i++) {
+//     const approvesParamsList: TransferParams[] = [];
+//     tezos.setSignerProvider(signers[i]);
+//     const signerAddress = await signers[i].publicKeyHash();
+//     for (const pool of deployedPoolList) {
+//       const poolStorage: any = await pool.contract.storage();
+
+//       const tokenXType = Object.keys(poolStorage.constants.token_x)[0];
+//       const tokenYType = Object.keys(poolStorage.constants.token_y)[0];
+//       const xToken = tokenXType === "fa12" ? fa12TokenX : fa2TokenX;
+//       const yToken = tokenYType === "fa12" ? fa12TokenY : fa2TokenY;
+
+//       approvesParamsList.push(
+//         await getTypedUpdateOperator(
+//           tezos,
+//           xToken,
+//           signerAddress,
+//           pool.contract.address,
+//           new BigNumber(1e18),
+//           true,
+//         ),
+//       );
+
+//       approvesParamsList.push(
+//         await getTypedUpdateOperator(
+//           tezos,
+//           yToken,
+//           signerAddress,
+//           pool.contract.address,
+//           new BigNumber(1e18),
+//           true,
+//         ),
+//       );
+//     }
+
+//     if (dublicate) {
+//       const part1 = approvesParamsList.slice(0, 8);
+//       let approvesOperation = await sendBatch(tezos, part1);
+//       await confirmOperation(tezos, approvesOperation.opHash);
+
+//       const part2 = approvesParamsList.slice(8, 17);
+
+//       approvesOperation = await sendBatch(tezos, part2);
+//       await confirmOperation(tezos, approvesOperation.opHash);
+//     } else {
+//       const approvesOperation = await sendBatch(tezos, approvesParamsList);
+//       console.log(99912321312312);
+//       await confirmOperation(tezos, approvesOperation.opHash);
+//       console.log(222221312312);
+//     }
+//     console.log("endCycle");
+//   }
+// };
+
 export async function poolsFixture(
   tezos,
   signers: any[],
@@ -81,7 +139,7 @@ export async function poolsFixture(
     const yToken = pair[1];
     const xTokenType = xToken instanceof FA12 ? "fa12" : "fa2";
     const yTokenType = yToken instanceof FA12 ? "fa12" : "fa2";
-    console.log("Creating pool for", xTokenType, yTokenType);
+
     const transferParams: TransferParams = await factory.deployPool(
       xToken.contract.address,
       xTokenType,
@@ -96,11 +154,10 @@ export async function poolsFixture(
     );
     paramsList.push(transferParams);
   }
-  console.log("421412412421412412422222");
+
   const operation = await sendBatch(tezos, paramsList);
-  console.log("777723232323333");
+
   await confirmOperation(tezos, operation.opHash);
-  console.log("34124214124242123333");
 
   const pools = await factory.getPools([0, 1, 2, 3, 4, 5, 6, 7]);
   const poolFa12 = await new QuipuswapV3().init(tezos, pools[0]);
@@ -173,6 +230,7 @@ export async function poolsFixture(
       await confirmOperation(tezos, approvesOperation.opHash);
     } else {
       const approvesOperation = await sendBatch(tezos, approvesParamsList);
+
       await confirmOperation(tezos, approvesOperation.opHash);
     }
   }

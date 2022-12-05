@@ -16,12 +16,22 @@ export const accounts = {
   carol: {
     pkh: "tz1R2oNqANNy2vZhnZBJc8iMEqW79t85Fv7L",
     sk: "edsk3W5Fz1yWK39sLY6vidmgkfmGAXh6V2JqUiri9W1pFeeYWbFbJL",
-    pk: "",
+    pk: "edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn",
+  },
+  peter: {
+    pkh: "tz1gKYy8uwdBHp9iw1PNiH7AJmzsvcVtmpwR",
+    sk: "edskSAyTXJtDDU74YihBxukF3hnDQyvcsr2ePjitKYE3GXFuBM9ytvVBkt13GqZhHBsDHQj8egJhjn5kZqECFDdwvxszoBRH5B",
   },
   eve: {
     pkh: "tz1MnmtP4uAcgMpeZN6JtyziXeFqqwQG6yn6",
     sk: "edsk3Sb16jcx9KrgMDsbZDmKnuN11v4AbTtPBgBSBTqYftd8Cq3i1e",
     pk: "edpku9qEgcyfNNDK6EpMvu5SqXDqWRLuxdMxdyH12ivTUuB1KXfGP4",
+  },
+  sara: {
+    pkh: "tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN",
+  },
+  dave: {
+    pkh: "tz1b7tUupMgCNw2cCLpKTkSD1NZzB5TkP2sv",
   },
 
   dev: {
