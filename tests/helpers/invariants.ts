@@ -21,7 +21,7 @@ export async function checkAllInvariants(
   signers: Object,
   positionIds: Nat[],
   tickIndices: Int[],
-  bufferMapIndices: Nat[],
+  bufferMapIndices: Nat[]
 ): Promise<void> {
   const st = await cfmm.getStorage(positionIds, tickIndices, bufferMapIndices);
   await checkTickMapInvariants(cfmm, st);
@@ -36,7 +36,7 @@ export async function checkAllInvariants(
 export async function checkAccumulatorsInvariants(
   cfmm: QuipuswapV3,
   storage: quipuswapV3Types.Storage,
-  tickIndices: Int[],
+  tickIndices: Int[]
 ): Promise<void> {
   const tickIndicesPaired = tickIndices
     .map((_, i) => [tickIndices[i], tickIndices[i + 1]])
@@ -46,7 +46,7 @@ export async function checkAccumulatorsInvariants(
   const insideAccumulators = await Promise.all(
     tickIndicesPaired.map(async ([ti1, ti2]) => {
       return await tickAccumulatorsInside(cfmm, storage, ti1, ti2);
-    }),
+    })
   );
 
   console.log("insideAccumulators", insideAccumulators);
@@ -56,7 +56,7 @@ export async function checkAccumulatorsInvariants(
       aTickCumulative: acc.aTickCumulative.plus(cur.aTickCumulative),
       aFeeGrowth: acc.aFeeGrowth.plus(cur.aFeeGrowth),
       aSecondsPerLiquidity: acc.aSecondsPerLiquidity.plus(
-        cur.aSecondsPerLiquidity,
+        cur.aSecondsPerLiquidity
       ),
     };
   });
@@ -81,19 +81,19 @@ export async function checkAccumulatorsInvariants(
   console.log("sumInsideAccumulators", sumInsideAccumulators.aSeconds);
   equal(
     globalAccumulators.aSeconds.toFixed(),
-    sumInsideAccumulators.aSeconds.toFixed(),
+    sumInsideAccumulators.aSeconds.toFixed()
   );
   equal(
     globalAccumulators.aTickCumulative.toFixed(),
-    sumInsideAccumulators.aTickCumulative.toFixed(),
+    sumInsideAccumulators.aTickCumulative.toFixed()
   );
   equal(
     globalAccumulators.aFeeGrowth.toFixed(),
-    sumInsideAccumulators.aFeeGrowth.toFixed(),
+    sumInsideAccumulators.aFeeGrowth.toFixed()
   );
   equal(
     globalAccumulators.aSecondsPerLiquidity.toFixed(),
-    sumInsideAccumulators.aSecondsPerLiquidity.toFixed(),
+    sumInsideAccumulators.aSecondsPerLiquidity.toFixed()
   );
 }
 
@@ -105,7 +105,7 @@ async function checkBalanceInvariants(
   cfmm: QuipuswapV3,
   storage: quipuswapV3Types.Storage,
   positionIds: Nat[],
-  signers: Object,
+  signers: Object
 ): Promise<void> {
   for (const positionId of positionIds) {
     const position = await storage.positions.get(positionId);
@@ -118,7 +118,7 @@ async function checkBalanceInvariants(
       liquidityProvider.toString(),
       new Date("2025-01-01").toString(),
       new BigNumber(0),
-      new BigNumber(0),
+      new BigNumber(0)
     );
   }
 }
@@ -135,25 +135,25 @@ async function checkBalanceInvariants(
 export async function checkStorageInvariants(
   cfmm: QuipuswapV3,
   storage: quipuswapV3Types.Storage,
-  tickIndices: Int[],
+  tickIndices: Int[]
 ): Promise<void> {
   // Invariant 1.
   const ticks = storage.ticks.map;
   const curTickIndex = storage.curTickIndex;
   const expectedCurTickWitness = Int.max(
-    ...tickIndices.filter(t => t <= curTickIndex),
+    ...tickIndices.filter((t) => t <= curTickIndex)
   );
   deepEqual(storage.curTickWitness, expectedCurTickWitness);
   // Invariant 2.1
   const liquiditiyAfterPriorTicks = tickIndices
-    .filter(t => t <= curTickIndex)
-    .map(t => ticks[t.toNumber()]!.liquidityNet)
+    .filter((t) => t <= curTickIndex)
+    .map((t) => ticks[t.toNumber()]!.liquidityNet)
     .reduce((acc, cur) => acc.plus(cur), new BigNumber(0));
   equal(storage.liquidity.toFixed(), liquiditiyAfterPriorTicks.toFixed());
 
   // Invariant 2.2.
   const liquidityOfActivePositions = Object.values(storage.positions.map)
-    .map(position => {
+    .map((position) => {
       const { lowerTickIndex, upperTickIndex, liquidity } = position;
       if (curTickIndex.gte(lowerTickIndex) && curTickIndex.lt(upperTickIndex)) {
         return liquidity;
@@ -177,7 +177,8 @@ export async function checkStorageInvariants(
   ];
 
   const inRange = (x: BigNumber) =>
-    x.gte(sqrtPriceForCurTick) && x.lt(sqrtPriceForNextTick);
+    x.gte(adjustScale(sqrtPriceForCurTick, new Nat(80), new Nat(30))) &&
+    x.lte(adjustScale(sqrtPriceForNextTick, new Nat(80), new Nat(30)));
 
   ok(inRange(adjustScale(storage.sqrtPrice, new Nat(80), new Nat(30))));
 }
@@ -191,11 +192,11 @@ export async function checkStorageInvariants(
  */
 export async function checkTickInvariants(
   cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
+  storage: quipuswapV3Types.Storage
 ): Promise<void> {
   const ticks = storage.ticks.map;
   const tickLiquidities = Object.values(ticks)
-    .map(tick => tick.liquidityNet)
+    .map((tick) => tick.liquidityNet)
     .reverse();
 
   // Invariant 1
@@ -203,7 +204,7 @@ export async function checkTickInvariants(
     tickLiquidities
       .reduce((acc, cur) => acc.plus(cur), new BigNumber(0))
       .toFixed(),
-    "0",
+    "0"
   );
   // Invariant 2
   // tickLiquidities
@@ -221,7 +222,7 @@ export async function checkTickInvariants(
   //     ok(runningSum.gte(0));
   //   });
   // Invariant 3
-  Object.values(ticks).forEach(t => {
+  Object.values(ticks).forEach((t) => {
     ok(t.nPositions.gt(0));
   });
 }
@@ -239,7 +240,7 @@ export async function checkTickInvariants(
 
 export async function checkTickMapInvariants(
   cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
+  storage: quipuswapV3Types.Storage
 ): Promise<void> {
   const ticks = storage.ticks.map;
   // Invariant 1
@@ -276,7 +277,7 @@ export async function checkTickMapInvariants(
  */
 export async function checkCumulativesBufferInvariants(
   cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
+  storage: quipuswapV3Types.Storage
 ): Promise<void> {
   const buffer = storage.cumulativesBuffer;
   // Invariant 1.1
@@ -289,16 +290,16 @@ export async function checkCumulativesBufferInvariants(
   deepEqual(
     Object.keys(bufferMap),
     [...Array(buffer.reservedLength.toNumber()).keys()]
-      .map(i => i + buffer.first.toNumber())
-      .map(i => i.toString()),
+      .map((i) => i + buffer.first.toNumber())
+      .map((i) => i.toString())
   );
 
   // Invariant 3
   const bufferRecordsMap = entries(storage);
-  const timestamps = Object.values(bufferRecordsMap).map(r => r.time);
+  const timestamps = Object.values(bufferRecordsMap).map((r) => r.time);
   ok(isMonotonic(timestamps));
   // Invariant 4
-  const sums = Object.values(bufferRecordsMap).map(r => r.spl.sum);
+  const sums = Object.values(bufferRecordsMap).map((r) => r.spl.sum);
   ok(isMonotonic(sums));
 }
 
@@ -332,7 +333,7 @@ checkCumulativesBufferTimeInvariants storages = do
  */
 export async function checkCumulativesBufferTimeInvariants(
   cfmm: QuipuswapV3,
-  storages: [quipuswapV3Types.Storage, quipuswapV3Types.Storage],
+  storages: [quipuswapV3Types.Storage, quipuswapV3Types.Storage]
 ): Promise<void> {
   const [storage1, storage2] = storages;
   const buffer1 = storage1.cumulativesBuffer;
@@ -345,7 +346,7 @@ export async function checkCumulativesBufferTimeInvariants(
       throw new Error(
         `Value for key ${k} has changed:\n\
         \  Was:\n    ${v1}\n\
-        \  After:\n    ${v2}\n`,
+        \  After:\n    ${v2}\n`
       );
     }
   };
