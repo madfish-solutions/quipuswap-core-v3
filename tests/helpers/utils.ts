@@ -55,7 +55,7 @@ export const genNonOverlappingPositions = async () => {
   }, []);
 };
 
-export const genSwapDirection = async () => {
+export const genSwapDirection = () => {
   return Math.floor(Math.random() * 2);
 };
 export const genFees = (feeCount: number, zeroFee: boolean = false) => {
