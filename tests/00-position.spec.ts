@@ -72,8 +72,8 @@ const cumulativesBuffer1 = async (now: string) => {
   const initVal = await initTimedCumulativesBuffer(new Nat(0));
   initVal.first = new Nat(1);
   initVal.last = new Nat(1);
-  initVal.map.michelsonMap = new MichelsonMap();
-  initVal.map.michelsonMap.set(1, initTimedCumulatives(now));
+  initVal.map.map = {};
+  initVal.map.map[1] = initTimedCumulatives(now);
   return initVal;
 };
 
@@ -95,9 +95,9 @@ const compareStorages = (
   // console.log("Edited");
   // console.log(storage1.cumulativesBuffer.map);
   // console.log(storage2.cumulativesBuffer.map);
-  // expect(storage1.cumulativesBuffer.map.map).to.be.deep.equal(
-  //   storage2.cumulativesBuffer.map.map
-  // );
+  expect(storage1.cumulativesBuffer.map.map).to.be.deep.equal(
+    storage2.cumulativesBuffer.map.map,
+  );
   // console.log(
   //   storage1.cumulativesBuffer.first.toFixed(),
   //   storage2.cumulativesBuffer.first.toFixed(),
@@ -645,7 +645,7 @@ describe("Position Tests", async () => {
     });
   });
   describe("Success cases", async () => {
-    it.skip("Should depositing and withdrawing the same amount of liquidity", async () => {
+    it.skip("Should depositing and withdrawing the same amount of liquidity+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -704,7 +704,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should adding liquidity twice is the same as adding it once", async () => {
+    it.skip("Should adding liquidity twice is the same as adding it onc+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -885,7 +885,7 @@ describe("Position Tests", async () => {
         //     minTickIndex,
         //   ),
         // );
-        // compareStorages(initialSt, poolStorage);
+        compareStorages(initialSt, poolStorage);
       }
     });
     it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
