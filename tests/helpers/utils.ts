@@ -177,3 +177,10 @@ export const cumulativesBuffer1 = async (now: string) => {
   initVal.map.map[1] = initTimedCumulatives(now);
   return initVal;
 };
+
+// Create valid deadline with 1 hour plus from now
+export const validDeadline = () => {
+  const now = new Date();
+  now.setHours(now.getHours() + 1);
+  return now.toString();
+};
