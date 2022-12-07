@@ -1,6 +1,14 @@
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { Nat } from "@madfish/quipuswap-v3/dist/types";
+import { Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import {
+  initTimedCumulatives,
+  initTimedCumulativesBuffer,
+} from "@madfish/quipuswap-v3/dist/utils";
+import { TezosToolkit } from "@taquito/taquito";
 import { BigNumber } from "bignumber.js";
+import { expect } from "chai";
+import { FA12 } from "./FA12";
+import { FA2 } from "./FA2";
 
 export async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -79,4 +87,93 @@ export const genNatIds = maxId => {
 
 export const inRange = (x: BigNumber, y: BigNumber, z: BigNumber) => {
   return x.gte(y) && x.lte(z);
+};
+
+export const compareStorages = (
+  storage1: quipuswapV3Types.Storage,
+  storage2: quipuswapV3Types.Storage,
+) => {
+  expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
+  expect(storage1.constants).to.be.deep.equal(storage2.constants);
+  expect(storage1.sqrtPrice).to.be.deep.equal(storage2.sqrtPrice);
+  expect(storage1.curTickIndex).to.be.deep.equal(storage2.curTickIndex);
+  expect(storage1.curTickWitness).to.be.deep.equal(storage2.curTickWitness);
+  expect(storage1.feeGrowth).to.be.deep.equal(storage2.feeGrowth);
+  expect(storage1.ticks.map).to.be.deep.equal(storage2.ticks.map);
+
+  expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
+  expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
+
+  // console.log("Edited");
+  // console.log(storage1.cumulativesBuffer.map);
+  // console.log(storage2.cumulativesBuffer.map);
+  expect(storage1.cumulativesBuffer.map.map).to.be.deep.equal(
+    storage2.cumulativesBuffer.map.map,
+  );
+  // console.log(
+  //   storage1.cumulativesBuffer.first.toFixed(),
+  //   storage2.cumulativesBuffer.first.toFixed(),
+  // );
+  // console.log(
+  //   storage1.cumulativesBuffer.last.toFixed(),
+  //   storage2.cumulativesBuffer.last.toFixed(),
+  // );
+  expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
+    storage2.cumulativesBuffer.first,
+  );
+  expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
+    storage2.cumulativesBuffer.last,
+  );
+  expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
+    storage2.cumulativesBuffer.reservedLength,
+  );
+};
+
+export const getTypedBalance = async (
+  tezos: TezosToolkit,
+  tokenType: string,
+  token: any,
+  address: string,
+) => {
+  if (tokenType === "fa12") {
+    const fa12 = new FA12(await tezos.contract.at(token["fa12"]), tezos);
+    const balance = await fa12.getBalance(address);
+    return new BigNumber(balance);
+  } else {
+    const fa2 = new FA2(
+      await tezos.contract.at(token["fa2"].token_address),
+      tezos,
+    );
+    const balance = await fa2.getBalance(address);
+    return new BigNumber(balance);
+  }
+};
+
+export const collectFees = async (
+  pool: QuipuswapV3,
+  recipient: string,
+  posIds: BigNumber[],
+) => {
+  for (const posId of posIds) {
+    try {
+      await pool.updatePosition(
+        posId,
+        new BigNumber(0),
+        recipient,
+        recipient,
+        new Date("2023-01-01T00:00:00Z").toString(),
+        new BigNumber(0),
+        new BigNumber(0),
+      );
+    } catch (e) {}
+  }
+};
+
+export const cumulativesBuffer1 = async (now: string) => {
+  const initVal = await initTimedCumulativesBuffer(new Nat(0));
+  initVal.first = new Nat(1);
+  initVal.last = new Nat(1);
+  initVal.map.map = {};
+  initVal.map.map[1] = initTimedCumulatives(now);
+  return initVal;
 };

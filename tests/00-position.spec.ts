@@ -1,11 +1,4 @@
-import {
-  deepEqual,
-  deepStrictEqual,
-  equal,
-  ok,
-  rejects,
-  strictEqual,
-} from "assert";
+import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
 import { expect } from "chai";
 import { BigNumber } from "bignumber.js";
 
@@ -20,34 +13,29 @@ import { FA2 } from "./helpers/FA2";
 import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import {
-  sendBatch,
-  Timestamp,
-  initTimedCumulatives,
-  initTimedCumulativesBuffer,
-  isInRangeNat,
-} from "@madfish/quipuswap-v3/dist/utils";
+import { sendBatch, isInRangeNat } from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
   liquidityDeltaToTokensDelta,
-  calcNewPriceX,
-  calcNewPriceY,
   sqrtPriceForTick,
   initTickAccumulators,
   tickAccumulatorsInside,
+  shiftRight,
+  calcSwapFee,
 } from "@madfish/quipuswap-v3/dist/helpers/math";
-import { MichelsonMapKey } from "@taquito/michelson-encoder";
-import {
-  checkAccumulatorsInvariants,
-  checkAllInvariants,
-} from "./helpers/invariants";
+
+import { checkAllInvariants } from "./helpers/invariants";
 import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 import {
   advanceSecs,
+  collectFees,
+  compareStorages,
+  cumulativesBuffer1,
   genFees,
   genNatIds,
   genNonOverlappingPositions,
   genSwapDirection,
+  getTypedBalance,
   inRange,
 } from "./helpers/utils";
 
@@ -67,151 +55,6 @@ const carolSigner = new InMemorySigner(carol.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 const tickSpacing = 1;
-
-const cumulativesBuffer1 = async (now: string) => {
-  const initVal = await initTimedCumulativesBuffer(new Nat(0));
-  initVal.first = new Nat(1);
-  initVal.last = new Nat(1);
-  initVal.map.map = {};
-  initVal.map.map[1] = initTimedCumulatives(now);
-  return initVal;
-};
-
-const compareStorages = (
-  storage1: quipuswapV3Types.Storage,
-  storage2: quipuswapV3Types.Storage,
-) => {
-  expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
-  expect(storage1.constants).to.be.deep.equal(storage2.constants);
-  expect(storage1.sqrtPrice).to.be.deep.equal(storage2.sqrtPrice);
-  expect(storage1.curTickIndex).to.be.deep.equal(storage2.curTickIndex);
-  expect(storage1.curTickWitness).to.be.deep.equal(storage2.curTickWitness);
-  expect(storage1.feeGrowth).to.be.deep.equal(storage2.feeGrowth);
-  expect(storage1.ticks.map).to.be.deep.equal(storage2.ticks.map);
-
-  expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
-  expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
-
-  // console.log("Edited");
-  // console.log(storage1.cumulativesBuffer.map);
-  // console.log(storage2.cumulativesBuffer.map);
-  expect(storage1.cumulativesBuffer.map.map).to.be.deep.equal(
-    storage2.cumulativesBuffer.map.map,
-  );
-  // console.log(
-  //   storage1.cumulativesBuffer.first.toFixed(),
-  //   storage2.cumulativesBuffer.first.toFixed(),
-  // );
-  // console.log(
-  //   storage1.cumulativesBuffer.last.toFixed(),
-  //   storage2.cumulativesBuffer.last.toFixed(),
-  // );
-  expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
-    storage2.cumulativesBuffer.first,
-  );
-  expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
-    storage2.cumulativesBuffer.last,
-  );
-  expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
-    storage2.cumulativesBuffer.reservedLength,
-  );
-};
-
-const calcFee = (
-  feeBps: BigNumber,
-  tokensDelta: BigNumber,
-  liquidity: BigNumber,
-) => {
-  const fee = tokensDelta
-    .multipliedBy(feeBps)
-    .dividedBy(10000)
-    .integerValue(BigNumber.ROUND_CEIL);
-  return fee;
-  // return shiftLeft(fee, new BigNumber(128))
-  //   .dividedBy(liquidity)
-  //   .integerValue(BigNumber.ROUND_FLOOR);
-};
-
-/** A bitwise shift left operation
-
- */
-const shiftLeft = (x: BigNumber, y: BigNumber) => {
-  return x.multipliedBy(new BigNumber(2).pow(y));
-};
-
-/**
- * A bitwise shift right operation
- */
-const shiftRight = (x: BigNumber, y: BigNumber) => {
-  return x.dividedBy(new BigNumber(2).pow(y));
-};
-
-const getTypedBalance = async (
-  tezos: TezosToolkit,
-  tokenType: string,
-  token: any,
-  address: string,
-) => {
-  if (tokenType === "fa12") {
-    const fa12 = new FA12(await tezos.contract.at(token["fa12"]), tezos);
-    const balance = await fa12.getBalance(address);
-    return new BigNumber(balance);
-  } else {
-    const fa2 = new FA2(
-      await tezos.contract.at(token["fa2"].token_address),
-      tezos,
-    );
-    const balance = await fa2.getBalance(address);
-    return new BigNumber(balance);
-  }
-};
-
-const collectFees = async (
-  pool: QuipuswapV3,
-  recipient: string,
-  posIds: BigNumber[],
-) => {
-  for (const posId of posIds) {
-    try {
-      await pool.updatePosition(
-        posId,
-        new BigNumber(0),
-        recipient,
-        recipient,
-        new Date("2023-01-01T00:00:00Z").toString(),
-        new BigNumber(0),
-        new BigNumber(0),
-      );
-    } catch (e) {}
-  }
-};
-
-//a function that finds all ticks from pool.storage.ticks using the previous and next tick from the first found tickstate
-// const findTicks = async(
-//   pool: QuipuswapV3,
-
-//   tickIndex: number,
-//   tickSpacing: number,
-//   minTickIndex: number,
-//   maxTickIndex: number,
-// ): Promise<quipuswapV3Types.Tick[]> => {
-//   const ticks: quipuswapV3Types.Tick[] = [];
-//   let tick = await pool.getTick(tickIndex);
-//   ticks.push(tick);
-//   let nextTickIndex = tick.next;
-//   let prevTickIndex = tick.prev;
-//   while (nextTickIndex !== maxTickIndex) {
-//     tick = await pool.getTick(nextTickIndex);
-//     ticks.push(tick);
-//     nextTickIndex = tick.next;
-//   }
-//   while (prevTickIndex !== minTickIndex) {
-//     tick = await pool.getTick(prevTickIndex);
-//     ticks.push(tick);
-//     prevTickIndex = tick.prev;
-//   }
-//   return ticks;
-// };
 
 describe("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
@@ -876,6 +719,7 @@ describe("Position Tests", async () => {
           genNatIds(10),
         );
         // The storage shouldn't have changed (with few exceptions).
+
         const now =
           Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
         initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
@@ -921,6 +765,7 @@ describe("Position Tests", async () => {
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+
         const prevEveBalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
@@ -962,9 +807,10 @@ describe("Position Tests", async () => {
             new BigNumber(1),
             swapperAddr,
           );
+
           const storage = await pool.getRawStorage();
-          const xFee = calcFee(feeBps, transferAmount, storage.liquidity);
-          const yFee = calcFee(feeBps, transferAmount, storage.liquidity);
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
           xFees = xFees.plus(xFee);
           yFees = yFees.plus(yFee);
         }
@@ -1106,8 +952,8 @@ describe("Position Tests", async () => {
           const storage = await pool.getRawStorage();
           const xFeeBalance = storage.fee_growth.x;
           const yFeeBalance = storage.fee_growth.y;
-          const xFee = calcFee(feeBps, transferAmount, storage.liquidity);
-          const yFee = calcFee(feeBps, transferAmount, storage.liquidity);
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
           xFees = xFees.plus(xFee);
           yFees = yFees.plus(yFee);
         }
@@ -1294,8 +1140,8 @@ describe("Position Tests", async () => {
         const storage = await pool.getRawStorage();
         const xFeeBalance = storage.fee_growth.x;
         const yFeeBalance = storage.fee_growth.y;
-        const prevXBefore = calcFee(feeBps, transferAmountB, storage.liquidity);
-        const prevYBefore = calcFee(feeBps, transferAmountB, storage.liquidity);
+        const prevXBefore = calcSwapFee(feeBps, transferAmountB);
+        const prevYBefore = calcSwapFee(feeBps, transferAmountB);
         tezos.setSignerProvider(bobSigner);
 
         await pool.setPosition(
@@ -1326,8 +1172,8 @@ describe("Position Tests", async () => {
         const storage2 = await pool.getRawStorage();
         const xFeeBalance2 = storage2.fee_growth.x;
         const yFeeBalance2 = storage2.fee_growth.y;
-        const prevXAfter = calcFee(feeBps, transferAmountA, storage2.liquidity);
-        const prevYAfter = calcFee(feeBps, transferAmountA, storage2.liquidity);
+        const prevXAfter = calcSwapFee(feeBps, transferAmountA);
+        const prevYAfter = calcSwapFee(feeBps, transferAmountA);
         await checkAllInvariants(
           pool,
           [],
@@ -1496,8 +1342,8 @@ describe("Position Tests", async () => {
             swapperAddr,
           );
           const storage = await pool.getRawStorage();
-          const xFee = calcFee(feeBps, transferAmount, storage.liquidity);
-          const yFee = calcFee(feeBps, transferAmount, storage.liquidity);
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
           xFees = xFees.plus(xFee);
           yFees = yFees.plus(yFee);
         }
