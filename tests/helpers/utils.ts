@@ -19,7 +19,10 @@ export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
  */
 export const genCreatePositionData = async () => {
   const liquidityDelta = Math.floor(Math.random() * 100000);
-  const lowerTickIndex = Math.floor(Math.random() * 10000);
+  //Gen.integral (Range.linearFrom 0 lowerBound upperBound)
+  const lowerTickIndex =
+    Math.ceil(Math.random() * 10000) * (Math.round(Math.random()) ? 1 : -1);
+  // const lowerTickIndex = Math.floor(Math.random() * 10000);
   const upperTickIndex = Math.floor(
     Math.random() * (10000 - lowerTickIndex) + lowerTickIndex + 1,
   );
