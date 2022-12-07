@@ -189,7 +189,7 @@ let update_balances_after_position_change
             (high_tokens_err, (maximum_tokens_contributed.y, delta.y)) : unit)
         else unit in
 
-    let op_x = if delta.x > 0 then
+    let op_x = if delta.x >= 0 then
         wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x
     else
 #if DEBUG
@@ -197,7 +197,7 @@ let update_balances_after_position_change
 #endif
         wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x in
 
-    let op_y = if delta.y > 0 then
+    let op_y = if delta.y >= 0 then
         wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y
     else
 #if DEBUG
