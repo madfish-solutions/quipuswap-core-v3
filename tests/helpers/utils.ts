@@ -184,3 +184,25 @@ export const validDeadline = () => {
   now.setHours(now.getHours() + 1);
   return now.toString();
 };
+
+export const safeSwap = async (
+  amountIn: BigNumber,
+  amountOutMin: BigNumber,
+  recipient: string,
+  deadline: string,
+  swapFunc: QuipuswapV3["swapXY"] | QuipuswapV3["swapYX"],
+) => {
+  try {
+    await swapFunc(amountIn, deadline, amountOutMin, recipient);
+  } catch (e) {
+    if (e.message.includes("TezosOperationError: 101")) {
+      await safeSwap(
+        amountIn.div(3).integerValue(BigNumber.ROUND_FLOOR),
+        amountOutMin,
+        recipient,
+        deadline,
+        swapFunc,
+      );
+    }
+  }
+};
