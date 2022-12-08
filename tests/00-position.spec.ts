@@ -675,7 +675,7 @@ describe("Position Tests", async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it.skip("Should be lowest and highest ticks cannot be garbage collected", async () => {
+    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -696,26 +696,46 @@ describe("Position Tests", async () => {
           [new Int(minTickIndex), new Int(maxTickIndex)],
           genNatIds(10),
         );
-        await pool.setPosition(
-          new BigNumber(minTickIndex),
-          new BigNumber(maxTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1),
-          validDeadline(),
-          new BigNumber(1),
-          new BigNumber(1),
+        const transferParams: TransferParams[] = [];
+        const newCallSettings: CallSettings = {
+          swapXY: CallMode.returnParams,
+          swapYX: CallMode.returnParams,
+          setPosition: CallMode.returnParams,
+          updatePosition: CallMode.returnParams,
+          transfer: CallMode.returnParams,
+          updateOperators: CallMode.returnParams,
+          increaseObservationCount: CallMode.returnConfirmatedOperation,
+        };
+        pool.setCallSetting(newCallSettings);
+
+        transferParams.push(
+          (await pool.setPosition(
+            new BigNumber(minTickIndex),
+            new BigNumber(maxTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(1),
+            validDeadline(),
+            new BigNumber(1),
+            new BigNumber(1),
+          )) as TransferParams,
         );
         //await sleep(5000);
-        await pool.updatePosition(
-          initialSt.newPositionId,
-          new BigNumber(-1),
-          alice.pkh,
-          alice.pkh,
-          validDeadline(),
-          new BigNumber(0),
-          new BigNumber(0),
+        transferParams.push(
+          (await pool.updatePosition(
+            initialSt.newPositionId,
+            new BigNumber(-1),
+            alice.pkh,
+            alice.pkh,
+            validDeadline(),
+            new BigNumber(0),
+            new BigNumber(0),
+          )) as TransferParams,
         );
+
+        const ops = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, ops.opHash);
+
         const poolStorage = await pool.updateStorage(
           [new Nat(0)],
           [new Int(minTickIndex), new Int(maxTickIndex)],
@@ -725,14 +745,16 @@ describe("Position Tests", async () => {
 
         const now =
           Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
+        console.log(initialSt.cumulativesBuffer);
         initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
         initialSt.cumulativesBuffer = await cumulativesBuffer1(now.toString());
+        console.log(JSON.stringify(poolStorage.cumulativesBuffer.map.map));
         // console.log(
         //   await ((await pool.contract.storage()) as any).ticks.get(
         //     minTickIndex,
         //   ),
         // );
-        //compareStorages(initialSt, poolStorage);
+        compareStorages(initialSt, poolStorage);
       }
     });
     it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
@@ -1756,7 +1778,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should initializing correctly position", async () => {
+    it.skip("Should initializing correctly position", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1778,8 +1800,8 @@ describe("Position Tests", async () => {
         poolFa2_1,
       } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
 
-      for (const pool of [poolFa12, poolFa2]) {
-        ///, poolFa1_2, poolFa2_1
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        ///,
         const inSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(inSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(inSt.constants.token_y)[0];
@@ -1794,7 +1816,8 @@ describe("Position Tests", async () => {
           const lowerTickIndex = new Int(cpd.lowerTickIndex);
           const upperTickIndex = new Int(cpd.upperTickIndex);
           const liquidityDelta = cpd.liquidityDelta;
-          const waitTime = cpd.waitTime;
+          const waitTime = cpd.cpdWaitTime;
+          console.log("waitTime", waitTime);
           const swapAmount = new BigNumber(1_000);
           const swapAmountX = swapDirection === "XtoY" ? swapAmount : 0;
           const swapAmountY = swapDirection === "XtoY" ? 0 : swapAmount;
@@ -1859,7 +1882,9 @@ describe("Position Tests", async () => {
           knownedTicks.push(lowerTickIndex);
 
           // -- Advance the time a few secs to make sure the buffer is updated to reflect the swaps.
-          console.log("advancing time");
+          console.log(cpd);
+          console.log(`advancing time with ${waitTime}`);
+
           await advanceSecs(waitTime, [pool]);
           console.log("checking invariants");
           checkAllInvariants(
@@ -1906,7 +1931,13 @@ describe("Position Tests", async () => {
             knownedTicks,
             genNatIds(200),
           );
-
+          console.log(finalSt.cumulativesBuffer);
+          const {
+            seconds: expectedSecondsOutside,
+            tickCumulative: expectedTickCumulativeOutside,
+            feeGrowth: expectedFeeGrowthOutside,
+            secondsPerLiquidity: expectedSecondsPerLiquidityOutside,
+          } = await initTickAccumulators(pool, finalSt, lowerTickIndex);
           // -- Ticks were initialized
           const initializedTickIndices = Object.keys(finalSt.ticks.map);
           expect(initializedTickIndices).to.include(lowerTickIndex.toString());
@@ -1980,18 +2011,18 @@ describe("Position Tests", async () => {
 
           expect(lowerTick.nPositions.toNumber()).to.be.eq(1);
           expect(upperTick.nPositions.toNumber()).to.be.eq(1);
-          await sleep(20000);
+          // await sleep(20000);
           console.log("initTickAccumulators");
-          const {
-            seconds: expectedSecondsOutside,
-            tickCumulative: expectedTickCumulativeOutside,
-            feeGrowth: expectedFeeGrowthOutside,
-            secondsPerLiquidity: expectedSecondsPerLiquidityOutside,
-          } = await initTickAccumulators(pool, finalSt, lowerTickIndex);
+          // const {
+          //   seconds: expectedSecondsOutside,
+          //   tickCumulative: expectedTickCumulativeOutside,
+          //   feeGrowth: expectedFeeGrowthOutside,
+          //   secondsPerLiquidity: expectedSecondsPerLiquidityOutside,
+          // } = await initTickAccumulators(pool, finalSt, lowerTickIndex);
 
-          // expect(lowerTick.secondsOutside).to.be.deep.equal(
-          //   expectedSecondsOutside,
-          // );
+          expect(lowerTick.secondsOutside).to.be.deep.equal(
+            expectedSecondsOutside,
+          );
           console.log(
             "lowerTick.secondsOutside",
             lowerTick.secondsOutside.toString(),
@@ -2000,14 +2031,14 @@ describe("Position Tests", async () => {
             "expectedSecondsOutside",
             expectedSecondsOutside.toString(),
           );
-          ok(
-            isInRangeNat(
-              lowerTick.secondsOutside,
-              expectedSecondsOutside,
-              new BigNumber(2),
-              new BigNumber(0),
-            ),
-          );
+          // ok(
+          //   isInRangeNat(
+          //     lowerTick.secondsOutside,
+          //     expectedSecondsOutside,
+          //     new BigNumber(2),
+          //     new BigNumber(0),
+          //   ),
+          // );
 
           expect(lowerTick.tickCumulativeOutside).to.be.deep.eq(
             expectedTickCumulativeOutside,
@@ -2015,9 +2046,9 @@ describe("Position Tests", async () => {
           expect(lowerTick.feeGrowthOutside).to.be.deep.eq(
             expectedFeeGrowthOutside,
           );
-          // expect(lowerTick.secondsPerLiquidityOutside).to.be.deep.eq(
-          //   expectedSecondsPerLiquidityOutside,
-          // );
+          expect(lowerTick.secondsPerLiquidityOutside).to.be.deep.eq(
+            expectedSecondsPerLiquidityOutside,
+          );
           console.log("initTickAccumulators2");
           const {
             seconds: expectedSecondsOutside2,
@@ -2027,17 +2058,17 @@ describe("Position Tests", async () => {
           } = await initTickAccumulators(pool, finalSt, upperTickIndex);
           console.log("good");
           // TODO
-          // expect(upperTick.secondsOutside).to.be.deep.eq(
-          //   expectedSecondsOutside2,
-          // );
-          ok(
-            isInRangeNat(
-              upperTick.secondsOutside,
-              expectedSecondsOutside2,
-              new BigNumber(1),
-              new BigNumber(0),
-            ),
+          expect(upperTick.secondsOutside).to.be.deep.eq(
+            expectedSecondsOutside2,
           );
+          // ok(
+          //   isInRangeNat(
+          //     upperTick.secondsOutside,
+          //     expectedSecondsOutside2,
+          //     new BigNumber(1),
+          //     new BigNumber(0),
+          //   ),
+          // );
 
           expect(upperTick.tickCumulativeOutside).to.be.deep.eq(
             expectedTickCumulativeOutside2,
