@@ -11,7 +11,7 @@ import { FA12 } from "./FA12";
 import { FA2 } from "./FA2";
 
 export async function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
@@ -32,7 +32,7 @@ export const genCreatePositionData = async () => {
     Math.ceil(Math.random() * 10000) * (Math.round(Math.random()) ? 1 : -1);
   // const lowerTickIndex = Math.floor(Math.random() * 10000);
   const upperTickIndex = Math.floor(
-    Math.random() * (10000 - lowerTickIndex) + lowerTickIndex + 1,
+    Math.random() * (10000 - lowerTickIndex) + lowerTickIndex + 1
   );
   const cpdWaitTime = Math.floor(Math.random() * 10);
   return {
@@ -51,7 +51,7 @@ export const genNonOverlappingPositions = async () => {
     cpds.push(await genCreatePositionData());
   }
   const boundsOverlap = (thisCpd, otherCpds) => {
-    const allTickIndices = [thisCpd, ...otherCpds].flatMap(cpd => [
+    const allTickIndices = [thisCpd, ...otherCpds].flatMap((cpd) => [
       cpd.lowerTickIndex,
       cpd.upperTickIndex,
     ]);
@@ -77,7 +77,7 @@ export const genFees = (feeCount: number, zeroFee: boolean = false) => {
   return fees;
 };
 
-export const genNatIds = maxId => {
+export const genNatIds = (maxId) => {
   const ids: Nat[] = [];
   for (let i = 0; i < maxId; i++) {
     ids.push(new Nat(i));
@@ -91,45 +91,30 @@ export const inRange = (x: BigNumber, y: BigNumber, z: BigNumber) => {
 
 export const compareStorages = (
   storage1: quipuswapV3Types.Storage,
-  storage2: quipuswapV3Types.Storage,
+  storage2: quipuswapV3Types.Storage
 ) => {
-  // expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
-  // expect(storage1.constants).to.be.deep.equal(storage2.constants);
-  // expect(storage1.sqrtPrice).to.be.deep.equal(storage2.sqrtPrice);
-  // expect(storage1.curTickIndex).to.be.deep.equal(storage2.curTickIndex);
-  // expect(storage1.curTickWitness).to.be.deep.equal(storage2.curTickWitness);
-  // expect(storage1.feeGrowth).to.be.deep.equal(storage2.feeGrowth);
-  // expect(storage1.ticks.map).to.be.deep.equal(storage2.ticks.map);
+  expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
+  expect(storage1.constants).to.be.deep.equal(storage2.constants);
+  expect(storage1.sqrtPrice).to.be.deep.equal(storage2.sqrtPrice);
+  expect(storage1.curTickIndex).to.be.deep.equal(storage2.curTickIndex);
+  expect(storage1.curTickWitness).to.be.deep.equal(storage2.curTickWitness);
+  expect(storage1.feeGrowth).to.be.deep.equal(storage2.feeGrowth);
+  expect(storage1.ticks.map).to.be.deep.equal(storage2.ticks.map);
 
-  // expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
-  // expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
+  expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
+  expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
 
-  // // console.log("Edited");
-  // console.log("Storage1", JSON.stringify(storage1.cumulativesBuffer.map.map));
-  // console.log("Storage2", JSON.stringify(storage2.cumulativesBuffer.map.map));
-  // expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
-  //   JSON.stringify(storage2.cumulativesBuffer.map.map),
-  // );
-  // console.log(
-  //   storage1.cumulativesBuffer.first.toFixed(),
-  //   storage2.cumulativesBuffer.first.toFixed(),
-  // );
-  // console.log(
-  //   storage1.cumulativesBuffer.last.toFixed(),
-  //   storage2.cumulativesBuffer.last.toFixed(),
-  // );
-  console.log(
-    storage1.cumulativesBuffer.first.toFixed(),
-    storage2.cumulativesBuffer.first.toFixed(),
+  expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
+    JSON.stringify(storage2.cumulativesBuffer.map.map)
   );
   expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
-    storage2.cumulativesBuffer.first,
+    storage2.cumulativesBuffer.first
   );
   expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
-    storage2.cumulativesBuffer.last,
+    storage2.cumulativesBuffer.last
   );
   expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
-    storage2.cumulativesBuffer.reservedLength,
+    storage2.cumulativesBuffer.reservedLength
   );
 };
 
@@ -137,7 +122,7 @@ export const getTypedBalance = async (
   tezos: TezosToolkit,
   tokenType: string,
   token: any,
-  address: string,
+  address: string
 ) => {
   if (tokenType === "fa12") {
     const fa12 = new FA12(await tezos.contract.at(token["fa12"]), tezos);
@@ -146,7 +131,7 @@ export const getTypedBalance = async (
   } else {
     const fa2 = new FA2(
       await tezos.contract.at(token["fa2"].token_address),
-      tezos,
+      tezos
     );
     const balance = await fa2.getBalance(address);
     return new BigNumber(balance);
@@ -156,7 +141,7 @@ export const getTypedBalance = async (
 export const collectFees = async (
   pool: QuipuswapV3,
   recipient: string,
-  posIds: BigNumber[],
+  posIds: BigNumber[]
 ) => {
   for (const posId of posIds) {
     try {
@@ -167,7 +152,7 @@ export const collectFees = async (
         recipient,
         new Date("2023-01-01T00:00:00Z").toString(),
         new BigNumber(0),
-        new BigNumber(0),
+        new BigNumber(0)
       );
     } catch (e) {}
   }
@@ -194,7 +179,7 @@ export const safeSwap = async (
   amountOutMin: BigNumber,
   recipient: string,
   deadline: string,
-  swapFunc: QuipuswapV3["swapXY"] | QuipuswapV3["swapYX"],
+  swapFunc: QuipuswapV3["swapXY"] | QuipuswapV3["swapYX"]
 ) => {
   try {
     await swapFunc(amountIn, deadline, amountOutMin, recipient);
@@ -205,7 +190,7 @@ export const safeSwap = async (
         amountOutMin,
         recipient,
         deadline,
-        swapFunc,
+        swapFunc
       );
     }
   }

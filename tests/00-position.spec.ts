@@ -120,12 +120,12 @@ describe("Position Tests", async () => {
           new BigNumber(100),
           validDeadline(),
           new BigNumber(100),
-          new BigNumber(100),
+          new BigNumber(100)
         ),
         (err: Error) => {
           equal(err.message.includes("110"), true);
           return true;
-        },
+        }
       );
     });
     it.skip("Shouldn't setting a position with lower_tick>upper_tick", async () => {
@@ -138,12 +138,12 @@ describe("Position Tests", async () => {
           new BigNumber(100),
           validDeadline(),
           new BigNumber(100),
-          new BigNumber(100),
+          new BigNumber(100)
         ),
         (err: Error) => {
           equal(err.message.includes("110"), true);
           return true;
-        },
+        }
       );
     });
     it.skip("Shouldn't setting a position with zero liquidity is a no-op", async () => {
@@ -156,7 +156,7 @@ describe("Position Tests", async () => {
         new BigNumber(0),
         validDeadline(),
         new BigNumber(100),
-        new BigNumber(100),
+        new BigNumber(100)
       );
       const actualLiquidity = (await poolFa12.getRawStorage()).liquidity;
       deepEqual(prevLiquidity, actualLiquidity);
@@ -171,12 +171,12 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("105"), true);
           return true;
-        },
+        }
       );
       await rejects(
         poolFa12.setPosition(
@@ -187,12 +187,12 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("105"), true);
           return true;
-        },
+        }
       );
       await rejects(
         poolFa12.setPosition(
@@ -203,12 +203,12 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("100"), true);
           return true;
-        },
+        }
       );
       await rejects(
         poolFa12.setPosition(
@@ -219,12 +219,12 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("100"), true);
           return true;
-        },
+        }
       );
     });
     it.skip("Shouldn't setting a position with past the deadline", async () => {
@@ -237,12 +237,12 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           new Date("2020-01-01").toString(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("103"), true);
           return true;
-        },
+        }
       );
 
       await poolFa12.setPosition(
@@ -253,7 +253,7 @@ describe("Position Tests", async () => {
         new BigNumber(1e7),
         validDeadline(),
         new BigNumber(1e7),
-        new BigNumber(1e7),
+        new BigNumber(1e7)
       );
       await rejects(
         poolFa12.updatePosition(
@@ -263,12 +263,12 @@ describe("Position Tests", async () => {
           alice.pkh,
           new Date("2021-01-01").toString(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         ),
         (err: Error) => {
           equal(err.message.includes("103"), true);
           return true;
-        },
+        }
       );
       await poolFa12.updatePosition(
         new BigNumber(0),
@@ -277,7 +277,7 @@ describe("Position Tests", async () => {
         alice.pkh,
         validDeadline(),
         new BigNumber(1e7),
-        new BigNumber(1e7),
+        new BigNumber(1e7)
       );
     });
     it.skip("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
@@ -288,7 +288,7 @@ describe("Position Tests", async () => {
         "fa12",
         0,
         10,
-        MichelsonMap.fromLiteral({}),
+        MichelsonMap.fromLiteral({})
       );
       const wrongPool = await new QuipuswapV3().init(tezos, poolAddress);
       wrongPool.setPosition(
@@ -299,7 +299,7 @@ describe("Position Tests", async () => {
         new BigNumber(1e7),
         validDeadline(),
         new BigNumber(1e7),
-        new BigNumber(1e7),
+        new BigNumber(1e7)
       ),
         (err: Error) => {
           console.log(err.message);
@@ -314,7 +314,7 @@ describe("Position Tests", async () => {
         new BigNumber(1e7),
         validDeadline(),
         new BigNumber(1e7),
-        new BigNumber(1e7),
+        new BigNumber(1e7)
       ),
         (err: Error) => {
           console.log(err.message);
@@ -333,12 +333,12 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
             validDeadline(),
             new BigNumber(1e7),
-            new BigNumber(1e7),
+            new BigNumber(1e7)
           ),
           (err: Error) => {
             equal(err.message.includes("105"), true);
             return true;
-          },
+          }
         );
         await rejects(
           pool.setPosition(
@@ -349,12 +349,12 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
             validDeadline(),
             new BigNumber(1e7),
-            new BigNumber(1e7),
+            new BigNumber(1e7)
           ),
           (err: Error) => {
             equal(err.message.includes("105"), true);
             return true;
-          },
+          }
         );
       }
     });
@@ -370,12 +370,12 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
             validDeadline(),
             new BigNumber(1),
-            new BigNumber(1),
+            new BigNumber(1)
           ),
           (err: Error) => {
             equal(err.message.includes("106"), true);
             return true;
-          },
+          }
         );
 
         const storage = await pool.getRawStorage();
@@ -387,7 +387,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
 
         await rejects(
@@ -398,12 +398,12 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(1),
-            new BigNumber(1),
+            new BigNumber(1)
           ),
           (err: Error) => {
             equal(err.message.includes("106"), true);
             return true;
-          },
+          }
         );
       }
     });
@@ -421,7 +421,7 @@ describe("Position Tests", async () => {
           new BigNumber(liquidityDelta),
           validDeadline(),
           new BigNumber(liquidityDelta),
-          new BigNumber(liquidityDelta),
+          new BigNumber(liquidityDelta)
         );
         tezos.setSignerProvider(bobSigner);
         await pool.setPosition(
@@ -432,7 +432,7 @@ describe("Position Tests", async () => {
           new BigNumber(liquidityDelta),
           validDeadline(),
           new BigNumber(liquidityDelta),
-          new BigNumber(liquidityDelta),
+          new BigNumber(liquidityDelta)
         );
         await rejects(
           pool.updatePosition(
@@ -442,12 +442,12 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(liquidityDelta),
-            new BigNumber(liquidityDelta),
+            new BigNumber(liquidityDelta)
           ),
           (err: Error) => {
             equal(err.message.includes("111"), true);
             return true;
-          },
+          }
         );
       }
     });
@@ -461,12 +461,12 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(0),
-            new BigNumber(0),
+            new BigNumber(0)
           ),
           (err: Error) => {
             equal(err.message.includes("FA2_TOKEN_UNDEFINED"), true);
             return true;
-          },
+          }
         );
       }
     });
@@ -480,12 +480,12 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(0),
-            new BigNumber(0),
+            new BigNumber(0)
           ),
           (err: Error) => {
             equal(err.message.includes("FA2_TOKEN_UNDEFINED"), true);
             return true;
-          },
+          }
         );
       }
     });
@@ -516,7 +516,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         await pool.updatePosition(
           initialSt.new_position_id,
@@ -525,20 +525,20 @@ describe("Position Tests", async () => {
           alice.pkh,
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         const poolStorage = (await pool.contract.storage()) as any;
         const xBalance = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          pool.contract.address,
+          pool.contract.address
         );
         const yBalance = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          pool.contract.address,
+          pool.contract.address
         );
         // The contract's balance should be 0.
         // There is a margin of error, so the contract may end up with at most 1 token.
@@ -546,7 +546,7 @@ describe("Position Tests", async () => {
         expect(yBalance.toNumber()).to.be.closeTo(0, 1);
         equal(
           poolStorage.new_position_id.toNumber(),
-          initialSt.new_position_id.toNumber() + 1,
+          initialSt.new_position_id.toNumber() + 1
         );
       }
     });
@@ -584,10 +584,10 @@ describe("Position Tests", async () => {
           increaseObservationCount: CallMode.returnParams,
         };
         const onlyTransferPool1 = await new QuipuswapV3(
-          defaultCallSettings,
+          defaultCallSettings
         ).init(tezos, pool1.contract.address);
         const onlyTransferPool2 = await new QuipuswapV3(
-          defaultCallSettings,
+          defaultCallSettings
         ).init(tezos, pool2.contract.address);
         const initialSt = await pool1.getRawStorage();
         const inistSt2 = await pool2.getRawStorage();
@@ -600,7 +600,7 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
             validDeadline(),
             new BigNumber(1e7),
-            new BigNumber(1e7),
+            new BigNumber(1e7)
           ),
           await onlyTransferPool1.updatePosition(
             initialSt.new_position_id,
@@ -609,7 +609,7 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(1e7),
-            new BigNumber(1e7),
+            new BigNumber(1e7)
           ),
           await onlyTransferPool2.setPosition(
             new BigNumber(-10),
@@ -619,7 +619,7 @@ describe("Position Tests", async () => {
             new BigNumber(2e7),
             validDeadline(),
             new BigNumber(2e7),
-            new BigNumber(2e7),
+            new BigNumber(2e7)
           ),
         ];
         const ops = await sendBatch(tezos, transferParams);
@@ -632,7 +632,7 @@ describe("Position Tests", async () => {
             new Int(-10),
             new Int(15),
           ],
-          [new Nat(0), new Nat(1), new Nat(2)],
+          [new Nat(0), new Nat(1), new Nat(2)]
         );
         const poolStorage2 = await pool2.getStorage(
           [new Nat(0)],
@@ -642,32 +642,32 @@ describe("Position Tests", async () => {
             new Int(-10),
             new Int(15),
           ],
-          [new Nat(0), new Nat(1), new Nat(2)],
+          [new Nat(0), new Nat(1), new Nat(2)]
         );
         compareStorages(poolStorage1, poolStorage2);
         const xBalance1 = await getTypedBalance(
           tezos,
           Object.keys(initialSt.constants.token_x)[0],
           initialSt.constants.token_x,
-          pool1.contract.address,
+          pool1.contract.address
         );
         const yBalance1 = await getTypedBalance(
           tezos,
           Object.keys(initialSt.constants.token_y)[0],
           initialSt.constants.token_y,
-          pool1.contract.address,
+          pool1.contract.address
         );
         const xBalance2 = await getTypedBalance(
           tezos,
           Object.keys(initialSt.constants.token_x)[0],
           initialSt.constants.token_x,
-          pool2.contract.address,
+          pool2.contract.address
         );
         const yBalance2 = await getTypedBalance(
           tezos,
           Object.keys(initialSt.constants.token_y)[0],
           initialSt.constants.token_y,
-          pool2.contract.address,
+          pool2.contract.address
         );
         expect(xBalance1.toNumber()).to.be.closeTo(xBalance2.toNumber(), 1);
         expect(yBalance1.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
@@ -675,7 +675,7 @@ describe("Position Tests", async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
+    it.skip("Should be lowest and highest ticks cannot be garbage collected", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -689,12 +689,12 @@ describe("Position Tests", async () => {
         poolFa2_1: poolFa2_1,
       } = await poolsFixture(tezos, [aliceSigner], genFees(8, true), true);
       const sleep = (ms: number) =>
-        new Promise(resolve => setTimeout(resolve, ms));
+        new Promise((resolve) => setTimeout(resolve, ms));
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const initialSt = await pool.getStorage(
           [],
           [new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(10),
+          genNatIds(10)
         );
         const transferParams: TransferParams[] = [];
         const newCallSettings: CallSettings = {
@@ -708,6 +708,7 @@ describe("Position Tests", async () => {
         };
         pool.setCallSetting(newCallSettings);
 
+        await sleep(5000);
         transferParams.push(
           (await pool.setPosition(
             new BigNumber(minTickIndex),
@@ -717,10 +718,9 @@ describe("Position Tests", async () => {
             new BigNumber(1),
             validDeadline(),
             new BigNumber(1),
-            new BigNumber(1),
-          )) as TransferParams,
+            new BigNumber(1)
+          )) as TransferParams
         );
-        //await sleep(5000);
         transferParams.push(
           (await pool.updatePosition(
             initialSt.newPositionId,
@@ -729,26 +729,25 @@ describe("Position Tests", async () => {
             alice.pkh,
             validDeadline(),
             new BigNumber(0),
-            new BigNumber(0),
-          )) as TransferParams,
+            new BigNumber(0)
+          )) as TransferParams
         );
 
         const ops = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, ops.opHash);
 
-        const poolStorage = await pool.updateStorage(
+        const poolStorage = await pool.getStorage(
           [new Nat(0)],
           [new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(10),
+          genNatIds(10)
         );
         // The storage shouldn't have changed (with few exceptions).
 
         const now =
           Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
-        console.log(initialSt.cumulativesBuffer);
+        // console.log(initialSt.cumulativesBuffer);
         initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
         initialSt.cumulativesBuffer = await cumulativesBuffer1(now.toString());
-        console.log(JSON.stringify(poolStorage.cumulativesBuffer.map.map));
         // console.log(
         //   await ((await pool.contract.storage()) as any).ticks.get(
         //     minTickIndex,
@@ -773,7 +772,7 @@ describe("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
-        fees,
+        fees
       );
       factory = _factory;
       fa12TokenX = _fa12TokenX;
@@ -795,13 +794,13 @@ describe("Position Tests", async () => {
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          eve.pkh,
+          eve.pkh
         );
         const prevEveBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          eve.pkh,
+          eve.pkh
         );
         await pool.setPosition(
           new BigNumber(-10000),
@@ -811,7 +810,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         let xFees: BigNumber = new BigNumber(0);
         let yFees: BigNumber = new BigNumber(0);
@@ -824,13 +823,13 @@ describe("Position Tests", async () => {
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
           await pool.swapYX(
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
 
           const storage = await pool.getRawStorage();
@@ -846,7 +845,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeX,
             initialSt.constants.token_x,
-            eve.pkh,
+            eve.pkh
           )
         ).minus(prevEveBalanceX);
         const eveBalanceY = (
@@ -854,7 +853,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeY,
             initialSt.constants.token_y,
-            eve.pkh,
+            eve.pkh
           )
         ).minus(prevEveBalanceY);
         ok(isInRangeNat(eveBalanceX, xFees, new Nat(1), new Nat(0)));
@@ -862,11 +861,11 @@ describe("Position Tests", async () => {
         /**  Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable. */
         expect(shiftRight(xFees, new BigNumber(128)).toNumber()).to.be.closeTo(
           0,
-          1,
+          1
         );
         expect(shiftRight(yFees, new BigNumber(128)).toNumber()).to.be.closeTo(
           0,
-          1,
+          1
         );
       }
     });
@@ -891,7 +890,7 @@ describe("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner, eveSigner],
-        fees,
+        fees
       );
       factory = _factory;
       fa12TokenX = _fa12TokenX;
@@ -916,7 +915,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         tezos.setSignerProvider(aliceSigner);
         await pool.setPosition(
@@ -927,31 +926,31 @@ describe("Position Tests", async () => {
           new BigNumber(1e7 * 3),
           validDeadline(),
           new BigNumber(1e7 * 3),
-          new BigNumber(1e7 * 3),
+          new BigNumber(1e7 * 3)
         );
         const prevEveBalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          eve.pkh,
+          eve.pkh
         );
         const prevEveBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          eve.pkh,
+          eve.pkh
         );
         const prevAliceBalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          alice.pkh,
+          alice.pkh
         );
         const prevAliceBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          alice.pkh,
+          alice.pkh
         );
         let xFees: BigNumber = new BigNumber(0);
         let yFees: BigNumber = new BigNumber(0);
@@ -966,13 +965,13 @@ describe("Position Tests", async () => {
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
           await pool.swapYX(
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
           const storage = await pool.getRawStorage();
           const xFeeBalance = storage.fee_growth.x;
@@ -989,14 +988,14 @@ describe("Position Tests", async () => {
         const st2 = await pool.getStorage(
           [(new Nat(0), new Nat(1))],
           [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
-          [new Nat(0), new Nat(1), new Nat(2), new Nat(3), new Nat(4)],
+          [new Nat(0), new Nat(1), new Nat(2), new Nat(3), new Nat(4)]
         );
         await checkAllInvariants(
           pool,
           { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
           [new Nat(0), new Nat(1), new Nat(2)],
           [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
-          genNatIds(50),
+          genNatIds(50)
         );
         tezos.setSignerProvider(aliceSigner);
         await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
@@ -1006,7 +1005,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeX,
             initialSt.constants.token_x,
-            eve.pkh,
+            eve.pkh
           )
         ).minus(prevEveBalanceX);
         const eveBalanceY = (
@@ -1014,7 +1013,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeY,
             initialSt.constants.token_y,
-            eve.pkh,
+            eve.pkh
           )
         ).minus(prevEveBalanceY);
         const aliceBalanceX = (
@@ -1022,7 +1021,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeX,
             initialSt.constants.token_x,
-            alice.pkh,
+            alice.pkh
           )
         ).minus(prevAliceBalanceX);
         const aliceBalanceY = (
@@ -1030,7 +1029,7 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeY,
             initialSt.constants.token_y,
-            alice.pkh,
+            alice.pkh
           )
         ).minus(prevAliceBalanceY);
         /**
@@ -1043,32 +1042,32 @@ describe("Position Tests", async () => {
             eveBalanceX,
             xFees.dividedBy(4),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             eveBalanceY,
             yFees.dividedBy(4),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             aliceBalanceX,
             xFees.multipliedBy(3).dividedBy(4),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             aliceBalanceY,
             yFees.multipliedBy(3).dividedBy(4),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
       }
     });
@@ -1089,7 +1088,7 @@ describe("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
-        genFees(4),
+        genFees(4)
       );
 
       factory = _factory;
@@ -1114,25 +1113,25 @@ describe("Position Tests", async () => {
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          feeReceiver1,
+          feeReceiver1
         );
         const prevfeeReceiver1BalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          feeReceiver1,
+          feeReceiver1
         );
         const prevfeeReceiver2BalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          feeReceiver2,
+          feeReceiver2
         );
         const prevfeeReceiver2BalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          feeReceiver2,
+          feeReceiver2
         );
 
         tezos.setSignerProvider(aliceSigner);
@@ -1144,7 +1143,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
 
         tezos.setSignerProvider(swapper);
@@ -1153,13 +1152,13 @@ describe("Position Tests", async () => {
           transferAmountB,
           validDeadline(),
           new BigNumber(1),
-          swapperAddr,
+          swapperAddr
         );
         await pool.swapYX(
           transferAmountB,
           validDeadline(),
           new BigNumber(1),
-          swapperAddr,
+          swapperAddr
         );
 
         const storage = await pool.getRawStorage();
@@ -1177,7 +1176,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         tezos.setSignerProvider(swapper);
 
@@ -1185,13 +1184,13 @@ describe("Position Tests", async () => {
           transferAmountA,
           validDeadline(),
           new BigNumber(1),
-          swapperAddr,
+          swapperAddr
         );
         await pool.swapYX(
           transferAmountA,
           validDeadline(),
           new BigNumber(1),
-          swapperAddr,
+          swapperAddr
         );
 
         const storage2 = await pool.getRawStorage();
@@ -1209,7 +1208,7 @@ describe("Position Tests", async () => {
             new Int(-10000),
             new Int(10000),
           ],
-          genNatIds(50),
+          genNatIds(50)
         );
         tezos.setSignerProvider(aliceSigner);
         await collectFees(pool, feeReceiver1, [new BigNumber(0)]);
@@ -1220,25 +1219,25 @@ describe("Position Tests", async () => {
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          feeReceiver1,
+          feeReceiver1
         );
         const feeReceiver1BalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          feeReceiver1,
+          feeReceiver1
         );
         const feeReceiver2BalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          feeReceiver2,
+          feeReceiver2
         );
         const feeReceiver2BalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          feeReceiver2,
+          feeReceiver2
         );
         /**
        *   feeReceiver1BalanceX `isInRangeNat` (xFeesBefore + (xFeesAfter `div` 2)) $ (1, 0)
@@ -1258,32 +1257,32 @@ describe("Position Tests", async () => {
             feeReceiver1BalanceX.minus(prevfeeReceiver1BalanceX),
             prevXBefore.plus(prevXAfter.div(2)),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             feeReceiver1BalanceY.minus(prevfeeReceiver1BalanceY),
             prevYBefore.plus(prevYAfter.div(2)),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             feeReceiver2BalanceX.minus(prevfeeReceiver2BalanceX),
             prevXAfter.div(2),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             feeReceiver2BalanceY.minus(prevfeeReceiver2BalanceY),
             prevYAfter.div(2),
             new BigNumber(1),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         await checkAllInvariants(
           pool,
@@ -1295,7 +1294,7 @@ describe("Position Tests", async () => {
             new Int(-10000),
             new Int(10000),
           ],
-          genNatIds(50),
+          genNatIds(50)
         );
         // (xFeesBefore, yFeesBefore) <- placeSwaps beforeSwaps from Haskel to TS
       }
@@ -1319,7 +1318,7 @@ describe("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, peterSigner, bobSigner],
-        genFees(4, false),
+        genFees(4, false)
       );
 
       factory = _factory;
@@ -1345,7 +1344,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         let xFees: BigNumber = new BigNumber(0);
         let yFees: BigNumber = new BigNumber(0);
@@ -1358,13 +1357,13 @@ describe("Position Tests", async () => {
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
           await pool.swapYX(
             transferAmount,
             validDeadline(),
             new BigNumber(1),
-            swapperAddr,
+            swapperAddr
           );
           const storage = await pool.getRawStorage();
           const xFee = calcSwapFee(feeBps, transferAmount);
@@ -1377,13 +1376,13 @@ describe("Position Tests", async () => {
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          alice.pkh,
+          alice.pkh
         );
         const aliceBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          alice.pkh,
+          alice.pkh
         );
         await pool.updatePosition(
           new BigNumber(0),
@@ -1392,32 +1391,32 @@ describe("Position Tests", async () => {
           feeReceiver,
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         const storage = await pool.getRawStorage();
         const finalAliceBalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          alice.pkh,
+          alice.pkh
         );
         const finalAliceBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          alice.pkh,
+          alice.pkh
         );
         const feeReceiverBalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          feeReceiver,
+          feeReceiver
         );
         const feeReceiverBalanceY = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          feeReceiver,
+          feeReceiver
         );
         //let PerToken xDelta yDelta = liquidityDeltaToTokensDelta (fromIntegral liquidityDelta) lowerTickIndex upperTickIndex (sCurTickIndexRPC st) (sSqrtPriceRPC st)
         const liquidityDelta = liquidityDeltaToTokensDelta(
@@ -1425,7 +1424,7 @@ describe("Position Tests", async () => {
           new Int(lowerTickIndex),
           new Int(upperTickIndex),
           new Int(storage.cur_tick_index),
-          new Nat(storage.sqrt_price),
+          new Nat(storage.sqrt_price)
         );
         const xDelta = liquidityDelta.x;
         const yDelta = liquidityDelta.y;
@@ -1439,16 +1438,16 @@ describe("Position Tests", async () => {
             finalAliceBalanceX,
             aliceBalanceX.plus(xFees).minus(xDelta),
             new BigNumber(2),
-            new BigNumber(1),
-          ),
+            new BigNumber(1)
+          )
         );
         ok(
           isInRangeNat(
             finalAliceBalanceY,
             aliceBalanceY.plus(yFees).minus(yDelta),
             new BigNumber(2),
-            new BigNumber(1),
-          ),
+            new BigNumber(1)
+          )
         );
         /**
          * `feeReceiver` should not receive any fees.
@@ -1479,7 +1478,7 @@ describe("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, eveSigner, bobSigner],
-        [50_00, 50_00, 50_00, 50_00],
+        [50_00, 50_00, 50_00, 50_00]
       );
       factory = _factory;
       fa12TokenX = _fa12TokenX;
@@ -1508,7 +1507,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         tezos.setSignerProvider(liquidityProvider2);
         await pool.setPosition(
@@ -1519,7 +1518,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         tezos.setSignerProvider(bobSigner);
         const swapperAddr = await swapper.publicKeyHash();
@@ -1542,8 +1541,8 @@ describe("Position Tests", async () => {
                   swapAmt,
                   validDeadline(),
                   new BigNumber(1),
-                  swapperAddr,
-                ),
+                  swapperAddr
+                )
               );
               break;
             default:
@@ -1552,8 +1551,8 @@ describe("Position Tests", async () => {
                   swapAmt,
                   validDeadline(),
                   new BigNumber(1),
-                  swapperAddr,
-                ),
+                  swapperAddr
+                )
               );
           }
         }
@@ -1570,7 +1569,7 @@ describe("Position Tests", async () => {
           receiver1,
           validDeadline(),
           new BigNumber(1e7),
-          new BigNumber(1e7),
+          new BigNumber(1e7)
         );
         // -- Liquidate the position in small steps
         //  -- Doing all 10 calls in one batch may go over the gas limit,
@@ -1589,8 +1588,8 @@ describe("Position Tests", async () => {
                 receiver2,
                 validDeadline(),
                 new BigNumber(1e7),
-                new BigNumber(1e7),
-              ),
+                new BigNumber(1e7)
+              )
             );
           }
         }
@@ -1601,25 +1600,25 @@ describe("Position Tests", async () => {
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          receiver1,
+          receiver1
         );
         const balanceReceiver1Y = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          receiver1,
+          receiver1
         );
         const balanceReceiver2X = await getTypedBalance(
           tezos,
           tokenTypeX,
           initialSt.constants.token_x,
-          receiver2,
+          receiver2
         );
         const balanceReceiver2Y = await getTypedBalance(
           tezos,
           tokenTypeY,
           initialSt.constants.token_y,
-          receiver2,
+          receiver2
         );
         // -- Liquidating in 10 smaller steps may lead
         // -- to `receiver2` receiving up to 10 fewer tokens due to rounding errors.
@@ -1637,16 +1636,16 @@ describe("Position Tests", async () => {
             balanceReceiver2X,
             balanceReceiver1X,
             new BigNumber(10),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
         ok(
           isInRangeNat(
             balanceReceiver2Y,
             balanceReceiver1Y,
             new BigNumber(10),
-            new BigNumber(0),
-          ),
+            new BigNumber(0)
+          )
         );
       }
     });
@@ -1685,7 +1684,7 @@ describe("Position Tests", async () => {
             new BigNumber(liquidityDelta),
             validDeadline(),
             new BigNumber(liquidityDelta),
-            new BigNumber(liquidityDelta),
+            new BigNumber(liquidityDelta)
           ),
           await pool.setPosition(
             ti2,
@@ -1695,13 +1694,13 @@ describe("Position Tests", async () => {
             new BigNumber(liquidityDelta),
             validDeadline(),
             new BigNumber(liquidityDelta),
-            new BigNumber(liquidityDelta),
+            new BigNumber(liquidityDelta)
           ),
         ];
 
         const setPositionOps = await sendBatch(
           tezos,
-          setPositionParams as TransferParams[],
+          setPositionParams as TransferParams[]
         );
         await confirmOperation(tezos, setPositionOps.opHash);
 
@@ -1713,7 +1712,7 @@ describe("Position Tests", async () => {
           new BigNumber(100),
           validDeadline(),
           new BigNumber(0),
-          await swapper.publicKeyHash(),
+          await swapper.publicKeyHash()
         );
         // -- Advance the time a few secs to make sure accumulators
         // -- like `seconds_per_liquidity_cumulative` change to non-zero values.
@@ -1724,12 +1723,12 @@ describe("Position Tests", async () => {
           new BigNumber(1_000),
           validDeadline(),
           new BigNumber(0),
-          await swapper.publicKeyHash(),
+          await swapper.publicKeyHash()
         );
         const initialStorage = await pool.getStorage(
           genNatIds(2),
           [ti1, ti2, ti3, ti4, new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(50),
+          genNatIds(50)
         );
         const initialState = initialStorage.ticks.get(ti2);
 
@@ -1744,41 +1743,41 @@ describe("Position Tests", async () => {
           new BigNumber(liquidityDelta),
           validDeadline(),
           new BigNumber(liquidityDelta),
-          new BigNumber(liquidityDelta),
+          new BigNumber(liquidityDelta)
         );
 
         // -- Check that `ti2`'s state has been updated.
         const finalStorage = await pool.getStorage(
           genNatIds(3),
           [ti1, ti2, ti3, ti4, new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(50),
+          genNatIds(50)
         );
         const finalState = finalStorage.ticks.get(ti2);
 
         expect(finalState.nPositions).to.deep.equal(
-          initialState.nPositions.plus(1),
+          initialState.nPositions.plus(1)
         );
         expect(finalState.liquidityNet).to.deep.equal(
-          initialState.liquidityNet.plus(liquidityDelta),
+          initialState.liquidityNet.plus(liquidityDelta)
         );
         expect(finalState.sqrtPrice).to.deep.equal(initialState.sqrtPrice);
 
         // -- Accumulators should stay unchanged.
         expect(finalState.feeGrowthOutside).to.deep.equal(
-          initialState.feeGrowthOutside,
+          initialState.feeGrowthOutside
         );
         expect(finalState.secondsOutside).to.deep.equal(
-          initialState.secondsOutside,
+          initialState.secondsOutside
         );
         expect(finalState.secondsPerLiquidityOutside).to.deep.equal(
-          initialState.secondsPerLiquidityOutside,
+          initialState.secondsPerLiquidityOutside
         );
         expect(finalState.tickCumulativeOutside).to.deep.equal(
-          initialState.tickCumulativeOutside,
+          initialState.tickCumulativeOutside
         );
       }
     });
-    it.skip("Should initializing correctly position", async () => {
+    it("Should initializing correctly position", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1786,7 +1785,7 @@ describe("Position Tests", async () => {
 
       const swapDirections = Array.from(
         { length: createPositionData.length },
-        () => genSwapDirection(),
+        () => genSwapDirection()
       );
       const {
         factory,
@@ -1801,7 +1800,8 @@ describe("Position Tests", async () => {
       } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        ///,
+        const op = await pool.inreaseObservationCount(new BigNumber(1));
+        ///
         const inSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(inSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(inSt.constants.token_y)[0];
@@ -1842,13 +1842,13 @@ describe("Position Tests", async () => {
             tezos,
             tokenTypeX,
             inSt.constants.token_x,
-            pool.contract.address,
+            pool.contract.address
           );
           let initialBalanceY = await getTypedBalance(
             tezos,
             tokenTypeY,
             inSt.constants.token_y,
-            pool.contract.address,
+            pool.contract.address
           );
 
           tezos.setSignerProvider(swapper);
@@ -1863,7 +1863,7 @@ describe("Position Tests", async () => {
                 new BigNumber(0),
                 validDeadline(),
                 await swapper.publicKeyHash(),
-                pool.swapXY,
+                pool.swapXY
               );
               break;
             default:
@@ -1875,7 +1875,7 @@ describe("Position Tests", async () => {
                 new BigNumber(0),
                 validDeadline(),
                 await swapper.publicKeyHash(),
-                pool.swapYX,
+                pool.swapYX
               );
           }
           knownedTicks.push(upperTickIndex);
@@ -1892,25 +1892,25 @@ describe("Position Tests", async () => {
             [liquidityProvider, swapper],
             genNatIds(50),
             knownedTicks,
-            genNatIds(200),
+            genNatIds(200)
           );
 
           const initSt = await pool.getStorage(
             genNatIds(50),
             knownedTicks,
-            genNatIds(200),
+            genNatIds(200)
           );
           initialBalanceX = await getTypedBalance(
             tezos,
             tokenTypeX,
             inSt.constants.token_x,
-            pool.contract.address,
+            pool.contract.address
           );
           initialBalanceY = await getTypedBalance(
             tezos,
             tokenTypeY,
             inSt.constants.token_y,
-            pool.contract.address,
+            pool.contract.address
           );
 
           tezos.setSignerProvider(liquidityProvider);
@@ -1923,13 +1923,13 @@ describe("Position Tests", async () => {
             new BigNumber(liquidityDelta),
             validDeadline(),
             new BigNumber(liquidityDelta),
-            new BigNumber(liquidityDelta),
+            new BigNumber(liquidityDelta)
           );
 
           const finalSt = await pool.getStorage(
             genNatIds(50),
             knownedTicks,
-            genNatIds(200),
+            genNatIds(200)
           );
           console.log(finalSt.cumulativesBuffer);
           const {
@@ -1952,15 +1952,15 @@ describe("Position Tests", async () => {
           const lowerTickSqrtPrice = lowerTick.sqrtPrice;
 
           const lowerTickSqrtPriceForMinusOne = sqrtPriceForTick(
-            lowerTickIndex.minus(1),
+            lowerTickIndex.minus(1)
           );
           const lowerTickSqrtPriceForPlusOne = sqrtPriceForTick(
-            lowerTickIndex.plus(1),
+            lowerTickIndex.plus(1)
           );
           const lowerTickSqrtPrice_30 = adjustScale(
             lowerTickSqrtPrice,
             new Nat(80),
-            new Nat(30),
+            new Nat(30)
           );
           ok(
             inRange(
@@ -1968,27 +1968,27 @@ describe("Position Tests", async () => {
               adjustScale(
                 lowerTickSqrtPriceForMinusOne,
                 new Nat(80),
-                new Nat(30),
+                new Nat(30)
               ),
               adjustScale(
                 lowerTickSqrtPriceForPlusOne,
                 new Nat(80),
-                new Nat(30),
-              ),
-            ),
+                new Nat(30)
+              )
+            )
           );
 
           const upperTickSqrtPrice = upperTick.sqrtPrice;
           const upperTickSqrtPriceForMinusOne = sqrtPriceForTick(
-            upperTickIndex.minus(1),
+            upperTickIndex.minus(1)
           );
           const upperTickSqrtPriceForPlusOne = sqrtPriceForTick(
-            upperTickIndex.plus(1),
+            upperTickIndex.plus(1)
           );
           const upperTickSqrtPrice_30 = adjustScale(
             upperTickSqrtPrice,
             new Nat(80),
-            new Nat(30),
+            new Nat(30)
           );
           ok(
             inRange(
@@ -1996,14 +1996,14 @@ describe("Position Tests", async () => {
               adjustScale(
                 upperTickSqrtPriceForMinusOne,
                 new Nat(80),
-                new Nat(30),
+                new Nat(30)
               ),
               adjustScale(
                 upperTickSqrtPriceForPlusOne,
                 new Nat(80),
-                new Nat(30),
-              ),
-            ),
+                new Nat(30)
+              )
+            )
           );
 
           expect(lowerTick.liquidityNet.toNumber()).to.be.eq(liquidityDelta);
@@ -2021,33 +2021,33 @@ describe("Position Tests", async () => {
           // } = await initTickAccumulators(pool, finalSt, lowerTickIndex);
 
           expect(lowerTick.secondsOutside).to.be.deep.equal(
-            expectedSecondsOutside,
+            expectedSecondsOutside
           );
           console.log(
             "lowerTick.secondsOutside",
-            lowerTick.secondsOutside.toString(),
+            lowerTick.secondsOutside.toString()
           );
           console.log(
             "expectedSecondsOutside",
-            expectedSecondsOutside.toString(),
+            expectedSecondsOutside.toString()
           );
           // ok(
           //   isInRangeNat(
           //     lowerTick.secondsOutside,
           //     expectedSecondsOutside,
           //     new BigNumber(2),
-          //     new BigNumber(0),
-          //   ),
+          //     new BigNumber(0)
+          //   )
           // );
 
           expect(lowerTick.tickCumulativeOutside).to.be.deep.eq(
-            expectedTickCumulativeOutside,
+            expectedTickCumulativeOutside
           );
           expect(lowerTick.feeGrowthOutside).to.be.deep.eq(
-            expectedFeeGrowthOutside,
+            expectedFeeGrowthOutside
           );
           expect(lowerTick.secondsPerLiquidityOutside).to.be.deep.eq(
-            expectedSecondsPerLiquidityOutside,
+            expectedSecondsPerLiquidityOutside
           );
           console.log("initTickAccumulators2");
           const {
@@ -2059,7 +2059,7 @@ describe("Position Tests", async () => {
           console.log("good");
           // TODO
           expect(upperTick.secondsOutside).to.be.deep.eq(
-            expectedSecondsOutside2,
+            expectedSecondsOutside2
           );
           // ok(
           //   isInRangeNat(
@@ -2071,10 +2071,10 @@ describe("Position Tests", async () => {
           // );
 
           expect(upperTick.tickCumulativeOutside).to.be.deep.eq(
-            expectedTickCumulativeOutside2,
+            expectedTickCumulativeOutside2
           );
           expect(upperTick.feeGrowthOutside).to.be.deep.eq(
-            expectedFeeGrowthOutside2,
+            expectedFeeGrowthOutside2
           );
           //TODO: fix this
           // expect(upperTick.secondsPerLiquidityOutside).to.be.deep.eq(
@@ -2088,7 +2088,7 @@ describe("Position Tests", async () => {
 
           if (positionIsActive) {
             expect(finalSt.liquidity).to.be.deep.eq(
-              initSt.liquidity.plus(liquidityDelta),
+              initSt.liquidity.plus(liquidityDelta)
             );
           } else {
             expect(finalSt.liquidity).to.be.deep.eq(initSt.liquidity);
@@ -2101,7 +2101,7 @@ describe("Position Tests", async () => {
           const position = finalSt.positions.get(new Nat(positionId));
           expect(position.liquidity.toNumber()).to.be.eq(liquidityDelta);
           expect(position.owner).to.be.eq(
-            await liquidityProvider.publicKeyHash(),
+            await liquidityProvider.publicKeyHash()
           );
 
           expect(position.lowerTickIndex).to.be.deep.eq(lowerTickIndex);
@@ -2112,13 +2112,13 @@ describe("Position Tests", async () => {
             pool,
             finalSt,
             lowerTickIndex,
-            upperTickIndex,
-          ).then(a => a.aFeeGrowth);
+            upperTickIndex
+          ).then((a) => a.aFeeGrowth);
 
           expect(
             position.feeGrowthInsideLast.x
               .plus(position.feeGrowthInsideLast.y)
-              .toBignumber(),
+              .toBignumber()
           ).to.be.deep.eq(expectedFeeGrowthInside);
 
           //  -- Check FA2 transfers
@@ -2127,7 +2127,7 @@ describe("Position Tests", async () => {
             lowerTickIndex,
             upperTickIndex,
             finalSt.curTickIndex,
-            finalSt.sqrtPrice,
+            finalSt.sqrtPrice
           ).x;
 
           const yDelta = liquidityDeltaToTokensDelta(
@@ -2135,20 +2135,20 @@ describe("Position Tests", async () => {
             lowerTickIndex,
             upperTickIndex,
             finalSt.curTickIndex,
-            finalSt.sqrtPrice,
+            finalSt.sqrtPrice
           ).y;
 
           const finalBalanceX = await getTypedBalance(
             tezos,
             tokenTypeX,
             finalSt.constants.tokenX,
-            pool.contract.address,
+            pool.contract.address
           );
           const finalBalanceY = await getTypedBalance(
             tezos,
             tokenTypeY,
             finalSt.constants.tokenY,
-            pool.contract.address,
+            pool.contract.address
           );
           /* Checking if the final balance is negative, and if it is, it is negating it. */
 
@@ -2168,15 +2168,15 @@ describe("Position Tests", async () => {
           //   : initialBalanceY.plus(yDelta);
           const exptectedFinalBalanceY = initialBalanceY.plus(yDelta);
           console.log(
-            `finalBalanceX: ${finalBalanceX.toNumber()}, expectedFinalBalanceX: ${exptectedFinalBalanceX.toNumber()}`,
+            `finalBalanceX: ${finalBalanceX.toNumber()}, expectedFinalBalanceX: ${exptectedFinalBalanceX.toNumber()}`
           );
           ok(
             isInRangeNat(
               finalBalanceX,
               exptectedFinalBalanceX,
               new BigNumber(0),
-              new BigNumber(1),
-            ),
+              new BigNumber(1)
+            )
           );
 
           ok(
@@ -2184,8 +2184,8 @@ describe("Position Tests", async () => {
               finalBalanceY,
               exptectedFinalBalanceY,
               new BigNumber(0),
-              new BigNumber(1),
-            ),
+              new BigNumber(1)
+            )
           );
         }
       }
