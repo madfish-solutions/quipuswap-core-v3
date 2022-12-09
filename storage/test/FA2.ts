@@ -22,7 +22,7 @@ export const fa2Storage: fa2Types.FA2Storage = {
       }),
       allowances: [],
     },
-    [accounts.carol.pkh]: {
+    [accounts.peter.pkh]: {
       balances: MichelsonMap.fromLiteral({
         [0]: totalSupply.dividedBy(4).integerValue(BigNumber.ROUND_DOWN),
       }),

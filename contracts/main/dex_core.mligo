@@ -8,6 +8,7 @@
 #include "../partial/types.mligo"
 #include "../partial/consts.mligo"
 #include "../partial/math.mligo"
+
 #include "../partial/defaults.mligo"
 
 #include "../partial/token/fa2.mligo"
@@ -15,7 +16,6 @@
 #include "../partial/helpers.mligo"
 
 #include "../partial/swaps.mligo"
-
 
 #include "../partial/methods.mligo"
 #define DEBUG
