@@ -110,6 +110,13 @@ let check_deadline (deadline : timestamp) : unit =
         else unit
 
 [@inline]
+let check_position_owner (owner : address) (sender : address) : unit =
+    if owner <> sender
+        then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
+            (not_owner_err : nat) : unit)
+        else unit
+
+[@inline]
 let get_registered_cumulatives_unsafe (buffer : timed_cumulatives_buffer) (i : nat) : timed_cumulatives =
     match Big_map.find_opt i buffer.map with
     | None -> failwith internal_bad_access_to_observation_buffer
