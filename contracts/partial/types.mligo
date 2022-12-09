@@ -201,6 +201,7 @@ type position_state = {
 (* Map containing Liquidity providers. *)
 type position_map = (position_id, position_state) big_map
 
+type position_ids_map = (address, position_id set ) big_map
 // What we return when someone requests for the values of cumulatives.
 type cumulatives_value =
     { tick_cumulative : int
@@ -289,8 +290,9 @@ let init_cumulatives_buffer (extra_reserved_slots : nat) : timed_cumulatives_buf
 type metadata_map = (string, bytes) big_map
 
 type constants = {
+    factory_address : address ;
     fee_bps : nat ;
-    ctez_burn_fee_bps : nat ;
+    dev_fee_bps: nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
     tick_spacing : nat ;
@@ -324,11 +326,15 @@ type storage = {
     *)
     fee_growth : balance_nat_x128 ;
 
+    dev_fee : balance_nat;
+
     (* States of all initialized ticks. *)
     ticks : tick_map ;
 
     (* States of positions (with non-zero liquidity). *)
     positions : position_map ;
+
+    position_ids : position_ids_map ;
 
     (* Cumulative values stored for the recent timestamps. *)
     cumulatives_buffer : timed_cumulatives_buffer ;
@@ -478,6 +484,7 @@ type parameter =
   | Set_position of set_position_param
   | Update_position of update_position_param
   | Get_position_info of get_position_info_param
+  | Claim_dev_fee of address
   | Call_fa2 of fa2_parameter
   | Snapshot_cumulatives_inside of snapshot_cumulatives_inside_param
   | Observe of observe_param

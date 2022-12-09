@@ -7,9 +7,6 @@
 #if ERRORS_MLIGO
 #else
 #define ERRORS_MLIGO
-
-#include "types.mligo"
-
 // ---------------------------------------------------------------------------
 // -- Invalid input error codes
 // ---------------------------------------------------------------------------
@@ -148,6 +145,8 @@
 
 (* Price became negative when crossing a tick *)
 [@inline] let internal_negative_price = 326n
+
+[@inline] let not_owner_err = 420n
 
 
 
