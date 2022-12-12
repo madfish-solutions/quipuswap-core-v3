@@ -132,11 +132,7 @@ describe("XtoY Tests", async () => {
       poolFa2,
       poolFa1_2,
       poolFa2_1,
-    } = await poolsFixture(
-      tezos,
-      [aliceSigner, bobSigner],
-      [700, 700, 700, 700],
-    );
+    } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
 
     const genSwaps = () => {
       const swaps: BigNumber[] = [];
@@ -147,7 +143,7 @@ describe("XtoY Tests", async () => {
       return swaps;
     };
 
-    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2]) {
+    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
       tezos.setSignerProvider(aliceSigner);
       const initialSt = await pool.getRawStorage();
       const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -299,12 +295,6 @@ describe("XtoY Tests", async () => {
         expect(finalBalanceSwapReceiverX.toFixed()).to.be.equal(
           initialBalanceSwapReceiverX.toFixed(),
         );
-        // console.log(finalBalanceSwapReceiverY.toFixed());
-        // console.log(initialBalanceSwapReceiverY.toFixed());
-        // console.log(expectedDy.toFixed());
-        // console.log(feeBps);
-        // console.log(calcSwapFee(feeBps, swapAmt).toFixed());
-
         expect(finalBalanceSwapReceiverY.toFixed()).to.be.equal(
           initialBalanceSwapReceiverY.plus(expectedDy).toFixed(),
         );
@@ -334,16 +324,6 @@ describe("XtoY Tests", async () => {
       const expectedFees = swaps
         .map(dx => calcSwapFee(feeBps, dx))
         .reduce((a, b) => a.plus(b), new BigNumber(0));
-      console.log("expectedFees", expectedFees.toFixed());
-      console.log(
-        "finalBalanceFeeReceiverX",
-        finalBalanceFeeReceiverX.toFixed(),
-      );
-      console.log(
-        "InitialBalanceFeeRecX",
-        initialBalanceFeeReceiverX.toFixed(),
-      );
-      console.log(initialBalanceFeeReceiverX.plus(expectedFees).toFixed());
       ok(
         isInRangeNat(
           finalBalanceFeeReceiverX,
@@ -353,7 +333,6 @@ describe("XtoY Tests", async () => {
         ),
       );
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
-      console.log("ok");
     }
   });
   // describe("Success cases", async () => {
