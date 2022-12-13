@@ -218,7 +218,7 @@ let update_position (s : storage) (p : update_position_param) : result =
     let position = get_position (p.position_id, s.positions) in
 
     (* Checking that the sender is the owner of the position. *)
-    let _check_owner: unit = check_position_owner position.owner (Tezos.get_sender ()) in
+    let _check_owner: unit = check_position_owner position.owner in
 
     (* Check that the position is not empty. *)
     (* Get accumulated fees for this position. *)

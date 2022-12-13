@@ -110,8 +110,8 @@ let check_deadline (deadline : timestamp) : unit =
         else unit
 
 [@inline]
-let check_position_owner (owner : address) (sender : address) : unit =
-    if owner <> sender
+let check_position_owner (owner : address) : unit =
+    if owner <> (Tezos.get_sender ())
         then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
             (not_owner_err : nat) : unit)
         else unit
