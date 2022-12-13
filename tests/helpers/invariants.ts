@@ -58,11 +58,6 @@ export async function checkAccumulatorsInvariants(
       ),
     };
   });
-  const bh = await cfmm.tezos.rpc.getBlockHeader();
-
-  // const currentTime = new BigNumber(
-  //   Math.floor(Date.parse(bh.timestamp) / 1000),
-  // ).plus(1);
   const currentTime = new BigNumber(Math.floor(Date.now() / 1000)).plus(1);
   const {
     tick_cumulative: cvTickCumulative,
@@ -276,12 +271,6 @@ export async function checkCumulativesBufferInvariants(
   ok(buffer.reservedLength.gte(buffer.last.minus(buffer.first).plus(1)));
   // Invariant 2
   const bufferMap = buffer.map.map;
-  console.log(Object.keys(bufferMap));
-  console.log(
-    [...Array(buffer.reservedLength.toNumber()).keys()]
-      .map(i => i + buffer.first.toNumber())
-      .map(i => i.toString()),
-  );
   deepEqual(
     Object.keys(bufferMap),
     [...Array(buffer.reservedLength.toNumber()).keys()]

@@ -343,13 +343,9 @@ describe("XtoY Tests", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
-    const liquidityProvider = aliceSigner;
-    const liquidityProviderAddr = alice.pkh;
     const swapper = bobSigner;
-    const swapperAddr = bob.pkh;
     const swapReceiver = sara.pkh;
-    const feeReceiver = carol.pkh;
-    const swapCount = 500;
+    const swapCount = 200;
     const swapAmt = new BigNumber(10);
     const {
       poolFa12,
@@ -380,48 +376,76 @@ describe("XtoY Tests", async () => {
       const initialSt = await pool_1.getRawStorage();
       const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
       const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-      const feeBps = initialSt.constants.fee_bps;
-      await pool_1.increaseObservationCount(new BigNumber(10));
-      await pool_2.increaseObservationCount(new BigNumber(10));
 
-      await pool_1.setPosition(
-        lowerTickIndex,
-        upperTickIndex,
-        new BigNumber(minTickIndex),
-        new BigNumber(minTickIndex),
-        liquidity,
-        validDeadline(),
-        liquidity,
-        liquidity,
+      pool_1.callSettings.increaseObservationCount = CallMode.returnParams;
+      pool_2.callSettings.increaseObservationCount = CallMode.returnParams;
+      pool_1.callSettings.setPosition = CallMode.returnParams;
+      pool_2.callSettings.setPosition = CallMode.returnParams;
+
+      let transferParams: any[] = [];
+      transferParams.push(
+        await pool_1.increaseObservationCount(new BigNumber(10)),
       );
-      await pool_2.setPosition(
-        lowerTickIndex,
-        upperTickIndex,
-        new BigNumber(minTickIndex),
-        new BigNumber(minTickIndex),
-        liquidity,
-        validDeadline(),
-        liquidity,
-        liquidity,
+      transferParams.push(
+        await pool_2.increaseObservationCount(new BigNumber(10)),
       );
+      let batchOp = await sendBatch(tezos, transferParams);
+      await confirmOperation(tezos, batchOp.opHash);
+      transferParams = [];
+      transferParams.push(
+        await pool_1.setPosition(
+          lowerTickIndex,
+          upperTickIndex,
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          liquidity,
+          validDeadline(),
+          liquidity,
+          liquidity,
+        ),
+      );
+      transferParams.push(
+        await pool_2.setPosition(
+          lowerTickIndex,
+          upperTickIndex,
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          liquidity,
+          validDeadline(),
+          liquidity,
+          liquidity,
+        ),
+      );
+      batchOp = await sendBatch(tezos, transferParams);
+      await confirmOperation(tezos, batchOp.opHash);
 
       tezos.setSignerProvider(swapper);
+      transferParams = [];
       // 1 big swap
-      await pool_1.swapXY(
-        swapAmt.multipliedBy(swapCount),
-        validDeadline(),
-        new BigNumber(0),
-        swapReceiver,
+      pool_1.callSettings.swapXY = CallMode.returnParams;
+      pool_2.callSettings.swapXY = CallMode.returnParams;
+      transferParams.push(
+        await pool_1.swapXY(
+          swapAmt.multipliedBy(swapCount),
+          validDeadline(),
+          new BigNumber(0),
+          swapReceiver,
+        ),
       );
       // many small swaps
-      await moreBatchSwaps(
-        pool_2,
-        swapCount,
-        swapAmt,
-        new BigNumber(1),
-        await swapper.publicKeyHash(),
-        "XtoY",
+      transferParams.push(
+        ...(await moreBatchSwaps(
+          pool_2,
+          swapCount,
+          swapAmt,
+          new BigNumber(1),
+          await swapper.publicKeyHash(),
+          "XtoY",
+        )),
       );
+
+      batchOp = await sendBatch(tezos, transferParams);
+      await confirmOperation(tezos, batchOp.opHash);
       // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
       await advanceSecs(1, [pool_1, pool_2]);
       await checkAllInvariants(
@@ -434,7 +458,7 @@ describe("XtoY Tests", async () => {
           lowerTickIndex,
           upperTickIndex,
         ],
-        genNatIds(200),
+        genNatIds(250),
       );
       await checkAllInvariants(
         pool_2,
@@ -446,7 +470,7 @@ describe("XtoY Tests", async () => {
           lowerTickIndex,
           upperTickIndex,
         ],
-        genNatIds(200),
+        genNatIds(250),
       );
       /**
        * The two storages should be mostly identical.
@@ -461,7 +485,7 @@ describe("XtoY Tests", async () => {
           lowerTickIndex,
           upperTickIndex,
         ],
-        genNatIds(200),
+        genNatIds(250),
       );
       const st2 = await pool_2.getStorage(
         [new Nat(0)],
@@ -471,7 +495,7 @@ describe("XtoY Tests", async () => {
           lowerTickIndex,
           upperTickIndex,
         ],
-        genNatIds(200),
+        genNatIds(250),
       );
       const sqrtPrice_1 = adjustScale(st1.sqrtPrice, new Nat(80), new Nat(60));
       const sqrtPrice_2 = adjustScale(st2.sqrtPrice, new Nat(80), new Nat(60));

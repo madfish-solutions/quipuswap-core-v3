@@ -218,8 +218,7 @@ export const moreBatchSwaps = async (
 ) => {
   const deadline = validDeadline();
   let transferParams: TransferParams[] = [];
-  pool.callSettings.swapXY = CallMode.returnParams;
-  pool.callSettings.swapYX = CallMode.returnParams;
+
   for (let i = 0; i < swapCount; i++) {
     if (swapDir === "XtoY") {
       transferParams.push(
@@ -240,18 +239,7 @@ export const moreBatchSwaps = async (
         )) as TransferParams,
       );
     }
-
-    if (i % 10 === 0) {
-      const batchOp = await sendBatch(pool.tezos, transferParams);
-      await batchOp.confirmation();
-      transferParams = [];
-    }
-  }
-  if (transferParams.length > 0) {
-    const batchOp = await sendBatch(pool.tezos, transferParams);
-    await batchOp.confirmation();
   }
 
-  pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
-  pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
+  return transferParams;
 };
