@@ -1,12 +1,15 @@
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { CallMode, swapDirection } from "@madfish/quipuswap-v3/dist/types";
 import { Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 import {
   initTimedCumulatives,
   initTimedCumulativesBuffer,
+  sendBatch,
 } from "@madfish/quipuswap-v3/dist/utils";
-import { TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit, TransferParams } from "@taquito/taquito";
 import { BigNumber } from "bignumber.js";
 import { expect } from "chai";
+import { confirmOperation } from "../../scripts/confirmation";
 import { FA12 } from "./FA12";
 import { FA2 } from "./FA2";
 
@@ -17,9 +20,18 @@ export async function sleep(ms: number) {
 export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
   for (let i = 0; i < n; i++) {
     await sleep(1000);
+    let transferParams: TransferParams[] = [];
     for (const cfmm of cfmms) {
-      await cfmm.increaseObservationCount(new BigNumber(0));
+      cfmm.callSettings.increaseObservationCount = CallMode.returnParams;
+      transferParams.push(
+        await cfmm.increaseObservationCount(new BigNumber(0)),
+      );
+      cfmm.callSettings.increaseObservationCount =
+        CallMode.returnConfirmatedOperation;
     }
+    const opBatch = await sendBatch(cfmms[0].tezos, transferParams);
+    await confirmOperation(cfmms[0].tezos, opBatch.opHash);
+    transferParams = [];
   }
 }
 
@@ -194,4 +206,52 @@ export const safeSwap = async (
       );
     }
   }
+};
+
+export const moreBatchSwaps = async (
+  pool: QuipuswapV3,
+  swapCount: number,
+  amountIn: BigNumber,
+  amountOutMin: BigNumber,
+  recipient: string,
+  swapDir: "XtoY" | "YtoX",
+) => {
+  const deadline = validDeadline();
+  let transferParams: TransferParams[] = [];
+  pool.callSettings.swapXY = CallMode.returnParams;
+  pool.callSettings.swapYX = CallMode.returnParams;
+  for (let i = 0; i < swapCount; i++) {
+    if (swapDir === "XtoY") {
+      transferParams.push(
+        (await pool.swapXY(
+          amountIn,
+          deadline,
+          amountOutMin,
+          recipient,
+        )) as TransferParams,
+      );
+    } else {
+      transferParams.push(
+        (await pool.swapYX(
+          amountIn,
+          deadline,
+          amountOutMin,
+          recipient,
+        )) as TransferParams,
+      );
+    }
+
+    if (i % 10 === 0) {
+      const batchOp = await sendBatch(pool.tezos, transferParams);
+      await batchOp.confirmation();
+      transferParams = [];
+    }
+  }
+  if (transferParams.length > 0) {
+    const batchOp = await sendBatch(pool.tezos, transferParams);
+    await batchOp.confirmation();
+  }
+
+  pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
+  pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
 };

@@ -137,12 +137,12 @@ export async function checkStorageInvariants(
   const ticks = storage.ticks.map;
   const curTickIndex = storage.curTickIndex;
   const expectedCurTickWitness = Int.max(
-    ...tickIndices.filter(t => t <= curTickIndex),
+    ...tickIndices.filter(t => t.lte(curTickIndex)),
   );
   deepEqual(storage.curTickWitness, expectedCurTickWitness);
   // Invariant 2.1
   const liquiditiyAfterPriorTicks = tickIndices
-    .filter(t => t <= curTickIndex)
+    .filter(t => t.lte(curTickIndex))
     .map(t => ticks[t.toNumber()]!.liquidityNet)
     .reduce((acc, cur) => acc.plus(cur), new BigNumber(0));
   equal(storage.liquidity.toFixed(), liquiditiyAfterPriorTicks.toFixed());
@@ -203,20 +203,17 @@ export async function checkTickInvariants(
     "0",
   );
   // Invariant 2
-  // tickLiquidities
-  //   .reduce(
-  //     (acc, cur) => {
-  //       console.log(acc, cur);
-  //       const x = cur.plus()
-  //       acc.push(acc[acc.length - 1].plus(cur));
-  //       return acc;
-  //     },
-  //     [new BigNumber(0)],
-  //   )
-  //   .forEach(runningSum => {
-  //     console.log(runningSum.toFixed());
-  //     ok(runningSum.gte(0));
-  //   });
+  tickLiquidities
+    .reduce(
+      (acc, cur) => {
+        acc.push(acc[acc.length - 1].plus(cur));
+        return acc;
+      },
+      [new BigNumber(0)],
+    )
+    .forEach(runningSum => {
+      ok(runningSum.gte(0));
+    });
   // Invariant 3
   Object.values(ticks).forEach(t => {
     ok(t.nPositions.gt(0));
@@ -279,7 +276,12 @@ export async function checkCumulativesBufferInvariants(
   ok(buffer.reservedLength.gte(buffer.last.minus(buffer.first).plus(1)));
   // Invariant 2
   const bufferMap = buffer.map.map;
-
+  console.log(Object.keys(bufferMap));
+  console.log(
+    [...Array(buffer.reservedLength.toNumber()).keys()]
+      .map(i => i + buffer.first.toNumber())
+      .map(i => i.toString()),
+  );
   deepEqual(
     Object.keys(bufferMap),
     [...Array(buffer.reservedLength.toNumber()).keys()]
@@ -292,36 +294,15 @@ export async function checkCumulativesBufferInvariants(
   const timestamps = Object.values(bufferRecordsMap).map(r => r.time);
   ok(isMonotonic(timestamps));
   // Invariant 4
-  const sums = Object.values(bufferRecordsMap).map(r => r.spl.sum);
+
+  const sums = Object.values(bufferRecordsMap).map(r =>
+    r.spl.sum.toBignumber(),
+  );
   ok(isMonotonic(sums));
 }
 
 /**
  * -- | Invariants on storages separated in time.
---
--- 1. Recorded values to not change.
-checkCumulativesBufferTimeInvariants
-  :: forall caps base m. (HasCallStack, MonadNettest caps base m)
-  => (Storage, Storage) -> m ()
-checkCumulativesBufferTimeInvariants storages = do
-  let mapBoth f (a, b) = (f a, f b)
-
-  let buffers = mapBoth sCumulativesBuffer storages
-  let bufferMaps = mapBoth cbEntries buffers
-
-  -- Invariant 1
-  let mergeEq k v1 v2 = assert (v1 == v2) $
-        "Value for key " +| k |+ " has changed:\n\
-        \  Was:\n    " +| v1 |+ "\n\
-        \  After:\n    " +| v2 |+ "\n"
-  _ <- uncurry
-    (Map.Merge.mergeA
-      Map.Merge.dropMissing
-      Map.Merge.dropMissing
-      (Map.Merge.zipWithAMatched mergeEq)
-    ) bufferMaps
-
-  pass
 
  */
 export async function checkCumulativesBufferTimeInvariants(

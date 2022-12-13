@@ -6,7 +6,11 @@ import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallSettings, CallMode } from "@madfish/quipuswap-v3/dist/types";
+import {
+  CallSettings,
+  CallMode,
+  swapDirection,
+} from "@madfish/quipuswap-v3/dist/types";
 import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
 import { FA2 } from "./helpers/FA2";
@@ -40,6 +44,7 @@ import {
   genSwapDirection,
   getTypedBalance,
   inRange,
+  moreBatchSwaps,
   safeSwap,
   sleep,
   validDeadline,
@@ -112,7 +117,7 @@ describe("XtoY Tests", async () => {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  it("Should swapping within a single tick range", async () => {
+  it.skip("Should swapping within a single tick range", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -257,7 +262,6 @@ describe("XtoY Tests", async () => {
           initSt.sqrtPrice,
           finalSt.sqrtPrice,
           initSt.liquidity,
-          new Nat(feeBps),
         );
 
         const finalBalanceSwapperX = await getTypedBalance(
@@ -333,6 +337,191 @@ describe("XtoY Tests", async () => {
         ),
       );
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
+    }
+  });
+  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+    const liquidity = new BigNumber(1e7);
+    const lowerTickIndex = new Int(-1000);
+    const upperTickIndex = new Int(1000);
+    const liquidityProvider = aliceSigner;
+    const liquidityProviderAddr = alice.pkh;
+    const swapper = bobSigner;
+    const swapperAddr = bob.pkh;
+    const swapReceiver = sara.pkh;
+    const feeReceiver = carol.pkh;
+    const swapCount = 500;
+    const swapAmt = new BigNumber(10);
+    const {
+      poolFa12,
+      poolFa2,
+      poolFa1_2,
+      poolFa2_1,
+      poolFa12Dublicate,
+      poolFa2Dublicate,
+      poolFa1_2Dublicate,
+      poolFa2_1Dublicate,
+    } = await poolsFixture(
+      tezos,
+      [aliceSigner, bobSigner],
+      genFees(8, true),
+      true,
+    );
+
+    for (const pools of [
+      [poolFa12, poolFa12Dublicate],
+      [poolFa2, poolFa2Dublicate],
+      [poolFa1_2, poolFa1_2Dublicate],
+      [poolFa2_1, poolFa2_1Dublicate],
+    ]) {
+      const rawSt = await pools[0].getRawStorage();
+      tezos.setSignerProvider(aliceSigner);
+      const pool_1: QuipuswapV3 = pools[0];
+      const pool_2: QuipuswapV3 = pools[1];
+      const initialSt = await pool_1.getRawStorage();
+      const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+      const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+      const feeBps = initialSt.constants.fee_bps;
+      await pool_1.increaseObservationCount(new BigNumber(10));
+      await pool_2.increaseObservationCount(new BigNumber(10));
+
+      await pool_1.setPosition(
+        lowerTickIndex,
+        upperTickIndex,
+        new BigNumber(minTickIndex),
+        new BigNumber(minTickIndex),
+        liquidity,
+        validDeadline(),
+        liquidity,
+        liquidity,
+      );
+      await pool_2.setPosition(
+        lowerTickIndex,
+        upperTickIndex,
+        new BigNumber(minTickIndex),
+        new BigNumber(minTickIndex),
+        liquidity,
+        validDeadline(),
+        liquidity,
+        liquidity,
+      );
+
+      tezos.setSignerProvider(swapper);
+      // 1 big swap
+      await pool_1.swapXY(
+        swapAmt.multipliedBy(swapCount),
+        validDeadline(),
+        new BigNumber(0),
+        swapReceiver,
+      );
+      // many small swaps
+      await moreBatchSwaps(
+        pool_2,
+        swapCount,
+        swapAmt,
+        new BigNumber(1),
+        await swapper.publicKeyHash(),
+        "XtoY",
+      );
+      // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
+      await advanceSecs(1, [pool_1, pool_2]);
+      await checkAllInvariants(
+        pool_1,
+        { [alice.pkh]: aliceSigner },
+        [new Nat(0), new Nat(1), new Nat(2)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(200),
+      );
+      await checkAllInvariants(
+        pool_2,
+        { [alice.pkh]: aliceSigner },
+        [new Nat(0), new Nat(1), new Nat(2)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(200),
+      );
+      /**
+       * The two storages should be mostly identical.
+       * The price might be slightly different, due to the compounding of rounding errors,
+       * so we take some precision away to account for this difference.
+       */
+      const st1 = await pool_1.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(200),
+      );
+      const st2 = await pool_2.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(200),
+      );
+      const sqrtPrice_1 = adjustScale(st1.sqrtPrice, new Nat(80), new Nat(60));
+      const sqrtPrice_2 = adjustScale(st2.sqrtPrice, new Nat(80), new Nat(60));
+      expect(sqrtPrice_1).to.be.deep.equal(sqrtPrice_2);
+      expect(st1.curTickIndex.toFixed()).to.be.equal(
+        st2.curTickIndex.toFixed(),
+      );
+      st1.sqrtPrice = new quipuswapV3Types.x80n(sqrtPrice_1);
+      st2.sqrtPrice = new quipuswapV3Types.x80n(sqrtPrice_2);
+      compareStorages(st1, st2);
+
+      const cfmm1XBalance = await getTypedBalance(
+        tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool_1.contract.address,
+      );
+      const cfmm1YBalance = await getTypedBalance(
+        tezos,
+        tokenTypeY,
+        rawSt.constants.token_y,
+        pool_1.contract.address,
+      );
+      const cfmm2XBalance = await getTypedBalance(
+        tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool_2.contract.address,
+      );
+      const cfmm2YBalance = await getTypedBalance(
+        tezos,
+        tokenTypeY,
+
+        rawSt.constants.token_y,
+        pool_2.contract.address,
+      );
+      /**
+       * Due to `dy` being rounded down, it's possible the swapper loses *up to* 1 Y token
+       * on every swap.
+       * So the 2nd contract may hold up to 1000 more Y tokens than the 1st contract.
+       */
+      ok(
+        isInRangeNat(
+          cfmm2YBalance,
+          cfmm1YBalance,
+          new Nat(0),
+          new Nat(swapCount),
+        ),
+      );
+      expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
 });
