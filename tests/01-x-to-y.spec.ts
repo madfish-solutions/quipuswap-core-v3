@@ -63,8 +63,8 @@ const peterSigner = new InMemorySigner(peter.sk);
 const eveSigner = new InMemorySigner(eve.sk);
 const carolSigner = new InMemorySigner(carol.sk);
 
-const minTickIndex = -1048575;
-const maxTickIndex = 1048575;
+const minTickIndex = new Int(-1048575);
+const maxTickIndex = new Int(1048575);
 const tickSpacing = 1;
 
 describe("XtoY Tests", async () => {
@@ -116,6 +116,44 @@ describe("XtoY Tests", async () => {
       mutez: true,
     });
     await confirmOperation(tezos, operation.hash);
+  });
+  describe("Failed cases", async () => {
+    it("Shouldn't swap if it's past the deadline", async () => {
+      const liquidityProvider = aliceSigner;
+      const swapper = bobSigner;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const liquidity = new BigNumber(1e7);
+
+        const lowerTickIndex = new Int(-1000);
+        const upperTickIndex = new Int(1000);
+
+        tezos.setSignerProvider(liquidityProvider);
+        await pool.setPosition(
+          lowerTickIndex,
+          upperTickIndex,
+          minTickIndex,
+          minTickIndex,
+          liquidity,
+          validDeadline(),
+          liquidity,
+          liquidity,
+        );
+
+        tezos.setSignerProvider(swapper);
+        await rejects(
+          pool.swapXY(
+            liquidity,
+            Math.floor(Date.now() / 1001).toString(),
+            new BigNumber(0),
+            eve.pkh,
+          ),
+          (err: Error) => {
+            equal(err.message.includes("103"), true);
+            return true;
+          },
+        );
+      }
+    });
   });
   it.skip("Should swapping within a single tick range", async () => {
     const liquidity = new BigNumber(1e7);
@@ -339,7 +377,7 @@ describe("XtoY Tests", async () => {
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
     }
   });
-  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+  it.skip("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
