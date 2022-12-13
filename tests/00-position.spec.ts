@@ -59,7 +59,7 @@ const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 const tickSpacing = 1;
 
-describe("Position Tests", async () => {
+describe.skip("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -110,7 +110,7 @@ describe("Position Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it("Shouldn't setting position with lower_tick=upper_tick", async () => {
+    it.skip("Shouldn't setting position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -128,7 +128,7 @@ describe("Position Tests", async () => {
         },
       );
     });
-    it("Shouldn't setting a position with lower_tick>upper_tick", async () => {
+    it.skip("Shouldn't setting a position with lower_tick>upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -146,7 +146,7 @@ describe("Position Tests", async () => {
         },
       );
     });
-    it("Shouldn't setting a position with zero liquidity is a no-op", async () => {
+    it.skip("Shouldn't setting a position with zero liquidity is a no-op", async () => {
       const prevLiquidity = (await poolFa12.getRawStorage()).liquidity;
       await poolFa12.setPosition(
         new BigNumber(-10),
@@ -161,7 +161,7 @@ describe("Position Tests", async () => {
       const actualLiquidity = (await poolFa12.getRawStorage()).liquidity;
       deepEqual(prevLiquidity, actualLiquidity);
     });
-    it("Shouldn't setting a position with wrong ticket witness", async () => {
+    it.skip("Shouldn't setting a position with wrong ticket witness", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -227,7 +227,7 @@ describe("Position Tests", async () => {
         },
       );
     });
-    it("Shouldn't setting a position with past the deadline", async () => {
+    it.skip("Shouldn't setting a position with past the deadline", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -280,7 +280,7 @@ describe("Position Tests", async () => {
         new BigNumber(1e7),
       );
     });
-    it("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
+    it.skip("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
       const poolAddress = await factory.deployPool(
         fa12TokenX.contract.address,
         "fa12",
@@ -322,7 +322,7 @@ describe("Position Tests", async () => {
           return true;
         };
     });
-    it("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
+    it.skip("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -359,7 +359,7 @@ describe("Position Tests", async () => {
       }
     });
 
-    it("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
+    it.skip("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -407,7 +407,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
+    it.skip("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const storage = await pool.getRawStorage();
         const liquidityDelta = 10_000;
@@ -451,7 +451,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Shouldn't updating a non-existing position properly fails", async () => {
+    it.skip("Shouldn't updating a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -470,7 +470,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Shouldn't attempt to update a non-existing position properly fails", async () => {
+    it.skip("Shouldn't attempt to update a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -491,7 +491,7 @@ describe("Position Tests", async () => {
     });
   });
   describe("Success cases", async () => {
-    it("Should depositing and withdrawing the same amount of liquidity+", async () => {
+    it.skip("Should depositing and withdrawing the same amount of liquidity+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -550,7 +550,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should adding liquidity twice is the same as adding it onc+", async () => {
+    it.skip("Should adding liquidity twice is the same as adding it onc+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -675,7 +675,7 @@ describe("Position Tests", async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
+    it.skip("Should be lowest and highest ticks cannot be garbage collected", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -751,7 +751,7 @@ describe("Position Tests", async () => {
         compareStorages(initialSt, poolStorage);
       }
     });
-    it("Should allow Liquidity Providers earning fees from swaps", async () => {
+    it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
       const fees = genFees(4);
       const swappers = [bobSigner, peterSigner];
       const {
@@ -864,7 +864,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
+    it.skip("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
       const fees = [
         Math.floor(Math.random() * 1e4),
         Math.floor(Math.random() * 1e4),
@@ -1066,7 +1066,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Liquidity Providers do not receive past fees", async () => {
+    it.skip("Liquidity Providers do not receive past fees", async () => {
       const swapper = peterSigner;
       const feeReceiver1 = carol.pkh;
       const feeReceiver2 = sara.pkh;
@@ -1282,7 +1282,7 @@ describe("Position Tests", async () => {
         // (xFeesBefore, yFeesBefore) <- placeSwaps beforeSwaps from Haskel to TS
       }
     });
-    it("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
+    it.skip("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const swappers = [bobSigner, peterSigner];
@@ -1439,7 +1439,7 @@ describe("Position Tests", async () => {
         strictEqual(feeReceiverBalanceY.toFixed(), "0");
       }
     });
-    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
+    it.skip("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const liquidityDelta = new BigNumber(1e7);
@@ -1623,7 +1623,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
+    it.skip("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1751,7 +1751,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should initializing correctly position", async () => {
+    it.skip("Should initializing correctly position", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
