@@ -586,4 +586,134 @@ describe("XtoY Tests", async () => {
       expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
+  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
+    const liquidity = new BigNumber(1e4);
+    const lowerTickIndex = new Int(-100);
+    const upperTickIndex = new Int(100);
+    const liquidityProvider = aliceSigner;
+    const liquidityProviderAddr = alice.pkh;
+    const swapper = bobSigner;
+    const swapperAddr = bob.pkh;
+
+    const {
+      factory,
+      fa12TokenX,
+      fa12TokenY,
+      fa2TokenX,
+      fa2TokenY,
+      poolFa12,
+      poolFa2,
+      poolFa1_2,
+      poolFa2_1,
+    } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4, true));
+
+    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      const rawSt = await pool.getRawStorage();
+      tezos.setSignerProvider(liquidityProvider);
+      const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
+      const tokenTypeY = Object.keys(rawSt.constants.token_y)[0];
+      await pool.setPosition(
+        lowerTickIndex,
+        upperTickIndex,
+        minTickIndex,
+        minTickIndex,
+        liquidity,
+        validDeadline(),
+        liquidity,
+        liquidity,
+      );
+
+      tezos.setSignerProvider(swapper);
+      //-- Place a swap big enough to exhaust the position's liquidity
+      //xtoy cfmm 200 swapper
+
+      await pool.swapXY(
+        new BigNumber(200),
+        validDeadline(),
+        new BigNumber(0),
+        swapperAddr,
+      );
+      let initialSt = await pool.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(50),
+      );
+      let initialBalance = await getTypedBalance(
+        pool.tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool.contract.address,
+      );
+      await pool.swapXY(
+        new BigNumber(100),
+        validDeadline(),
+        new BigNumber(0),
+        swapperAddr,
+      );
+
+      let finalSt = await pool.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(50),
+      );
+      let finalBalance = await getTypedBalance(
+        pool.tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool.contract.address,
+      );
+      compareStorages(initialSt, finalSt);
+      expect(initialBalance.toFixed()).to.be.equal(finalBalance.toFixed());
+
+      initialSt = await pool.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(50),
+      );
+      initialBalance = await getTypedBalance(
+        pool.tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool.contract.address,
+      );
+      await pool.swapXY(
+        new BigNumber(100),
+        validDeadline(),
+        new BigNumber(0),
+        swapperAddr,
+      );
+      finalSt = await pool.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(50),
+      );
+      finalBalance = await getTypedBalance(
+        pool.tezos,
+        tokenTypeX,
+        rawSt.constants.token_x,
+        pool.contract.address,
+      );
+      compareStorages(initialSt, finalSt);
+    }
+  });
 });
