@@ -118,7 +118,7 @@ describe("XtoY Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it("Shouldn't swap if it's past the deadline", async () => {
+    it.skip("Shouldn't swap if it's past the deadline", async () => {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
