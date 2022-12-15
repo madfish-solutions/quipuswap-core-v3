@@ -104,6 +104,7 @@ export const inRange = (x: BigNumber, y: BigNumber, z: BigNumber) => {
 export const compareStorages = (
   storage1: quipuswapV3Types.Storage,
   storage2: quipuswapV3Types.Storage,
+  skipBuffer: boolean = false,
 ) => {
   expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
   expect(storage1.constants).to.be.deep.equal(storage2.constants);
@@ -116,18 +117,20 @@ export const compareStorages = (
   expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
   expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
 
-  expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
-    JSON.stringify(storage2.cumulativesBuffer.map.map),
-  );
-  expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
-    storage2.cumulativesBuffer.first,
-  );
-  expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
-    storage2.cumulativesBuffer.last,
-  );
-  expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
-    storage2.cumulativesBuffer.reservedLength,
-  );
+  if (!skipBuffer) {
+    expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
+      JSON.stringify(storage2.cumulativesBuffer.map.map),
+    );
+    expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
+      storage2.cumulativesBuffer.first,
+    );
+    expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
+      storage2.cumulativesBuffer.last,
+    );
+    expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
+      storage2.cumulativesBuffer.reservedLength,
+    );
+  }
 };
 
 export const getTypedBalance = async (
