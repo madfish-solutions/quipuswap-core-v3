@@ -4,7 +4,7 @@
   "license": "MIT",
   "description": "Quipuswap Core V3",
   "scripts": {
-    "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20220510 jakartabox start",
+    "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20221026 kathmandubox start",
     "clean": "rm -rf ./build",
     "compile": "yarn clean && ts-node scripts/cli.ts compile -f text && ts-node scripts/cli.ts compile -f json",
     "migrate": "ts-node scripts/cli.ts migrate -n development",
@@ -33,14 +33,14 @@
     "chai": "^4.3.4",
     "chai-bignumber": "^3.0.0",
     "child_process": "^1.0.2",
+    "dotenv": "^10.0.0",
     "fs": "^0.0.1-security",
     "karma-chai": "^0.1.0",
     "mocha": "^9.1.2",
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3",
-    "yargs": "^17.2.1",
-    "dotenv": "^10.0.0"
+    "yargs": "^17.2.1"
   },
   "bugs": {
     "url": "https://github.com/madfish-solutions/quipuswap-core-v3/issues"
@@ -50,5 +50,9 @@
     "tezos",
     "ligo",
     "blockchain"
-  ]
+  ],
+  "devDependencies": {
+    "@types/chai": "^4.3.4",
+    "it-each": "^0.3.0"
+  }
 }

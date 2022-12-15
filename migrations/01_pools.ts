@@ -1,12 +1,12 @@
 import { TezosToolkit } from "@taquito/taquito";
 
-import { confirmOperation } from "../scripts/confirmation";
+import { confirmOperation } from "./../scripts/confirmation";
 const networks = require("../env").networks;
 
 module.exports = async (tezos: TezosToolkit, network: string) => {
-  const dexFactory: string = require("../build/factory.json").networks[network][
-    "factory"
-  ];
+  const dexFactory: string = require("./../build/factory.json").networks[
+    network
+  ]["factory"];
 
   const factory = (await tezos.contract.at(dexFactory)) as any;
 
