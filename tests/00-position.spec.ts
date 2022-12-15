@@ -489,6 +489,39 @@ describe("Position Tests", async () => {
         );
       }
     });
+    it("Shouldn't updating a someone else's positions", async () => {
+      for (pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const storage = await pool.getRawStorage();
+        tezos.setSignerProvider(aliceSigner);
+        await pool.setPosition(
+          new BigNumber(-10),
+          new BigNumber(10),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          new Date("2023-01-01").toString(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        tezos.setSignerProvider(bobSigner);
+
+        await rejects(
+          pool.updatePosition(
+            storage.new_position_id,
+            new BigNumber(1e7),
+            bob.pkh,
+            bob.pkh,
+            new Date("2023-01-01").toString(),
+            new BigNumber(0),
+            new BigNumber(0),
+          ),
+          (err: Error) => {
+            equal(err.message.includes("420"), true);
+            return true;
+          },
+        );
+      }
+    });
   });
   describe("Success cases", async () => {
     it("Should depositing and withdrawing the same amount of liquidity+", async () => {
