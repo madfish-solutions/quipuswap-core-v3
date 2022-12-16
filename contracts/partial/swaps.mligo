@@ -166,11 +166,15 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
             (* We will have to consume more dx than that because a fee will be applied. *)
             let dx_consumed = ceildiv (dx_for_dy * 10000n) (one_minus_fee_bps(p.s.constants)) in
 
-            let dx_with_dev_fee = ceildiv (dx_for_dy * 10000n) (one_minus_dev_fee_bps(p.s.constants)) in
-            let dev_fee = assert_nat (dx_for_dy - dx_with_dev_fee, internal_impossible_err) in
-
             (* Deduct the fee we will actually be paying. *)
-            let fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
+            let total_fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
+
+            let dev_fee = if p.s.constants.dev_fee_bps > 0n
+              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+              else 0n in
+            let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
+
+            (* Update the fee growth. *)
             let fee_growth_x_new = {x128 = p.s.fee_growth.x.x128 + (floordiv (Bitwise.shift_left fee 128n) p.s.liquidity)} in
             let fee_growth_new = {p.s.fee_growth with x=fee_growth_x_new} in
             (* Flip tick cumulative growth. *)
