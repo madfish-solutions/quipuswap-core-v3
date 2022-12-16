@@ -126,9 +126,11 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
         p
     else
         (* The fee that would be extracted from selling dx. *)
-        let fee = ceildiv (p.dx * p.s.constants.fee_bps) 10000n in
-
-        let dev_fee = ceildiv (p.dx * p.s.constants.dev_fee_bps) 10000n in
+        let total_fee = ceildiv (p.dx * p.s.constants.fee_bps) 10000n in
+        let dev_fee = if p.s.constants.dev_fee_bps > 0n
+          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+          else 0n in
+        let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
         (* What the new price will be, assuming it's within the current tick. *)
         let sqrt_price_new = sqrt_price_move_x p.s.liquidity p.s.sqrt_price (assert_nat (p.dx - fee - dev_fee, internal_fee_more_than_100_percent_err)) in
@@ -166,11 +168,15 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
             (* We will have to consume more dx than that because a fee will be applied. *)
             let dx_consumed = ceildiv (dx_for_dy * 10000n) (one_minus_fee_bps(p.s.constants)) in
 
-            let dx_with_dev_fee = ceildiv (dx_for_dy * 10000n) (one_minus_dev_fee_bps(p.s.constants)) in
-            let dev_fee = assert_nat (dx_for_dy - dx_with_dev_fee, internal_impossible_err) in
-
             (* Deduct the fee we will actually be paying. *)
-            let fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
+            let total_fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
+
+            let dev_fee = if p.s.constants.dev_fee_bps > 0n
+              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+              else 0n in
+            let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
+
+            (* Update the fee growth. *)
             let fee_growth_x_new = {x128 = p.s.fee_growth.x.x128 + (floordiv (Bitwise.shift_left fee 128n) p.s.liquidity)} in
             let fee_growth_new = {p.s.fee_growth with x=fee_growth_x_new} in
             (* Flip tick cumulative growth. *)
@@ -218,10 +224,14 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
         p
     else
         (* The fee that would be extracted from selling dy. *)
-        let fee = ceildiv (p.dy * p.s.constants.fee_bps) 10000n in
-        let dev_fee = ceildiv (p.dy * p.s.constants.dev_fee_bps) 10000n in
+        let total_fee = ceildiv (p.dy * p.s.constants.fee_bps) 10000n in
+        let dev_fee = if p.s.constants.dev_fee_bps > 0n
+          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+          else 0n in
+        let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
+
         (* The amount of dy after the swap fee is taken. *)
-        let dy_minus_fee = assert_nat (p.dy - fee - dev_fee, internal_fee_more_than_100_percent_err) in
+        let dy_minus_fee = assert_nat (p.dy - total_fee, internal_fee_more_than_100_percent_err) in
         (* The amount of dy that will be converted to dx as a result of the swap. *)
 
         (* What the new price will be, assuming it's within the current tick. *)
@@ -267,11 +277,15 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
             (* We will have to consume more dy than that because a fee will be applied. *)
             let dy_consumed = ceildiv (dy_for_dx * 10000n) (one_minus_fee_bps(p.s.constants)) in
 
-            let dy_with_dev_fee = ceildiv (dy_for_dx * 10000n) (one_minus_dev_fee_bps(p.s.constants)) in
-            let dev_fee = assert_nat (dy_for_dx - dy_with_dev_fee, internal_impossible_err) in
-
             (* Deduct the fee we will actually be paying. *)
-            let fee = assert_nat (dy_consumed - dy_for_dx, internal_impossible_err) in
+            let total_fee = assert_nat (dy_consumed - dy_for_dx, internal_impossible_err) in
+
+            let dev_fee = if p.s.constants.dev_fee_bps > 0n
+              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+              else 0n in
+
+            let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
+
             let fee_growth_y_new = {x128 = p.s.fee_growth.y.x128 + (floordiv (Bitwise.shift_left fee 128n) p.s.liquidity)} in
             let fee_growth_new = {p.s.fee_growth with y=fee_growth_y_new} in
             (* Flip tick cumulative growth. *)

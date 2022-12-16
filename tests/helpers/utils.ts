@@ -1,12 +1,15 @@
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { CallMode, swapDirection } from "@madfish/quipuswap-v3/dist/types";
 import { Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 import {
   initTimedCumulatives,
   initTimedCumulativesBuffer,
+  sendBatch,
 } from "@madfish/quipuswap-v3/dist/utils";
-import { TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit, TransferParams } from "@taquito/taquito";
 import { BigNumber } from "bignumber.js";
 import { expect } from "chai";
+import { confirmOperation } from "../../scripts/confirmation";
 import { FA12 } from "./FA12";
 import { FA2 } from "./FA2";
 
@@ -17,9 +20,18 @@ export async function sleep(ms: number) {
 export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
   for (let i = 0; i < n; i++) {
     await sleep(1000);
+    let transferParams: TransferParams[] = [];
     for (const cfmm of cfmms) {
-      await cfmm.increaseObservationCount(new BigNumber(0));
+      cfmm.callSettings.increaseObservationCount = CallMode.returnParams;
+      transferParams.push(
+        await cfmm.increaseObservationCount(new BigNumber(0)),
+      );
+      cfmm.callSettings.increaseObservationCount =
+        CallMode.returnConfirmatedOperation;
     }
+    const opBatch = await sendBatch(cfmms[0].tezos, transferParams);
+    await confirmOperation(cfmms[0].tezos, opBatch.opHash);
+    transferParams = [];
   }
 }
 
@@ -92,6 +104,7 @@ export const inRange = (x: BigNumber, y: BigNumber, z: BigNumber) => {
 export const compareStorages = (
   storage1: quipuswapV3Types.Storage,
   storage2: quipuswapV3Types.Storage,
+  skipBuffer: boolean = false,
 ) => {
   expect(storage1.newPositionId).to.be.deep.equal(storage2.newPositionId);
   expect(storage1.constants).to.be.deep.equal(storage2.constants);
@@ -104,18 +117,20 @@ export const compareStorages = (
   expect(storage1.positions.map).to.be.deep.equal(storage2.positions.map);
   expect(storage1.liquidity).to.be.deep.equal(storage2.liquidity);
 
-  expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
-    JSON.stringify(storage2.cumulativesBuffer.map.map),
-  );
-  expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
-    storage2.cumulativesBuffer.first,
-  );
-  expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
-    storage2.cumulativesBuffer.last,
-  );
-  expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
-    storage2.cumulativesBuffer.reservedLength,
-  );
+  if (!skipBuffer) {
+    expect(JSON.stringify(storage1.cumulativesBuffer.map.map)).to.be.equal(
+      JSON.stringify(storage2.cumulativesBuffer.map.map),
+    );
+    expect(storage1.cumulativesBuffer.first).to.be.deep.equal(
+      storage2.cumulativesBuffer.first,
+    );
+    expect(storage1.cumulativesBuffer.last).to.be.deep.equal(
+      storage2.cumulativesBuffer.last,
+    );
+    expect(storage1.cumulativesBuffer.reservedLength).to.be.deep.equal(
+      storage2.cumulativesBuffer.reservedLength,
+    );
+  }
 };
 
 export const getTypedBalance = async (
@@ -194,4 +209,40 @@ export const safeSwap = async (
       );
     }
   }
+};
+
+export const moreBatchSwaps = async (
+  pool: QuipuswapV3,
+  swapCount: number,
+  amountIn: BigNumber,
+  amountOutMin: BigNumber,
+  recipient: string,
+  swapDir: "XtoY" | "YtoX",
+) => {
+  const deadline = validDeadline();
+  let transferParams: TransferParams[] = [];
+
+  for (let i = 0; i < swapCount; i++) {
+    if (swapDir === "XtoY") {
+      transferParams.push(
+        (await pool.swapXY(
+          amountIn,
+          deadline,
+          amountOutMin,
+          recipient,
+        )) as TransferParams,
+      );
+    } else {
+      transferParams.push(
+        (await pool.swapYX(
+          amountIn,
+          deadline,
+          amountOutMin,
+          recipient,
+        )) as TransferParams,
+      );
+    }
+  }
+
+  return transferParams;
 };
