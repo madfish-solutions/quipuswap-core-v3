@@ -27,7 +27,7 @@ export async function checkAllInvariants(
   await checkTickMapInvariants(cfmm, st);
   await checkTickInvariants(cfmm, st);
   await checkStorageInvariants(cfmm, st, tickIndices);
-  await checkAccumulatorsInvariants(cfmm, st, tickIndices);
+  //await checkAccumulatorsInvariants(cfmm, st, tickIndices);
   await checkCumulativesBufferInvariants(cfmm, st);
 
   //await checkBalanceInvariants(cfmm, storage, positionIds, signers);

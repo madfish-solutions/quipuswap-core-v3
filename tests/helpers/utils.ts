@@ -169,7 +169,9 @@ export const collectFees = async (
         new BigNumber(0),
         new BigNumber(0),
       );
-    } catch (e) {}
+    } catch (e) {
+      return;
+    }
   }
 };
 
