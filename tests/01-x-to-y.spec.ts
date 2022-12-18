@@ -730,7 +730,7 @@ describe("XtoY Tests", async () => {
       expect(finalBalance).to.be.deep.eq(initialBalance);
     }
   });
-  it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
+  it.skip("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
     const liquidity = new BigNumber(1e6);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -1152,6 +1152,105 @@ describe("XtoY Tests", async () => {
         expect(ts.feeGrowthOutside.x.toFixed()).to.be.not.eq("0");
         //expect(ts.feeGrowthOutside.y.toFixed()).to.be.not.eq("0");
       }
+    }
+  });
+  it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async () => {
+    const liquidity = new BigNumber(1e4);
+    const lowerTickIndex = new Int(-100);
+    const upperTickIndex = new Int(100);
+    const liquidityProvider = aliceSigner;
+
+    const swapper = bobSigner;
+    const swapperAddr = bob.pkh;
+
+    const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      tezos,
+      [aliceSigner, bobSigner],
+      genFees(4, true),
+    );
+
+    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      const rawSt = await pool.getRawStorage();
+      tezos.setSignerProvider(liquidityProvider);
+      const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
+      const tokenTypeY = Object.keys(rawSt.constants.token_y)[0];
+      let transferParams: any[] = [];
+      pool.callSettings.setPosition = CallMode.returnParams;
+      //pool.callSettings.swapXY = CallMode.returnParams;
+      transferParams.push(
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new BigNumber(1e4),
+          validDeadline(),
+          new BigNumber(1e4),
+          new BigNumber(1e4),
+        ),
+      );
+      transferParams.push(
+        await pool.setPosition(
+          new Int(-200),
+          new Int(-100),
+          minTickIndex,
+          minTickIndex,
+          new BigNumber(3e4),
+          validDeadline(),
+          new BigNumber(3e4),
+          new BigNumber(3e4),
+        ),
+      );
+
+      let batchOp = await sendBatch(tezos, transferParams);
+      await confirmOperation(tezos, batchOp.opHash);
+      transferParams.push(
+        await pool.swapXY(
+          new BigNumber(51),
+          validDeadline(),
+          new BigNumber(1),
+          swapperAddr,
+        ),
+      );
+      tezos.setSignerProvider(swapper);
+      /**
+       * Explanation:
+       * We have 2 positions: one currently in-range with boundaries at [-100, 100],
+       * and another currently out-of-range with boundaries at [-200, -100].
+       * If we deposit 52 X tokens, the cur_tick_index would move to -100 but NOT cross it.
+       * If we deposit 53 X tokens, we'll exhaust the first position's liquidity,
+       * and therefore cross the tick -100.
+       * After having crossed the tick, we'll have 1 X token left to swap.
+       * But since a 1 token fee will be charged, 0 X tokens will be
+       * deposited and 0 Y tokens will be withdrawn.
+       * We want to make sure invariants are not broken when this edge case occurs.
+       */
+
+      const st = await pool.getStorage(
+        [new Nat(0)],
+        [
+          new Int(minTickIndex),
+          new Int(maxTickIndex),
+          lowerTickIndex,
+          upperTickIndex,
+        ],
+        genNatIds(50),
+      );
+      expect(st.curTickIndex.toFixed()).to.be.eq("-101");
+      await checkAllInvariants(
+        pool,
+        [],
+        [new Nat(0), new Nat(1)],
+        [
+          new Int(-100),
+          new Int(-101),
+          new Int(100),
+          new Int(-200),
+          minTickIndex,
+          maxTickIndex,
+        ],
+        genNatIds(10),
+      );
     }
   });
 });
