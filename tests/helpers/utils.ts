@@ -29,8 +29,10 @@ export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
       cfmm.callSettings.increaseObservationCount =
         CallMode.returnConfirmatedOperation;
     }
+    console.log("preparing batch");
     const opBatch = await sendBatch(cfmms[0].tezos, transferParams);
     await confirmOperation(cfmms[0].tezos, opBatch.opHash);
+    console.log("batch confirmed");
     transferParams = [];
   }
 }
