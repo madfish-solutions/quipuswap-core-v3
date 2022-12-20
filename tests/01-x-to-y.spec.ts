@@ -158,6 +158,42 @@ describe("XtoY Tests", async () => {
         );
       }
     });
+    it("Shouldn't swap if the user would receiver less than min_dy", async () => {
+      const liquidityProvider = aliceSigner;
+      const swapper = bobSigner;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const liquidity = new BigNumber(1e7);
+
+        const lowerTickIndex = new Int(-1000);
+        const upperTickIndex = new Int(1000);
+
+        tezos.setSignerProvider(liquidityProvider);
+        await pool.setPosition(
+          lowerTickIndex,
+          upperTickIndex,
+          minTickIndex,
+          minTickIndex,
+          liquidity,
+          validDeadline(),
+          liquidity,
+          liquidity,
+        );
+
+        tezos.setSignerProvider(swapper);
+        await rejects(
+          pool.swapXY(
+            new BigNumber(1),
+            validDeadline(),
+            new BigNumber(1000),
+            eve.pkh,
+          ),
+          (err: Error) => {
+            equal(err.message.includes("104"), true);
+            return true;
+          },
+        );
+      }
+    });
   });
   it.skip("Should swapping within a single tick range", async () => {
     const liquidity = new BigNumber(1e7);
