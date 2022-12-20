@@ -27,7 +27,7 @@ export async function checkAllInvariants(
   await checkTickMapInvariants(cfmm, st);
   await checkTickInvariants(cfmm, st);
   await checkStorageInvariants(cfmm, st, tickIndices);
-  //await checkAccumulatorsInvariants(cfmm, st, tickIndices);
+  await checkAccumulatorsInvariants(cfmm, st, tickIndices);
   await checkCumulativesBufferInvariants(cfmm, st);
 
   //await checkBalanceInvariants(cfmm, storage, positionIds, signers);
@@ -185,10 +185,11 @@ export async function checkTickInvariants(
   cfmm: QuipuswapV3,
   storage: quipuswapV3Types.Storage,
 ): Promise<void> {
-  const ticks = storage.ticks.map;
-  const tickLiquidities = Object.values(ticks)
-    .map(tick => tick.liquidityNet)
-    .reverse();
+  let ticks = storage.ticks.map;
+
+  const tickLiquidities = Object.entries(ticks)
+    .sort((a, b) => (new BigNumber(a[0]).lt(new BigNumber(b[0])) ? -1 : 1))
+    .map(v => v[1].liquidityNet);
 
   // Invariant 1
   equal(
