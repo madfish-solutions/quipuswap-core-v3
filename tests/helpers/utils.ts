@@ -17,7 +17,11 @@ export async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
+export async function advanceSecs(
+  n: number,
+  cfmms: QuipuswapV3[],
+  returnParams = false,
+) {
   for (let i = 0; i < n; i++) {
     await sleep(1000);
     let transferParams: TransferParams[] = [];
@@ -29,10 +33,12 @@ export async function advanceSecs(n: number, cfmms: QuipuswapV3[]) {
       cfmm.callSettings.increaseObservationCount =
         CallMode.returnConfirmatedOperation;
     }
-    console.log("preparing batch");
+
+    if (returnParams) {
+      return transferParams;
+    }
     const opBatch = await sendBatch(cfmms[0].tezos, transferParams);
     await confirmOperation(cfmms[0].tezos, opBatch.opHash);
-    console.log("batch confirmed");
     transferParams = [];
   }
 }

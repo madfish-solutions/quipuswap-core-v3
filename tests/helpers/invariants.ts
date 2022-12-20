@@ -187,12 +187,6 @@ export async function checkTickInvariants(
 ): Promise<void> {
   let ticks = storage.ticks.map;
 
-  console.log(
-    Object.entries(storage.ticks.map).sort((a, b) =>
-      new BigNumber(a[0]).lt(new BigNumber(b[0])) ? -1 : 1,
-    ),
-  );
-
   const tickLiquidities = Object.entries(ticks)
     .sort((a, b) => (new BigNumber(a[0]).lt(new BigNumber(b[0])) ? -1 : 1))
     .map(v => v[1].liquidityNet);

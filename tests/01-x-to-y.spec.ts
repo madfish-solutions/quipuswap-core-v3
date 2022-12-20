@@ -1,16 +1,12 @@
-import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
+import { equal, ok, rejects } from "assert";
 import { expect } from "chai";
 import { BigNumber } from "bignumber.js";
 
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { TezosToolkit, TransferParams } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import {
-  CallSettings,
-  CallMode,
-  swapDirection,
-} from "@madfish/quipuswap-v3/dist/types";
+import { CallMode } from "@madfish/quipuswap-v3/dist/types";
 import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
 import { FA2 } from "./helpers/FA2";
@@ -24,11 +20,6 @@ import {
 } from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
-  liquidityDeltaToTokensDelta,
-  sqrtPriceForTick,
-  initTickAccumulators,
-  tickAccumulatorsInside,
-  shiftRight,
   calcSwapFee,
   calcNewPriceX,
   calcReceivedY,
@@ -41,16 +32,10 @@ import {
   advanceSecs,
   collectFees,
   compareStorages,
-  cumulativesBuffer1,
   genFees,
   genNatIds,
-  genNonOverlappingPositions,
-  genSwapDirection,
   getTypedBalance,
-  inRange,
   moreBatchSwaps,
-  safeSwap,
-  sleep,
   validDeadline,
 } from "./helpers/utils";
 
@@ -59,17 +44,12 @@ const bob = accounts.bob;
 const peter = accounts.peter;
 const eve = accounts.eve;
 const sara = accounts.sara;
-const dave = accounts.dave;
 const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-const peterSigner = new InMemorySigner(peter.sk);
-const eveSigner = new InMemorySigner(eve.sk);
-const carolSigner = new InMemorySigner(carol.sk);
 
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
-const tickSpacing = 1;
 
 describe("XtoY Tests", async () => {
   let poolFa12: QuipuswapV3;
@@ -122,7 +102,7 @@ describe("XtoY Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it.skip("Shouldn't swap if it's past the deadline", async () => {
+    it("Shouldn't swap if it's past the deadline", async () => {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -159,7 +139,7 @@ describe("XtoY Tests", async () => {
       }
     });
   });
-  it.skip("Should swapping within a single tick range", async () => {
+  it("Should swapping within a single tick range", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -381,7 +361,7 @@ describe("XtoY Tests", async () => {
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
     }
   });
-  it.skip("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -590,7 +570,7 @@ describe("XtoY Tests", async () => {
       expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
-  it.skip("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
+  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
     const liquidity = new BigNumber(1e4);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
@@ -599,17 +579,11 @@ describe("XtoY Tests", async () => {
     const swapper = bobSigner;
     const swapperAddr = bob.pkh;
 
-    const {
-      factory,
-      fa12TokenX,
-      fa12TokenY,
-      fa2TokenX,
-      fa2TokenY,
-      poolFa12,
-      poolFa2,
-      poolFa1_2,
-      poolFa2_1,
-    } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4, true));
+    const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      tezos,
+      [aliceSigner, bobSigner],
+      genFees(4, true),
+    );
 
     for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
       const rawSt = await pool.getRawStorage();
@@ -633,7 +607,6 @@ describe("XtoY Tests", async () => {
 
       tezos.setSignerProvider(swapper);
       //-- Place a swap big enough to exhaust the position's liquidity
-      //xtoy cfmm 200 swapper
       pool.callSettings.swapXY = CallMode.returnParams;
       transferParams.push(
         await pool.swapXY(
@@ -1155,7 +1128,6 @@ describe("XtoY Tests", async () => {
     }
   });
   it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async () => {
-    const liquidity = new BigNumber(1e4);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
     const liquidityProvider = aliceSigner;
