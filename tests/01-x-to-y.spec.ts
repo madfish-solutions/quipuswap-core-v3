@@ -51,7 +51,7 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-describe("XtoY Tests", async () => {
+describe("XtoY Tests", async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -102,7 +102,7 @@ describe("XtoY Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it("Shouldn't swap if it's past the deadline", async () => {
+    it("Shouldn't swap if it's past the deadline", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -138,7 +138,7 @@ describe("XtoY Tests", async () => {
         );
       }
     });
-    it("Shouldn't swap if the user would receiver less than min_dy", async () => {
+    it("Shouldn't swap if the user would receiver less than min_dy", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -175,27 +175,22 @@ describe("XtoY Tests", async () => {
       }
     });
   });
-  it("Should swapping within a single tick range", async () => {
+  it("Should swapping within a single tick range", async function () {
+    this.retries(3);
+
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
     const liquidityProvider = aliceSigner;
-    const liquidityProviderAddr = alice.pkh;
     const swapper = bobSigner;
     const swapperAddr = bob.pkh;
     const swapReceiver = sara.pkh;
     const feeReceiver = carol.pkh;
-    const {
-      factory,
-      fa12TokenX,
-      fa12TokenY,
-      fa2TokenX,
-      fa2TokenY,
-      poolFa12,
-      poolFa2,
-      poolFa1_2,
-      poolFa2_1,
-    } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
+    const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      tezos,
+      [aliceSigner, bobSigner],
+      genFees(4),
+    );
 
     const genSwaps = () => {
       const swaps: BigNumber[] = [];
@@ -397,7 +392,9 @@ describe("XtoY Tests", async () => {
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
     }
   });
-  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+    this.retries(3);
+
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -420,7 +417,6 @@ describe("XtoY Tests", async () => {
       genFees(8, true),
       true,
     );
-
     for (const pools of [
       [poolFa12, poolFa12Dublicate],
       [poolFa2, poolFa2Dublicate],
@@ -606,7 +602,8 @@ describe("XtoY Tests", async () => {
       expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
-  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
+  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
+    this.retries(3);
     const liquidity = new BigNumber(1e4);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
@@ -739,7 +736,8 @@ describe("XtoY Tests", async () => {
       expect(finalBalance).to.be.deep.eq(initialBalance);
     }
   });
-  it.skip("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
+  it.skip("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async function () {
+    this.retries(3);
     const liquidity = new BigNumber(1e6);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -819,13 +817,8 @@ describe("XtoY Tests", async () => {
       );
       // let batchOp = await sendBatch(tezos, transferParams);
       // await confirmOperation(tezos, batchOp.opHash);
-      /**
 
-      -- Place many small positions with the same liquidity
-      for_ [-1000, -900 .. 900] \lowerTickIndex' -> do
-        setPosition cfmm2 liquidity (lowerTickIndex', lowerTickIndex' + 100)
-       */
-      //transferParams = [];
+      //-- Place many small positions with the same liquidity
 
       transferParams.push(
         await pool_1.setPosition(
@@ -864,31 +857,28 @@ describe("XtoY Tests", async () => {
       let batchOp = await sendBatch(tezos, transferParams);
       await confirmOperation(tezos, batchOp.opHash);
       transferParams = [];
-
-      // batchOp = await sendBatch(tezos, transferParams);
-      // await confirmOperation(tezos, batchOp.opHash);
-      // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
-
+      console.log("firstInv");
       await checkAllInvariants(
         pool_1,
         { [alice.pkh]: aliceSigner },
         [new Nat(0)],
         [
           new Int(minTickIndex),
-          new Int(maxTickIndex),
           lowerTickIndex,
           upperTickIndex,
+          new Int(maxTickIndex),
         ],
         genNatIds(100),
       );
+      console.log("secondInv");
       await checkAllInvariants(
         pool_2,
         { [alice.pkh]: aliceSigner },
         genNatIds(100),
-        [new Int(minTickIndex), new Int(maxTickIndex), ...knownedIndexes],
+        [new Int(minTickIndex), ...knownedIndexes, new Int(maxTickIndex)],
         genNatIds(100),
       );
-
+      console.log("sdsad");
       const pool1InitialBalanceX = await getTypedBalance(
         pool_1.tezos,
         tokenTypeX,
@@ -964,7 +954,7 @@ describe("XtoY Tests", async () => {
       await confirmOperation(tezos, batchOp.opHash);
 
       //Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
-      await advanceSecs(waitTime, [pool_1, pool_2]);
+      await advanceSecs(1, [pool_1, pool_2]);
 
       await checkAllInvariants(
         pool_1,
@@ -978,11 +968,12 @@ describe("XtoY Tests", async () => {
         ],
         genNatIds(100),
       );
+
       await checkAllInvariants(
         pool_2,
         { [alice.pkh]: aliceSigner },
         genNatIds(50),
-        [new Int(minTickIndex), new Int(maxTickIndex), ...knownedIndexes],
+        [new Int(minTickIndex), ...knownedIndexes, new Int(maxTickIndex)],
         genNatIds(100),
       );
 
@@ -1149,21 +1140,23 @@ describe("XtoY Tests", async () => {
       }
 
       for (const ts of crossedTicks) {
-        // expect(ts.secondsPerLiquidityOutside.toFixed()).to.be.eq(
-        //   new Nat(waitTime).div(new Nat(liquidity)).toFixed(),
-        // );
-        // expect(ts.secondsOutside.toFixed()).to.be.eq(
-        //   new Nat(waitTime).toFixed(),
-        // );
-        // expect(ts.tickCumulativeOutside.toFixed()).to.be.eq(
-        //   lowerTickIndex.multipliedBy(waitTime).toFixed(),
-        // );
+        expect(ts.secondsPerLiquidityOutside.toFixed()).to.be.eq(
+          new Nat(waitTime).div(new Nat(liquidity)).toFixed(),
+        );
+        expect(ts.secondsOutside.toFixed()).to.be.eq(
+          new Nat(waitTime).toFixed(),
+        );
+        expect(ts.tickCumulativeOutside.toFixed()).to.be.eq(
+          lowerTickIndex.multipliedBy(waitTime).toFixed(),
+        );
         expect(ts.feeGrowthOutside.x.toFixed()).to.be.not.eq("0");
-        //expect(ts.feeGrowthOutside.y.toFixed()).to.be.not.eq("0");
+        expect(ts.feeGrowthOutside.y.toFixed()).to.be.not.eq("0");
       }
+      console.log("win");
     }
   });
-  it.skip("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async () => {
+  it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async function () {
+    this.retries(3);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
     const liquidityProvider = aliceSigner;
@@ -1260,7 +1253,8 @@ describe("XtoY Tests", async () => {
       );
     }
   });
-  it("Should assigning correctly fees to each position", async () => {
+  it("Should assigning correctly fees to each position", async function () {
+    this.retries(3);
     const liquidityProvider = aliceSigner;
     const swapper = bobSigner;
     const swapperAddr = bob.pkh;

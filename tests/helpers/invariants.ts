@@ -38,7 +38,7 @@ export async function checkAccumulatorsInvariants(
   storage: quipuswapV3Types.Storage,
   tickIndices: Int[],
 ): Promise<void> {
-  const tickIndicesPaired = tickIndices
+  const tickIndicesPaired = Array.from(new Set(tickIndices))
     .map((_, i) => [tickIndices[i], tickIndices[i + 1]])
     .slice(0, -1);
 
@@ -47,7 +47,6 @@ export async function checkAccumulatorsInvariants(
       return await tickAccumulatorsInside(cfmm, storage, ti1, ti2);
     }),
   );
-
   const sumInsideAccumulators = insideAccumulators.reduce((acc, cur) => {
     return {
       aSeconds: acc.aSeconds.plus(cur.aSeconds),
@@ -58,7 +57,10 @@ export async function checkAccumulatorsInvariants(
       ),
     };
   });
-  const currentTime = new BigNumber(Math.floor(Date.now() / 1000)).plus(1);
+  const currentTime = new BigNumber(Date.now() / 1000).integerValue(
+    BigNumber.ROUND_CEIL,
+  );
+
   const {
     tick_cumulative: cvTickCumulative,
     seconds_per_liquidity_cumulative: cvSecondsPerLiquidityCumulative,
