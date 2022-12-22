@@ -1,37 +1,22 @@
-import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
+import { equal, ok, rejects } from "assert";
 import { expect } from "chai";
 import { BigNumber } from "bignumber.js";
 
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import {
-  CallSettings,
-  CallMode,
-  swapDirection,
-} from "@madfish/quipuswap-v3/dist/types";
+import { CallMode } from "@madfish/quipuswap-v3/dist/types";
 import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
 import { FA2 } from "./helpers/FA2";
 import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import {
-  sendBatch,
-  isInRangeNat,
-  isInRange,
-} from "@madfish/quipuswap-v3/dist/utils";
+import { sendBatch, isInRangeNat } from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
-  liquidityDeltaToTokensDelta,
-  sqrtPriceForTick,
-  initTickAccumulators,
-  tickAccumulatorsInside,
-  shiftRight,
   calcSwapFee,
-  calcNewPriceX,
-  calcReceivedY,
   shiftLeft,
   calcNewPriceY,
   calcReceivedX,
@@ -43,31 +28,20 @@ import {
   advanceSecs,
   collectFees,
   compareStorages,
-  cumulativesBuffer1,
   genFees,
   genNatIds,
-  genNonOverlappingPositions,
-  genSwapDirection,
   getTypedBalance,
-  inRange,
   moreBatchSwaps,
-  safeSwap,
-  sleep,
   validDeadline,
 } from "./helpers/utils";
 
 const alice = accounts.alice;
 const bob = accounts.bob;
-const peter = accounts.peter;
 const eve = accounts.eve;
 const sara = accounts.sara;
-const dave = accounts.dave;
 const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-const peterSigner = new InMemorySigner(peter.sk);
-const eveSigner = new InMemorySigner(eve.sk);
-const carolSigner = new InMemorySigner(carol.sk);
 
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
@@ -79,11 +53,6 @@ describe("YtoX Tests", async () => {
   let poolFa1_2: QuipuswapV3;
   let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
-  let factory: DexFactory;
-  let fa12TokenX: FA12;
-  let fa12TokenY: FA12;
-  let fa2TokenX: FA2;
-  let fa2TokenY: FA2;
   before(async () => {
     tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
@@ -99,29 +68,10 @@ describe("YtoX Tests", async () => {
       poolFa1_2: _poolFa1_2,
       poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
-    factory = _factory;
-    fa12TokenX = _fa12TokenX;
-    fa12TokenY = _fa12TokenY;
-    fa2TokenX = _fa2TokenX;
-    fa2TokenY = _fa2TokenY;
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
     poolFa2_1 = _poolFa2_1;
-
-    // let operation = await tezos.contract.transfer({
-    //   to: peter.pkh,
-    //   amount: 1e6,
-    //   mutez: true,
-    // });
-
-    // await confirmOperation(tezos, operation.hash);
-    // operation = await tezos.contract.transfer({
-    //   to: eve.pkh,
-    //   amount: 1e6,
-    //   mutez: true,
-    // });
-    // await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
     it("Shouldn't swap if it's past the deadline", async () => {
@@ -198,7 +148,8 @@ describe("YtoX Tests", async () => {
     });
   });
   describe("Success cases", async () => {
-    it.skip("Should swapping within a single tick range", async () => {
+    it("Should swapping within a single tick range", async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -306,8 +257,6 @@ describe("YtoX Tests", async () => {
             initSt.liquidity,
             new Nat(swapAmt.minus(expectedFee)),
           );
-          console.log(expectedNewPrice);
-          console.log(swapAmt.minus(expectedFee));
           expect(
             adjustScale(finalSt.sqrtPrice, new Nat(80), new Nat(30)).toFixed(),
           ).to.be.equal(
@@ -415,7 +364,8 @@ describe("YtoX Tests", async () => {
         expect(finalBalanceFeeReceiverX.toFixed()).to.be.equal("0");
       }
     });
-    it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+    it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
