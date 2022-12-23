@@ -490,7 +490,7 @@ describe.skip("Position Tests", async () => {
       }
     });
     it("Shouldn't updating a someone else's positions", async () => {
-      for (pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const storage = await pool.getRawStorage();
         tezos.setSignerProvider(aliceSigner);
         await pool.setPosition(
@@ -782,6 +782,136 @@ describe.skip("Position Tests", async () => {
         initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
         initialSt.cumulativesBuffer = await cumulativesBuffer1(now.toString());
         compareStorages(initialSt, poolStorage);
+      }
+    });
+    it("Should allow admins earning dev fees from swaps", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const fees = [5000, 5000, 5000, 5000];
+      const swappers = [bobSigner, peterSigner];
+      const devFeeRecipient = sara.pkh;
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner, peterSigner],
+        fees,
+        false,
+        5000,
+      );
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+
+        const prevDevFeeRecipientBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          devFeeRecipient,
+        );
+        const prevDevFeeRecipientBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          devFeeRecipient,
+        );
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        let xFees: BigNumber = new BigNumber(0);
+        let yFees: BigNumber = new BigNumber(0);
+        for (const swapper of swappers) {
+          const initialSt = await pool.getRawStorage();
+          const feeBps = initialSt.constants.fee_bps;
+          tezos.setSignerProvider(swapper);
+          const swapperAddr = await swapper.publicKeyHash();
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          await pool.swapYX(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
+          xFees = xFees.plus(xFee);
+          yFees = yFees.plus(yFee);
+        }
+        tezos.setSignerProvider(aliceSigner);
+
+        const op = await pool.contract.methods
+          .claim_dev_fee(devFeeRecipient)
+          .send();
+        await op.confirmation();
+
+        const devFeeRecipientBalanceX = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeX,
+            initialSt.constants.token_x,
+            devFeeRecipient,
+          )
+        ).minus(prevDevFeeRecipientBalanceX);
+        const devFeeRecipientBalanceY = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeY,
+            initialSt.constants.token_y,
+            devFeeRecipient,
+          )
+        ).minus(prevDevFeeRecipientBalanceY);
+
+        const devFeeBPS = initialSt.constants.dev_fee_bps;
+        const devFeeX = xFees.multipliedBy(devFeeBPS).dividedBy(10000);
+        const devFeeY = yFees.multipliedBy(devFeeBPS).dividedBy(10000);
+
+        ok(
+          isInRangeNat(
+            devFeeRecipientBalanceX,
+            devFeeX,
+            new Nat(0),
+            new Nat(1),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            devFeeRecipientBalanceY,
+            devFeeY,
+            new Nat(0),
+            new Nat(1),
+          ),
+        );
       }
     });
     it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
