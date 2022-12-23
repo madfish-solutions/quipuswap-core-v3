@@ -101,7 +101,7 @@ describe("XtoY Tests", async function () {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  describe("Failed cases", async () => {
+  describe.skip("Failed cases", async () => {
     it("Shouldn't swap if it's past the deadline", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
@@ -175,7 +175,7 @@ describe("XtoY Tests", async function () {
       }
     });
   });
-  it("Should swapping within a single tick range", async function () {
+  it.skip("Should swapping within a single tick range", async function () {
     this.retries(3);
 
     const liquidity = new BigNumber(1e7);
@@ -392,7 +392,7 @@ describe("XtoY Tests", async function () {
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
     }
   });
-  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+  it.skip("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
     this.retries(3);
 
     const liquidity = new BigNumber(1e7);
@@ -602,7 +602,7 @@ describe("XtoY Tests", async function () {
       expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
-  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
+  it.skip("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
     this.retries(3);
     const liquidity = new BigNumber(1e4);
     const lowerTickIndex = new Int(-100);
@@ -1155,7 +1155,7 @@ describe("XtoY Tests", async function () {
       console.log("win");
     }
   });
-  it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async function () {
+  it.skip("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async function () {
     this.retries(3);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
@@ -1253,7 +1253,7 @@ describe("XtoY Tests", async function () {
       );
     }
   });
-  it("Should assigning correctly fees to each position", async function () {
+  it.skip("Should assigning correctly fees to each position", async function () {
     this.retries(3);
     const liquidityProvider = aliceSigner;
     const swapper = bobSigner;
@@ -1378,6 +1378,92 @@ describe("XtoY Tests", async function () {
 
       expect(balanceFeeReceiverX_2.toFixed()).to.be.not.eq("0");
       expect(balanceFeeReceiverY_2.toFixed()).to.be.eq("0");
+    }
+  });
+  it("Should receive dev fee", async function name() {
+    const liquidityProvider = aliceSigner;
+    const swapper = bobSigner;
+    const swapperAddr = bob.pkh;
+    const feeReceiver1 = sara.pkh;
+    const feeReceiver2 = carol.pkh;
+    const lowerTickIndex = new Int(-1000);
+    const upperTickIndex = new Int(1000);
+    const liquidity = new BigNumber(1e6);
+
+    const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      tezos,
+      [aliceSigner, bobSigner],
+      [5000, 5000, 5000, 5000],
+      false,
+      5000,
+    );
+
+    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      tezos.setSignerProvider(liquidityProvider);
+
+      const initialSt = await pool.getRawStorage();
+      const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+      const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+      const feeBps = initialSt.constants.fee_bps;
+      await pool.setPosition(
+        lowerTickIndex,
+        upperTickIndex,
+        new BigNumber(minTickIndex),
+        new BigNumber(minTickIndex),
+        liquidity,
+        validDeadline(),
+        liquidity,
+        liquidity,
+      );
+
+      tezos.setSignerProvider(swapper);
+      let xFees: BigNumber = new BigNumber(0);
+      let yFees: BigNumber = new BigNumber(0);
+      pool.callSettings.swapXY = CallMode.returnParams;
+      let transferParams: any[] = [];
+      for (let i = 0; i < 10; i++) {
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        transferParams.push(
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          ),
+        );
+        // transferParams.push(
+        //   await pool.swapYX(
+        //     transferAmount,
+        //     validDeadline(),
+        //     new BigNumber(1),
+        //     swapperAddr,
+        //   ),
+        // );
+        const xFee = calcSwapFee(feeBps, transferAmount);
+        const yFee = calcSwapFee(feeBps, transferAmount);
+        xFees = xFees.plus(xFee);
+        yFees = yFees.plus(yFee);
+      }
+      const batchOp = await sendBatch(tezos, transferParams);
+      await confirmOperation(tezos, batchOp.opHash);
+
+      tezos.setSignerProvider(liquidityProvider);
+      await collectFees(pool, feeReceiver1, [new Nat(0)]);
+      const balanceFeeReceiverX_1 = await getTypedBalance(
+        pool.tezos,
+        tokenTypeX,
+        initialSt.constants.token_x,
+        feeReceiver1,
+      );
+      const balanceFeeReceiverY_1 = await getTypedBalance(
+        pool.tezos,
+        tokenTypeY,
+        initialSt.constants.token_y,
+        feeReceiver1,
+      );
+
+      console.log(xFees.toFixed(), balanceFeeReceiverX_1.toFixed());
+      console.log(yFees.toFixed(), balanceFeeReceiverY_1.toFixed());
     }
   });
 });

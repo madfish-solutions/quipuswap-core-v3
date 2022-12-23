@@ -114,6 +114,7 @@ export async function poolsFixture(
   signers: any[],
   fees: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   dublicate: boolean = false,
+  devFee: number = 0,
   tickSpacing: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ) {
   const fa12TokenX = await FA12.originate(tezos, fa12Storage);
@@ -122,7 +123,7 @@ export async function poolsFixture(
   const fa2TokenX = await FA2.originate(tezos, fa2Storage);
   const fa2TokenY = await FA2.originate(tezos, fa2Storage);
 
-  const factory = await new DexFactory(tezos, "development").initialize();
+  const factory = await new DexFactory(tezos, "development").initialize(devFee);
   const paramsList: TransferParams[] = [];
   let poolList: any[] = [
     [fa12TokenX, fa12TokenY],

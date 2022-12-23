@@ -10,10 +10,12 @@ export default class Factory {
   contract: Contract;
   constructor(private tezos: TezosToolkit, private network: string) {}
 
-  async initialize(factoryAddress?: string) {
+  async initialize(devFee: number = 0, factoryAddress?: string) {
     if (factoryAddress) {
       this.contract = await this.tezos.contract.at(factoryAddress);
     } else {
+      factoryStorage.dev_fee_bps = devFee;
+      factoryStorage.owner = await this.tezos.signer.publicKeyHash();
       const deployedAddress = await migrate(
         this.tezos,
         "factory",
