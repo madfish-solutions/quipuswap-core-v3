@@ -442,5 +442,14 @@ describe("FA2 Tests", async function () {
         ]);
       }
     });
+    it("Should allow get balance of", async function () {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
+        const balance = await pool.contract.views
+          .balance_of([{ owner: alice.pkh, token_id: "0" }])
+          .read();
+        equal(balance[0].balance.toNumber() >= 0, true);
+      }
+    });
   });
 });
