@@ -1,43 +1,20 @@
 import { equal, notEqual, ok, rejects } from "assert";
-import { expect } from "chai";
+
 import { BigNumber } from "bignumber.js";
 
 import { TezosToolkit, TransferParams } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallMode } from "@madfish/quipuswap-v3/dist/types";
+
 import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
 import { FA2 } from "./helpers/FA2";
 import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import {
-  sendBatch,
-  isInRangeNat,
-  isInRange,
-} from "@madfish/quipuswap-v3/dist/utils";
-import {
-  adjustScale,
-  calcSwapFee,
-  calcNewPriceX,
-  calcReceivedY,
-  shiftLeft,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
-
-import { checkAllInvariants } from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
-import {
-  advanceSecs,
-  collectFees,
-  compareStorages,
-  genFees,
-  genNatIds,
-  getTypedBalance,
-  moreBatchSwaps,
-  validDeadline,
-} from "./helpers/utils";
+import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
+import { validDeadline } from "./helpers/utils";
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -50,7 +27,6 @@ const bobSigner = new InMemorySigner(bob.sk);
 const eveSigner = new InMemorySigner(eve.sk);
 
 const minTickIndex = new Int(-1048575);
-const maxTickIndex = new Int(1048575);
 
 describe("FA2 Tests", async function () {
   let poolFa12: QuipuswapV3;
@@ -124,10 +100,6 @@ describe("FA2 Tests", async function () {
         new BigNumber(1e7),
         new BigNumber(1e7),
       );
-
-      const onlyOwnerPosID = new BigNumber(0);
-      const ownerAndOpPosId = new BigNumber(1);
-
       const operation = await tezos.contract.transfer({
         to: eve.pkh,
         amount: 1e6,
