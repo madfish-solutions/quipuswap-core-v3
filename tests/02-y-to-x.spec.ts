@@ -377,7 +377,7 @@ describe("YtoX Tests", async () => {
       expect(finalBalanceFeeReceiverX.toFixed()).to.be.equal("0");
     }
   });
-  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+  it.skip("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
     const liquidity = new BigNumber(1e7);
     const lowerTickIndex = new Int(-1000);
     const upperTickIndex = new Int(1000);
@@ -385,7 +385,7 @@ describe("YtoX Tests", async () => {
     const swapReceiver = sara.pkh;
     const swapCount = 200;
     const swapAmt = new BigNumber(10);
-    console.log(111);
+
     const {
       poolFa12,
       poolFa2,
@@ -401,7 +401,6 @@ describe("YtoX Tests", async () => {
       genFees(8, true),
       true,
     );
-    console.log(222111);
     for (const pools of [
       [poolFa12, poolFa12Dublicate],
       [poolFa2, poolFa2Dublicate],
@@ -420,7 +419,7 @@ describe("YtoX Tests", async () => {
       pool_2.callSettings.increaseObservationCount = CallMode.returnParams;
       pool_1.callSettings.setPosition = CallMode.returnParams;
       pool_2.callSettings.setPosition = CallMode.returnParams;
-      console.log(333);
+
       let transferParams: any[] = [];
       transferParams.push(
         await pool_1.increaseObservationCount(new BigNumber(10)),
@@ -430,7 +429,7 @@ describe("YtoX Tests", async () => {
       );
       let batchOp = await sendBatch(tezos, transferParams);
       await confirmOperation(tezos, batchOp.opHash);
-      console.log(444333);
+
       transferParams = [];
       transferParams.push(
         await pool_1.setPosition(
@@ -456,10 +455,10 @@ describe("YtoX Tests", async () => {
           liquidity,
         ),
       );
-      console.log(43333);
+
       batchOp = await sendBatch(tezos, transferParams);
       await confirmOperation(tezos, batchOp.opHash);
-      console.log(555333);
+
       tezos.setSignerProvider(swapper);
       transferParams = [];
       // 1 big swap
@@ -484,13 +483,13 @@ describe("YtoX Tests", async () => {
           "YtoX",
         )),
       );
-      console.log(6656333);
+
       batchOp = await sendBatch(tezos, transferParams);
       await confirmOperation(tezos, batchOp.opHash);
-      console.log(777333);
+
       // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
       await advanceSecs(1, [pool_1, pool_2]);
-      console.log(1000000);
+
       await checkAllInvariants(
         pool_1,
         { [alice.pkh]: aliceSigner },
@@ -515,7 +514,7 @@ describe("YtoX Tests", async () => {
         ],
         genNatIds(250),
       );
-      console.log(8888333);
+
       /**
        * The two storages should be mostly identical.
        * The price might be slightly different, due to the compounding of rounding errors,
@@ -590,7 +589,6 @@ describe("YtoX Tests", async () => {
         ),
       );
       expect(cfmm1YBalance.toFixed()).to.be.equal(cfmm2YBalance.toFixed());
-      console.log("ok");
     }
   });
   it.skip("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
