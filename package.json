@@ -18,7 +18,7 @@
     "url": "git+https://github.com/madfish-solutions/quipuswap-core-v3.git"
   },
   "dependencies": {
-    "@madfish/quipuswap-v3": "../quipuswap-v3-interface",
+    "@madfish/quipuswap-v3": "git+https://github.com/madfish-solutions/quipuswap-v3-interface.git",
     "@taquito/http-utils": "^15.0.1",
     "@taquito/local-forging": "^15.0.1",
     "@taquito/michel-codec": "^15.0.1",
