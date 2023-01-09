@@ -256,3 +256,43 @@ export const moreBatchSwaps = async (
 
   return transferParams;
 };
+
+export const groupAdjacent = <T>(l: T[]) => {
+  return l.map((a1, i) => [a1, l[i + 1]]).slice(0, -1);
+};
+
+/**
+ * 
+ * -- timestamps.
+gettingCumulativesInsideDiff
+  :: (MonadNettest caps base m, HasCallStack)
+  => ContractHandler Parameter Storage
+  -> (TickIndex, TickIndex)
+  -> m ()
+  -> m CumulativesInsideSnapshot
+gettingCumulativesInsideDiff cfmm (loTick, hiTick) action = do
+  consumer <- originateSimple "consumer" [] contractConsumer
+
+  call cfmm (Call @"Snapshot_cumulatives_inside") $
+    SnapshotCumulativesInsideParam loTick hiTick (toContractRef consumer)
+  action
+  call cfmm (Call @"Snapshot_cumulatives_inside") $
+    SnapshotCumulativesInsideParam loTick hiTick (toContractRef consumer)
+
+  getStorage consumer >>= \case
+    [s2, s1] -> return (subCumulativesInsideSnapshot s2 s1)
+    _ -> failure "Expected exactly 2 elements"
+ */
+
+// export const getCumulativesInsideDiff = async(
+//   pool: QuipuswapV3,
+//   loTick: BigNumber,
+//   hiTick: BigNumber,
+//   action: () => Promise<void>,
+// ) => {
+//   const consumer = await originateConsumer(pool.tezos);
+//   const s1 = await snapshotCumulativesInside(pool, loTick, hiTick, consumer);
+//   await action();
+//   const s2 = await snapshotCumulativesInside(pool, loTick, hiTick, consumer);
+//   return subCumulativesInsideSnapshot(s2, s1);
+// }

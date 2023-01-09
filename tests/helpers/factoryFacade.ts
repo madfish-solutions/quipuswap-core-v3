@@ -33,6 +33,7 @@ export default class Factory {
     yTokenType: string,
     feeBPS: number,
     tickSpacing: number,
+    extraSlots: number,
     metadata: MichelsonMap<MichelsonMapKey, unknown>,
     xTokenId: number = 0,
     yTokenId: number = 0,
@@ -51,6 +52,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -64,6 +66,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -77,6 +80,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -89,6 +93,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -106,6 +111,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -119,6 +125,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -132,6 +139,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -144,6 +152,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();

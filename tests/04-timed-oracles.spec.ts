@@ -1,0 +1,736 @@
+import { equal, notEqual, ok, rejects } from "assert";
+import { expect } from "chai";
+import { BigNumber } from "bignumber.js";
+
+import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { InMemorySigner } from "@taquito/signer";
+import { accounts } from "../sandbox/accounts";
+import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { CallMode } from "@madfish/quipuswap-v3/dist/types";
+import DexFactory from "./helpers/factoryFacade";
+import env from "../env";
+import { FA2 } from "./helpers/FA2";
+import { FA12 } from "./helpers/FA12";
+import { poolsFixture } from "./fixtures/poolFixture";
+import { confirmOperation } from "../scripts/confirmation";
+import {
+  sendBatch,
+  isInRangeNat,
+  isInRange,
+  initTimedCumulativesBuffer,
+  Timestamp,
+  entries,
+} from "@madfish/quipuswap-v3/dist/utils";
+import {
+  adjustScale,
+  calcSwapFee,
+  calcNewPriceX,
+  calcReceivedY,
+  shiftLeft,
+} from "@madfish/quipuswap-v3/dist/helpers/math";
+
+import {
+  checkAllInvariants,
+  checkCumulativesBufferInvariants,
+  checkCumulativesBufferTimeInvariants,
+} from "./helpers/invariants";
+import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import {
+  advanceSecs,
+  collectFees,
+  compareStorages,
+  genFees,
+  genNatIds,
+  getTypedBalance,
+  groupAdjacent,
+  moreBatchSwaps,
+  sleep,
+  validDeadline,
+} from "./helpers/utils";
+import { OperationEntry } from "@taquito/rpc";
+import { BatchWalletOperation } from "@taquito/taquito/dist/types/wallet/batch-operation";
+
+const alice = accounts.alice;
+const bob = accounts.bob;
+const peter = accounts.peter;
+const eve = accounts.eve;
+const sara = accounts.sara;
+const carol = accounts.carol;
+const aliceSigner = new InMemorySigner(alice.sk);
+const bobSigner = new InMemorySigner(bob.sk);
+const eveSigner = new InMemorySigner(eve.sk);
+
+const minTickIndex = new Int(-1048575);
+const maxTickIndex = new Int(1048575);
+
+describe("Timed oracles tests", async function () {
+  let poolFa12: QuipuswapV3;
+  let poolFa2: QuipuswapV3;
+  let poolFa1_2: QuipuswapV3;
+  let poolFa2_1: QuipuswapV3;
+  let tezos: TezosToolkit;
+  let factory: DexFactory;
+  let fa12TokenX: FA12;
+  let fa12TokenY: FA12;
+  let fa2TokenX: FA2;
+  let fa2TokenY: FA2;
+  before(async () => {
+    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos.setSignerProvider(aliceSigner);
+
+    let operation = await tezos.contract.transfer({
+      to: peter.pkh,
+      amount: 1e6,
+      mutez: true,
+    });
+
+    await confirmOperation(tezos, operation.hash);
+    operation = await tezos.contract.transfer({
+      to: eve.pkh,
+      amount: 1e6,
+      mutez: true,
+    });
+    await confirmOperation(tezos, operation.hash);
+  });
+
+  describe("Success cases", async () => {
+    it.skip("Our initial buffer matches the ligo's one", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const initCumulativeBuffer = await initTimedCumulativesBuffer(
+          new Nat(0),
+        );
+        const initSt = await pool.getStorage(
+          [],
+          [minTickIndex, maxTickIndex],
+          genNatIds(10),
+        );
+
+        expect(initSt.cumulativesBuffer.first.toFixed()).to.equal(
+          initCumulativeBuffer.first.toFixed(),
+        );
+        expect(initSt.cumulativesBuffer.last.toFixed()).to.equal(
+          initCumulativeBuffer.last.toFixed(),
+        );
+        expect(initSt.cumulativesBuffer.map.map).to.deep.equal(
+          initCumulativeBuffer.map.map,
+        );
+        const initCumulativeBuffer10 = await initTimedCumulativesBuffer(
+          new Nat(10),
+        );
+
+        expect(initCumulativeBuffer10.first.toFixed()).to.equal("0");
+        expect(initCumulativeBuffer10.last.toFixed()).to.equal("0");
+        expect(initCumulativeBuffer10.reservedLength.toFixed()).to.equal("11");
+
+        for (const [k, v] of Object.entries(initCumulativeBuffer10.map.map)) {
+          expect(v.spl.blockStartLiquidityValue.toFixed()).to.equal("0");
+          expect(v.spl.sum.toFixed()).to.equal("0");
+          expect(v.time.toFixed()).to.equal("0");
+        }
+      }
+    });
+    it.skip("Returned cumulative values continuously grow over time", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const {
+        poolFa12,
+        poolFa2,
+        poolFa1_2,
+        poolFa2_1,
+        factory,
+        fa12TokenX,
+        fa12TokenY,
+        fa2TokenX,
+        fa2TokenY,
+      } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        await pool.increaseObservationCount(new Nat(100));
+        await sleep(3000);
+
+        //setPosition cfmm 100 (-100, 100)
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new Nat(100),
+          validDeadline(),
+          new Nat(100),
+          new Nat(100),
+        );
+        await sleep(3000);
+
+        /**
+         * checkedTimes <- do
+        cumulatives <- getStorage cfmm >>= lastRecordedCumulatives
+        let time = tcTime cumulatives
+        return $ timestampPlusSeconds time <$> [-3 .. 0]
+         */
+        let st = await pool.getStorage(
+          [],
+          [minTickIndex, maxTickIndex],
+          genNatIds(110),
+        );
+
+        const checkedTimes = async (): Promise<string[]> => {
+          const lastCumulatives = st.cumulativesBuffer.map.get(
+            st.cumulativesBuffer.last,
+          );
+          const time = lastCumulatives.time;
+          return [-3, -2, -1, 0].map(seconds => time.plus(seconds).toFixed());
+        };
+        /**
+         * Our property of interest here:
+         * lim{t -> record_time} cumulative(t) = cumulative(record_time)
+         * We will also check places of regular growth at the same time.
+         */
+
+        const cumulatives: quipuswapV3Types.CumulativesValue[] =
+          await pool.observe(await checkedTimes());
+
+        const adjacents = groupAdjacent(cumulatives);
+
+        const diffs = adjacents.map(([a, b]) => ({
+          cvTickCumulative: b.tick_cumulative.minus(a.tick_cumulative),
+          cvSecondsPerLiquidityCumulative:
+            b.seconds_per_liquidity_cumulative.minus(
+              a.seconds_per_liquidity_cumulative,
+            ),
+        }));
+
+        const groups = diffs.reduce((acc, curr) => {
+          const last = acc[acc.length - 1];
+          if (last && last[0].tick_cumulative.eq(curr.cvTickCumulative)) {
+            last.push({
+              tick_cumulative: curr.cvTickCumulative,
+              seconds_per_liquidity_cumulative: new quipuswapV3Types.x128n(
+                curr.cvSecondsPerLiquidityCumulative,
+              ),
+            });
+          } else {
+            acc.push([
+              {
+                tick_cumulative: curr.cvTickCumulative,
+                seconds_per_liquidity_cumulative: new quipuswapV3Types.x128n(
+                  curr.cvSecondsPerLiquidityCumulative,
+                ),
+              },
+            ]);
+          }
+          return acc;
+        }, [] as quipuswapV3Types.CumulativesValue[][]);
+
+        expect(groups.length).to.equal(1);
+      }
+    });
+    it.skip("Observing time out of bounds", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        await pool.increaseObservationCount(new Nat(100));
+
+        const now =
+          Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
+
+        const requested = now - 100000;
+
+        await rejects(pool.observe([requested.toFixed()]), (e: Error) => {
+          equal(e.message.includes("108"), true);
+          return true;
+        });
+
+        const requested2 = now + 1000;
+        await rejects(pool.observe([requested2.toFixed()]), (e: Error) => {
+          equal(e.message.includes("109"), true);
+          return true;
+        });
+      }
+    });
+    it.skip("Increasing observation count works as expected", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        /**
+         * This helps to distinguish dummy and true values in the buffer
+         * Note: this also triggers the contract to record a value in the buffer
+         */
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new Nat(100),
+          validDeadline(),
+          new Nat(100),
+          new Nat(100),
+        );
+        /**
+         * Run invariants that can be checked immediately,
+         * and return info (current storage) for performing later mass checks.
+         */
+        const runInvariantsChecks = async () => {
+          const st = await pool.getStorage(
+            [],
+            [minTickIndex, maxTickIndex],
+            genNatIds(110),
+          );
+
+          await checkCumulativesBufferInvariants(pool, st);
+          return st;
+        };
+
+        const storageSnapshotInit = await (async () => {
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(1);
+          expect(cb.first.toNumber()).to.equal(1);
+          expect(cb.last.toNumber()).to.equal(1);
+          return st;
+        })();
+
+        const incr = new Nat(5);
+        await pool.increaseObservationCount(incr);
+
+        const storageSnapshot0 = await (async () => {
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(1 + incr.toNumber());
+          expect(cb.first.toNumber()).to.equal(2);
+          expect(cb.last.toNumber()).to.equal(2);
+          return st;
+        })();
+
+        /**
+         * No dummy slots were consumed till this moment, checking how they are
+         * getting filled now.
+         * We had to do only one step ahead in the buffer till this point.
+         */
+        const storageSnapshots1: quipuswapV3Types.Storage[] = [];
+        for (let i = 1; i <= incr.toNumber(); i++) {
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(1 + incr.toNumber());
+          expect(cb.first.toNumber()).to.equal(2);
+          expect(cb.last.toNumber()).to.equal(i + 2);
+          storageSnapshots1.push(st);
+        }
+
+        // No more increase is expected
+        const storageSnapshots2: quipuswapV3Types.Storage[] = [];
+        for (let i = 1; i <= 3; i++) {
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(1 + incr.toNumber());
+          expect(cb.first.toNumber()).to.equal(2 + i);
+          expect(cb.last.toNumber()).to.equal(2 + incr.toNumber() + i);
+          storageSnapshots2.push(st);
+        }
+
+        const allStorageSnapshots = [
+          storageSnapshotInit,
+          storageSnapshot0,
+          ...storageSnapshots1,
+          ...storageSnapshots2,
+        ];
+        const vals = allStorageSnapshots
+          .map(s => entries(s))
+          .map(m => Array.from(m.values()))
+          .flat();
+
+        if (vals.every(v => vals[0] === v)) {
+          throw new Error(
+            "All values in the buffer were eventually equal, the test is not significant\n" +
+              JSON.stringify(vals),
+          );
+        }
+      }
+    });
+    it.skip("Observed values are sane: Seconds per liquidity cumulative", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
+        await poolsFixture(tezos, [aliceSigner, bobSigner]);
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        let timestamps: string[] = [];
+        timestamps.push(
+          (
+            Date.parse(
+              ((await pool.increaseObservationCount(new Nat(20))) as any)
+                .lastHead.header.timestamp,
+            ) /
+              1000 +
+            1
+          ).toString(),
+        );
+        //await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new Nat(10),
+          validDeadline(),
+
+          new Nat(10),
+          new Nat(10),
+        );
+
+        await sleep(10000);
+
+        timestamps.push(
+          (
+            Date.parse(
+              (
+                (await pool.swapXY(
+                  new Int(0),
+                  validDeadline(),
+                  new Nat(0),
+                  alice.pkh,
+                )) as any
+              ).lastHead.header.timestamp,
+            ) / 1000
+          ).toString(),
+        );
+
+        await pool.setPosition(
+          new Int(-10),
+          new Int(30),
+          minTickIndex,
+          minTickIndex,
+          new Nat(40),
+          validDeadline(),
+          new Nat(40),
+          new Nat(40),
+        );
+        await pool.setPosition(
+          new Int(30),
+          new Int(50),
+          minTickIndex,
+          minTickIndex,
+          new Nat(10000),
+          validDeadline(),
+          new Nat(10000),
+          new Nat(10000),
+        );
+        await sleep(100000);
+        timestamps.push(
+          (
+            Date.parse(
+              (
+                (await pool.swapXY(
+                  new Int(0),
+                  validDeadline(),
+                  new Nat(0),
+                  alice.pkh,
+                )) as any
+              ).lastHead.header.timestamp,
+            ) / 1000
+          ).toString(),
+        );
+        await pool.updatePosition(
+          new Nat(0),
+          new Int(-10),
+          alice.pkh,
+          alice.pkh,
+          validDeadline(),
+          new Nat(40),
+          new Nat(40),
+        );
+        await sleep(10000);
+        timestamps.push(
+          (
+            Date.parse(
+              (
+                (await pool.swapXY(
+                  new Int(0),
+                  validDeadline(),
+                  new Nat(0),
+                  alice.pkh,
+                )) as any
+              ).lastHead.header.timestamp,
+            ) / 1000
+          ).toString(),
+        );
+
+        const viewedResults = await pool.observe(timestamps);
+
+        const splCums = viewedResults.map(
+          r => r.seconds_per_liquidity_cumulative,
+        );
+
+        const adjacents = groupAdjacent(splCums);
+        console.log("Adh", adjacents);
+        const diffs = adjacents.map(([prev, next]) =>
+          adjustScale(new Nat(next.minus(prev)), new Nat(128), new Nat(10)),
+        );
+        console.log("difs", diffs);
+        expect(diffs[0].toFixed()).to.equal(
+          new BigNumber(1).multipliedBy(2 ** 10).toFixed(),
+        );
+        expect(diffs[1].toFixed()).to.equal(
+          new BigNumber(2).multipliedBy(2 ** 10).toFixed(),
+        );
+        expect(diffs[2].toFixed()).to.equal(
+          new BigNumber(0.25).multipliedBy(2 ** 10).toFixed(),
+        );
+
+        // expect(splCums[0].toFixed()).to.equal("0");
+        // expect(
+        //   adjustScale(
+        //     new Nat(splCums[1].minus(splCums[0])),
+        //     new Nat(128),
+        //     new Nat(30),
+        //   ).toFixed(),
+        // ).to.equal(new BigNumber(1).multipliedBy(2 ** 30).toFixed());
+        // expect(
+        //   adjustScale(
+        //     new Nat(splCums[2].minus(splCums[1])),
+        //     new Nat(128),
+        //     new Nat(30),
+        //   ).toFixed(),
+        // ).to.equal(new BigNumber(2).multipliedBy(2 ** 30).toFixed());
+        // expect(
+        //   adjustScale(
+        //     new Nat(splCums[3].minus(splCums[2])),
+        //     new Nat(128),
+        //     new Nat(30),
+        //   ).toFixed(),
+        // ).to.equal(new BigNumber(0.25).multipliedBy(2 ** 30).toFixed());
+      }
+    });
+    it("Observed values are sane: Tick cumulative", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        let timestamps: string[] = [];
+        timestamps.push(
+          (
+            Date.parse(
+              ((await pool.increaseObservationCount(new Nat(20))) as any)
+                .lastHead.header.timestamp,
+            ) /
+              1000 +
+            1
+          ).toString(),
+        );
+        //await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+        await pool.setPosition(
+          new Int(-10),
+          new Int(10),
+          minTickIndex,
+          minTickIndex,
+          new Nat(10),
+          validDeadline(),
+
+          new Nat(10),
+          new Nat(10),
+        );
+
+        await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh);
+
+        let st = await pool.getRawStorage();
+
+        expect(st.cur_tick_index.toNumber()).to.equal(10);
+
+        await sleep(10000);
+
+        timestamps.push(
+          (
+            Date.parse(
+              (
+                (await pool.swapXY(
+                  new Int(0),
+                  validDeadline(),
+                  new Nat(0),
+                  alice.pkh,
+                )) as any
+              ).lastHead.header.timestamp,
+            ) / 1000
+          ).toString(),
+        );
+
+        await pool.setPosition(
+          new Int(-20),
+          new Int(50),
+          minTickIndex,
+          minTickIndex,
+          new Nat(10),
+          validDeadline(),
+          new Nat(10),
+          new Nat(10),
+        );
+
+        await pool.swapXY(new Int(4), validDeadline(), new Nat(0), alice.pkh);
+
+        st = await pool.getRawStorage();
+        expect(st.cur_tick_index.toNumber()).to.equal(-21);
+
+        await sleep(100000);
+        timestamps.push(
+          (
+            Date.parse(
+              (
+                (await pool.swapXY(
+                  new Int(0),
+                  validDeadline(),
+                  new Nat(0),
+                  alice.pkh,
+                )) as any
+              ).lastHead.header.timestamp,
+            ) / 1000
+          ).toString(),
+        );
+
+        /** from Haskell to TypeScript
+         *  viewedResults <- reverse <$> getStorage consumer
+      tickCums <- forM viewedResults $ \case
+        [x] -> pure (cvTickCumulative x)
+        _ -> failure "Expected exactly one entry"
+
+      safeHead tickCums @== Just 0
+
+      [ nextTickCum - prevTickCum | (prevTickCum, nextTickCum) <- groupAdjacent tickCums ]
+        @== [10 * 10, -21 * 100]
+         */
+
+        const viewedResults = await pool.observe(timestamps);
+
+        const tickCums = viewedResults.map(r => r.tick_cumulative).reverse();
+
+        const adjacents = groupAdjacent(tickCums);
+        console.log("Adh", adjacents);
+        const diffs = adjacents.map(
+          ([prev, next]) => new Int(next.minus(prev)),
+        );
+        // console.log("difs", differences);
+
+        expect(diffs[0].toFixed()).to.equal(
+          new BigNumber(1).multipliedBy(2 ** 10).toFixed(),
+        );
+        expect(diffs[1].toFixed()).to.equal(
+          new BigNumber(2).multipliedBy(2 ** 10).toFixed(),
+        );
+        // expect(diffs[2].toFixed()).to.equal(
+        //   new BigNumber(0.25).multipliedBy(2 ** 10).toFixed(),
+        // );
+      }
+    });
+    it.skip("Setting large initial buffer works properly", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+        10,
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        // Note: this also triggers the contract to record a value in the buffer
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new Nat(100),
+          validDeadline(),
+          new Nat(100),
+          new Nat(100),
+        );
+
+        // Run invariants that can be checked immediately,
+        // and return info (current storage) for performing later mass checks.
+        const runInvariantsChecks = async () => {
+          const s = await pool.getStorage(
+            [new Nat(0)],
+            [new Int(-100), new Int(100), minTickIndex, minTickIndex],
+            genNatIds(20),
+          );
+          checkCumulativesBufferInvariants(pool, s);
+          return s;
+        };
+
+        const storageSnapshot0 = await (async () => {
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(0);
+          expect(cb.last.toNumber()).to.equal(1);
+          return st;
+        })();
+
+        const storageSnapshot1 = await (async () => {
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(0);
+          expect(cb.last.toNumber()).to.equal(3);
+          return st;
+        })();
+
+        const storageSnapshot2 = await (async () => {
+          for (let i = 0; i < 10; i++) {
+            await sleep(1000);
+            await pool.swapXY(
+              new Int(0),
+              validDeadline(),
+              new Nat(0),
+              alice.pkh,
+            );
+          }
+
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(3);
+          expect(cb.last.toNumber()).to.equal(13);
+          return st;
+        })();
+
+        const allStorageSnapshots = [
+          storageSnapshot0,
+          storageSnapshot1,
+          storageSnapshot2,
+        ];
+        const vals = allStorageSnapshots
+          .map(s => entries(s))
+          .map(m => Array.from(m.values()))
+          .flat();
+
+        if (vals.every(v => vals[0] === v)) {
+          throw new Error(
+            "All values in the buffer were eventually equal, the test is not significant\n" +
+              JSON.stringify(vals),
+          );
+        }
+      }
+    });
+  });
+});

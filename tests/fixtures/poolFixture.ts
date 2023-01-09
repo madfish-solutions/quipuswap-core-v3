@@ -9,6 +9,7 @@ import { FA12 } from "./../helpers/FA12";
 import { confirmOperation } from "./../../scripts/confirmation";
 
 import { BigNumber } from "bignumber.js";
+import { migrate } from "../../scripts/helpers";
 
 const getTypedUpdateOperator = async (
   tezos: TezosToolkit,
@@ -112,6 +113,7 @@ const getTypedUpdateOperator = async (
 export async function poolsFixture(
   tezos,
   signers: any[],
+  extraSlots: number = 0,
   fees: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   dublicate: boolean = false,
   devFee: number = 0,
@@ -148,6 +150,7 @@ export async function poolsFixture(
       yTokenType,
       fees[paramsList.length],
       tickSpacing[0],
+      extraSlots,
       MichelsonMap.fromLiteral({}),
       0,
       0,
@@ -236,6 +239,14 @@ export async function poolsFixture(
     }
   }
 
+  const deployedConsumer = await migrate(
+    tezos,
+    "consumer",
+    { snapshot_id: 0, snapshots: MichelsonMap.fromLiteral({}) },
+    "development",
+  );
+  const consumer = await tezos.contract.at(deployedConsumer!);
+
   return {
     factory,
     fa12TokenX,
@@ -250,5 +261,6 @@ export async function poolsFixture(
     poolFa2Dublicate,
     poolFa1_2Dublicate,
     poolFa2_1Dublicate,
+    consumer,
   };
 }

@@ -15,6 +15,7 @@ type create_dex_t =
     token_y: asset_standard_t ;
     fee_bps : nat ;
     tick_spacing : nat ;
+    extra_slots : nat ;
     metadata: metadata_map ;
   }
 
