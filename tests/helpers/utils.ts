@@ -1,4 +1,5 @@
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { shiftLeft } from "@madfish/quipuswap-v3/dist/helpers/math";
 import { CallMode, swapDirection } from "@madfish/quipuswap-v3/dist/types";
 import { Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 import {
@@ -296,3 +297,70 @@ gettingCumulativesInsideDiff cfmm (loTick, hiTick) action = do
 //   const s2 = await snapshotCumulativesInside(pool, loTick, hiTick, consumer);
 //   return subCumulativesInsideSnapshot(s2, s1);
 // }
+
+/**
+ * // Recursive helper for `get_cumulatives`
+let rec find_cumulatives_around (buffer, t, l, r : timed_cumulatives_buffer * timestamp * (nat * timed_cumulatives) * (nat * timed_cumulatives)) : (timed_cumulatives * timed_cumulatives * nat) =
+    let (l_i, l_v) = l in
+    let (r_i, r_v) = r in
+    // Binary search, invariant: l_v.time <= t && t < r_v.time
+    if l_i + 1n < r_i
+    then
+        let m_i = (l_i + r_i) / 2n in
+        let m_v = get_registered_cumulatives_unsafe buffer m_i in
+        let m = (m_i, m_v) in
+        let (new_l, new_r) = if m_v.time > t then (l, m) else (m, r) in
+        find_cumulatives_around (buffer, t, new_l, new_r)
+    else
+        (l_v, r_v, assert_nat (t - l_v.time, internal_observe_bin_search_failed))
+ */
+
+export const findCumulativesAround = (
+  buffer: quipuswapV3Types.TimedCumulativesBuffer,
+  timestamp: BigNumber,
+  l: [BigNumber, quipuswapV3Types.TimedCumulative],
+  r: [BigNumber, quipuswapV3Types.TimedCumulative],
+) => {
+  const [l_i, l_v] = l;
+  const [r_i, r_v] = r;
+
+  if (l_i.plus(1).lt(r_i)) {
+    const m_i = l_i.plus(r_i).div(2);
+    const m_v = buffer.map.get(new Nat(m_i));
+    const m = [m_i, m_v] as [BigNumber, quipuswapV3Types.TimedCumulative];
+    const new_l = m_v.time.gt(timestamp) ? l : m;
+    const new_r = m_v.time.gt(timestamp) ? m : r;
+    return findCumulativesAround(buffer, timestamp, new_l, new_r);
+  }
+
+  return {
+    sumsAtLeft: l_v,
+    sumsAtRight: r_v,
+    timeDelta: r_v.time.minus(l_v.time),
+  };
+};
+
+/**
+ * // Calculate seconds_per_liquidity cumulative diff.
+[@inline]
+let eval_seconds_per_liquidity_x128(liquidity, duration : nat * nat) =
+    if liquidity = 0n
+    // It actually doesn't really matter how much we add to this accumulator
+    // when there is no active liquidity. When calculating a liquidity miner's
+    // rewards, we only care about the 'seconds per liquidity' accumulator's
+    // value while the current tick was inside the position's range
+    // (i.e., while the contract's liquidity was not zero).
+    then 0n
+    else Bitwise.shift_left duration 128n / liquidity
+ */
+
+export const evalSecondsPerLiquidityX128 = (
+  liquidity: BigNumber,
+  duration: BigNumber,
+) => {
+  if (liquidity.eq(0)) {
+    return new BigNumber(0);
+  }
+
+  return shiftLeft(duration, new BigNumber(128)).div(liquidity);
+};

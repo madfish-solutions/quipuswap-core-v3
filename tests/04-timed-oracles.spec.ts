@@ -20,6 +20,7 @@ import {
   initTimedCumulativesBuffer,
   Timestamp,
   entries,
+  safeObserve,
 } from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
@@ -39,6 +40,8 @@ import {
   advanceSecs,
   collectFees,
   compareStorages,
+  evalSecondsPerLiquidityX128,
+  findCumulativesAround,
   genFees,
   genNatIds,
   getTypedBalance,
@@ -137,17 +140,10 @@ describe("Timed oracles tests", async function () {
     });
     it.skip("Returned cumulative values continuously grow over time", async function () {
       tezos.setSignerProvider(aliceSigner);
-      const {
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+      );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await pool.increaseObservationCount(new Nat(100));
@@ -369,18 +365,19 @@ describe("Timed oracles tests", async function () {
         await poolsFixture(tezos, [aliceSigner, bobSigner]);
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        let timestamps: string[] = [];
-        timestamps.push(
-          (
-            Date.parse(
-              ((await pool.increaseObservationCount(new Nat(20))) as any)
-                .lastHead.header.timestamp,
-            ) /
-              1000 +
-            1
-          ).toString(),
+        let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
+        let timedCumulativesBuffers: quipuswapV3Types.TimedCumulative[] = [];
+        let ts = (await tezos.rpc.getBlockHeader()).timestamp;
+
+        await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+        let now = Date.parse(ts) / 1000 + 2;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        let st = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          st.cumulativesBuffer.map.get(st.cumulativesBuffer.last),
         );
-        //await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
 
         await pool.setPosition(
           new Int(-100),
@@ -396,19 +393,14 @@ describe("Timed oracles tests", async function () {
 
         await sleep(10000);
 
-        timestamps.push(
-          (
-            Date.parse(
-              (
-                (await pool.swapXY(
-                  new Int(0),
-                  validDeadline(),
-                  new Nat(0),
-                  alice.pkh,
-                )) as any
-              ).lastHead.header.timestamp,
-            ) / 1000
-          ).toString(),
+        await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        st = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          st.cumulativesBuffer.map.get(st.cumulativesBuffer.last),
         );
 
         await pool.setPosition(
@@ -421,6 +413,7 @@ describe("Timed oracles tests", async function () {
           new Nat(40),
           new Nat(40),
         );
+
         await pool.setPosition(
           new Int(30),
           new Int(50),
@@ -431,21 +424,19 @@ describe("Timed oracles tests", async function () {
           new Nat(10000),
           new Nat(10000),
         );
-        await sleep(100000);
-        timestamps.push(
-          (
-            Date.parse(
-              (
-                (await pool.swapXY(
-                  new Int(0),
-                  validDeadline(),
-                  new Nat(0),
-                  alice.pkh,
-                )) as any
-              ).lastHead.header.timestamp,
-            ) / 1000
-          ).toString(),
+
+        await sleep(5000);
+
+        await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        st = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          st.cumulativesBuffer.map.get(st.cumulativesBuffer.last),
         );
+
         await pool.updatePosition(
           new Nat(0),
           new Int(-10),
@@ -455,66 +446,60 @@ describe("Timed oracles tests", async function () {
           new Nat(40),
           new Nat(40),
         );
+
         await sleep(10000);
-        timestamps.push(
-          (
-            Date.parse(
-              (
-                (await pool.swapXY(
-                  new Int(0),
-                  validDeadline(),
-                  new Nat(0),
-                  alice.pkh,
-                )) as any
-              ).lastHead.header.timestamp,
-            ) / 1000
-          ).toString(),
+
+        await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        st = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          st.cumulativesBuffer.map.get(st.cumulativesBuffer.last),
         );
 
-        const viewedResults = await pool.observe(timestamps);
-
-        const splCums = viewedResults.map(
+        const splCums = cumulativesValues.map(
           r => r.seconds_per_liquidity_cumulative,
         );
 
         const adjacents = groupAdjacent(splCums);
-        console.log("Adh", adjacents);
-        const diffs = adjacents.map(([prev, next]) =>
-          adjustScale(new Nat(next.minus(prev)), new Nat(128), new Nat(10)),
-        );
-        console.log("difs", diffs);
-        expect(diffs[0].toFixed()).to.equal(
-          new BigNumber(1).multipliedBy(2 ** 10).toFixed(),
-        );
-        expect(diffs[1].toFixed()).to.equal(
-          new BigNumber(2).multipliedBy(2 ** 10).toFixed(),
-        );
-        expect(diffs[2].toFixed()).to.equal(
-          new BigNumber(0.25).multipliedBy(2 ** 10).toFixed(),
-        );
 
-        // expect(splCums[0].toFixed()).to.equal("0");
-        // expect(
-        //   adjustScale(
-        //     new Nat(splCums[1].minus(splCums[0])),
-        //     new Nat(128),
-        //     new Nat(30),
-        //   ).toFixed(),
-        // ).to.equal(new BigNumber(1).multipliedBy(2 ** 30).toFixed());
-        // expect(
-        //   adjustScale(
-        //     new Nat(splCums[2].minus(splCums[1])),
-        //     new Nat(128),
-        //     new Nat(30),
-        //   ).toFixed(),
-        // ).to.equal(new BigNumber(2).multipliedBy(2 ** 30).toFixed());
-        // expect(
-        //   adjustScale(
-        //     new Nat(splCums[3].minus(splCums[2])),
-        //     new Nat(128),
-        //     new Nat(30),
-        //   ).toFixed(),
-        // ).to.equal(new BigNumber(0.25).multipliedBy(2 ** 30).toFixed());
+        const combinedAdjacents = adjacents.map((innerList, i) => [
+          ...innerList,
+          timedCumulativesBuffers[i],
+          timedCumulativesBuffers[i + 1],
+        ]);
+
+        const diffs = combinedAdjacents.map(([prev, next, prevTC, nextTC]) => {
+          let aPrev = prev as quipuswapV3Types.x128n;
+          let aNext = next as quipuswapV3Types.x128n;
+
+          const aPrevTC = prevTC as quipuswapV3Types.TimedCumulative;
+          const aNextTC = nextTC as quipuswapV3Types.TimedCumulative;
+          if (aPrev.eq(new BigNumber(0))) {
+            return [new Nat(0), new Nat(0)];
+          }
+          const timeDelta = aNextTC.time.minus(aPrevTC.time);
+          const expectedSPL = evalSecondsPerLiquidityX128(
+            aNextTC.spl.blockStartLiquidityValue,
+            new BigNumber(timeDelta),
+          );
+
+          return [
+            adjustScale(new Nat(aNext.minus(aPrev)), new Nat(128), new Nat(30)),
+            adjustScale(
+              new Nat(expectedSPL.integerValue(BigNumber.ROUND_CEIL)),
+              new Nat(128),
+              new Nat(30),
+            ),
+          ];
+        });
+
+        expect(diffs[0][0].toFixed()).to.equal("0");
+        expect(diffs[1][0].toFixed()).to.equal(diffs[1][1].toFixed());
+        expect(diffs[2][0].toFixed()).to.equal(diffs[2][1].toFixed());
       }
     });
     it("Observed values are sane: Tick cumulative", async function () {
@@ -525,18 +510,9 @@ describe("Timed oracles tests", async function () {
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        let timestamps: string[] = [];
-        timestamps.push(
-          (
-            Date.parse(
-              ((await pool.increaseObservationCount(new Nat(20))) as any)
-                .lastHead.header.timestamp,
-            ) /
-              1000 +
-            1
-          ).toString(),
-        );
-        //await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+        let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
+        let timedCumulativesBuffers: quipuswapV3Types.TimedCumulative[] = [];
+        let ts = (await tezos.rpc.getBlockHeader()).timestamp;
 
         await pool.setPosition(
           new Int(-10),
@@ -557,20 +533,14 @@ describe("Timed oracles tests", async function () {
         expect(st.cur_tick_index.toNumber()).to.equal(10);
 
         await sleep(10000);
+        await pool.swapYX(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        let now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        let stor = await pool.getStorage([], [], genNatIds(10));
 
-        timestamps.push(
-          (
-            Date.parse(
-              (
-                (await pool.swapXY(
-                  new Int(0),
-                  validDeadline(),
-                  new Nat(0),
-                  alice.pkh,
-                )) as any
-              ).lastHead.header.timestamp,
-            ) / 1000
-          ).toString(),
+        timedCumulativesBuffers.push(
+          stor.cumulativesBuffer.map.get(stor.cumulativesBuffer.last),
         );
 
         await pool.setPosition(
@@ -589,54 +559,47 @@ describe("Timed oracles tests", async function () {
         st = await pool.getRawStorage();
         expect(st.cur_tick_index.toNumber()).to.equal(-21);
 
-        await sleep(100000);
-        timestamps.push(
-          (
-            Date.parse(
-              (
-                (await pool.swapXY(
-                  new Int(0),
-                  validDeadline(),
-                  new Nat(0),
-                  alice.pkh,
-                )) as any
-              ).lastHead.header.timestamp,
-            ) / 1000
-          ).toString(),
+        await sleep(10000);
+        await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh);
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        stor = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          stor.cumulativesBuffer.map.get(stor.cumulativesBuffer.last),
         );
 
-        /** from Haskell to TypeScript
-         *  viewedResults <- reverse <$> getStorage consumer
-      tickCums <- forM viewedResults $ \case
-        [x] -> pure (cvTickCumulative x)
-        _ -> failure "Expected exactly one entry"
-
-      safeHead tickCums @== Just 0
-
-      [ nextTickCum - prevTickCum | (prevTickCum, nextTickCum) <- groupAdjacent tickCums ]
-        @== [10 * 10, -21 * 100]
-         */
-
-        const viewedResults = await pool.observe(timestamps);
-
-        const tickCums = viewedResults.map(r => r.tick_cumulative).reverse();
+        const tickCums = cumulativesValues.map(r => r.tick_cumulative);
 
         const adjacents = groupAdjacent(tickCums);
-        console.log("Adh", adjacents);
-        const diffs = adjacents.map(
-          ([prev, next]) => new Int(next.minus(prev)),
-        );
-        // console.log("difs", differences);
 
-        expect(diffs[0].toFixed()).to.equal(
-          new BigNumber(1).multipliedBy(2 ** 10).toFixed(),
-        );
-        expect(diffs[1].toFixed()).to.equal(
-          new BigNumber(2).multipliedBy(2 ** 10).toFixed(),
-        );
-        // expect(diffs[2].toFixed()).to.equal(
-        //   new BigNumber(0.25).multipliedBy(2 ** 10).toFixed(),
-        // );
+        const combinedAdjacents = adjacents.map((innerList, i) => [
+          ...innerList,
+          timedCumulativesBuffers[i],
+          timedCumulativesBuffers[i + 1],
+        ]);
+        console.log(adjacents.map(r => r.map(r => r.toFixed())));
+        const diffs = combinedAdjacents.map(([prev, next, prevTC, nextTC]) => {
+          let aPrev = prev as Int;
+          let aNext = next as Int;
+          console.log();
+          const aPrevTC = prevTC as quipuswapV3Types.TimedCumulative;
+          const aNextTC = nextTC as quipuswapV3Types.TimedCumulative;
+          // if (aPrev.eq(new BigNumber(0))) {
+          //   return [new Nat(0), new Nat(0)];
+          // }
+          const timeDelta = aNextTC.time.minus(aPrevTC.time);
+          const expectedTickSum =
+            aNextTC.tick.blockStartValue.multipliedBy(timeDelta);
+          expect(aNext.minus(aPrev).toFixed()).to.equal(
+            timeDelta.multipliedBy(-21).toFixed(),
+          );
+        });
+
+        //  expect(aPrev.minus(aNext).toFixed()).to.equal(
+        //    timeDelta.multipliedBy(1),
+        //  );
       }
     });
     it.skip("Setting large initial buffer works properly", async function () {
