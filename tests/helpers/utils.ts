@@ -14,7 +14,7 @@ import { confirmOperation } from "../../scripts/confirmation";
 import { FA12 } from "./FA12";
 import { FA2 } from "./FA2";
 
-export async function sleep(ms: number) {
+export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -262,41 +262,47 @@ export const groupAdjacent = <T>(l: T[]) => {
   return l.map((a1, i) => [a1, l[i + 1]]).slice(0, -1);
 };
 
-/**
- * 
- * -- timestamps.
-gettingCumulativesInsideDiff
-  :: (MonadNettest caps base m, HasCallStack)
-  => ContractHandler Parameter Storage
-  -> (TickIndex, TickIndex)
-  -> m ()
-  -> m CumulativesInsideSnapshot
-gettingCumulativesInsideDiff cfmm (loTick, hiTick) action = do
-  consumer <- originateSimple "consumer" [] contractConsumer
-
-  call cfmm (Call @"Snapshot_cumulatives_inside") $
-    SnapshotCumulativesInsideParam loTick hiTick (toContractRef consumer)
-  action
-  call cfmm (Call @"Snapshot_cumulatives_inside") $
-    SnapshotCumulativesInsideParam loTick hiTick (toContractRef consumer)
-
-  getStorage consumer >>= \case
-    [s2, s1] -> return (subCumulativesInsideSnapshot s2 s1)
-    _ -> failure "Expected exactly 2 elements"
- */
-
-// export const getCumulativesInsideDiff = async(
-//   pool: QuipuswapV3,
-//   loTick: BigNumber,
-//   hiTick: BigNumber,
-//   action: () => Promise<void>,
-// ) => {
-//   const consumer = await originateConsumer(pool.tezos);
-//   const s1 = await snapshotCumulativesInside(pool, loTick, hiTick, consumer);
-//   await action();
-//   const s2 = await snapshotCumulativesInside(pool, loTick, hiTick, consumer);
-//   return subCumulativesInsideSnapshot(s2, s1);
-// }
+export const getCumulativesInsideDiff = async (
+  pool: QuipuswapV3,
+  loTick: BigNumber,
+  hiTick: BigNumber,
+  consumer: any,
+  waitTime: number,
+) => {
+  const tx1 = await pool.contract.methodsObject
+    .snapshot_cumulatives_inside({
+      lower_tick_index: loTick,
+      upper_tick_index: hiTick,
+      callback: consumer.address,
+    })
+    .send();
+  await confirmOperation(pool.tezos, tx1.hash);
+  await sleep(waitTime);
+  const tx2 = await pool.contract.methodsObject
+    .snapshot_cumulatives_inside({
+      lower_tick_index: loTick,
+      upper_tick_index: hiTick,
+      callback: consumer.address,
+    })
+    .send();
+  await confirmOperation(pool.tezos, tx2.hash);
+  const storage = await consumer.storage();
+  const cums1 = await storage.snapshots.get(
+    storage.snapshot_id.minus(2).toString(),
+  );
+  const cums2 = await storage.snapshots.get(
+    storage.snapshot_id.minus(1).toString(),
+  );
+  return {
+    tickCumulativeInside: cums2.tick_cumulative_inside.minus(
+      cums1.tick_cumulative_inside,
+    ),
+    secondsPerLiquidityInside: cums2.seconds_per_liquidity_inside.minus(
+      cums1.seconds_per_liquidity_inside,
+    ),
+    secondsInside: cums2.seconds_inside.minus(cums1.seconds_inside),
+  };
+};
 
 /**
  * // Recursive helper for `get_cumulatives`
@@ -340,20 +346,6 @@ export const findCumulativesAround = (
   };
 };
 
-/**
- * // Calculate seconds_per_liquidity cumulative diff.
-[@inline]
-let eval_seconds_per_liquidity_x128(liquidity, duration : nat * nat) =
-    if liquidity = 0n
-    // It actually doesn't really matter how much we add to this accumulator
-    // when there is no active liquidity. When calculating a liquidity miner's
-    // rewards, we only care about the 'seconds per liquidity' accumulator's
-    // value while the current tick was inside the position's range
-    // (i.e., while the contract's liquidity was not zero).
-    then 0n
-    else Bitwise.shift_left duration 128n / liquidity
- */
-
 export const evalSecondsPerLiquidityX128 = (
   liquidity: BigNumber,
   duration: BigNumber,
@@ -364,3 +356,62 @@ export const evalSecondsPerLiquidityX128 = (
 
   return shiftLeft(duration, new BigNumber(128)).div(liquidity);
 };
+
+/**
+ *  let sums = get_last_cumulatives s.cumulatives_buffer in
+    let cums_total =
+            { tick = sums.tick.sum
+            ; seconds = Tezos.get_now() - epoch_time
+            ; seconds_per_liquidity = {x128 = int sums.spl.sum.x128}
+            } in
+
+    [@inline]
+    let eval_cums (above, index, cums_outside : bool * tick_index * cumulatives_data) =
+        // Formulas 6.22 when 'above', 6.23 otherwise
+        if (s.cur_tick_index >= index) = above
+        then
+            { tick =
+                cums_total.tick - cums_outside.tick
+            ; seconds =
+                cums_total.seconds - cums_outside.seconds
+            ; seconds_per_liquidity = {x128 =
+                cums_total.seconds_per_liquidity.x128 - cums_outside.seconds_per_liquidity.x128
+                }
+            }
+        else
+            cums_outside
+        in
+
+    let lower_tick = get_tick s.ticks p.lower_tick_index tick_not_exist_err in
+    let upper_tick = get_tick s.ticks p.upper_tick_index tick_not_exist_err in
+
+    let lower_cums_outside =
+            { tick = lower_tick.tick_cumulative_outside
+            ; seconds = int lower_tick.seconds_outside
+            ; seconds_per_liquidity = {x128 = int lower_tick.seconds_per_liquidity_outside.x128}
+            } in
+    let upper_cums_outside =
+            { tick = upper_tick.tick_cumulative_outside
+            ; seconds = int upper_tick.seconds_outside
+            ; seconds_per_liquidity = {x128 = int upper_tick.seconds_per_liquidity_outside.x128}
+            } in
+
+    let cums_below_lower = eval_cums(false, p.lower_tick_index, lower_cums_outside) in
+    let cums_above_upper = eval_cums(true, p.upper_tick_index, upper_cums_outside) in
+    let res =
+            { tick_cumulative_inside =
+                cums_total.tick
+                    - cums_below_lower.tick
+                    - cums_above_upper.tick
+            ; seconds_inside =
+                cums_total.seconds
+                    - cums_below_lower.seconds
+                    - cums_above_upper.seconds
+            ; seconds_per_liquidity_inside = {x128 =
+                cums_total.seconds_per_liquidity.x128
+                    - cums_below_lower.seconds_per_liquidity.x128
+                    - cums_above_upper.seconds_per_liquidity.x128
+                }
+            }
+ */
+//export const getExpectedSPL
