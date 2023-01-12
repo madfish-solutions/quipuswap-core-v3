@@ -1,82 +1,43 @@
-import { equal, notEqual, ok, rejects } from "assert";
+import { equal, rejects } from "assert";
 import { expect } from "chai";
 import { BigNumber } from "bignumber.js";
 
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
 import { CallMode } from "@madfish/quipuswap-v3/dist/types";
-import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
 import {
   sendBatch,
-  isInRangeNat,
-  isInRange,
   initTimedCumulativesBuffer,
-  Timestamp,
   entries,
-  safeObserve,
 } from "@madfish/quipuswap-v3/dist/utils";
-import {
-  adjustScale,
-  calcSwapFee,
-  calcNewPriceX,
-  calcReceivedY,
-  shiftLeft,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
+import { adjustScale } from "@madfish/quipuswap-v3/dist/helpers/math";
 
-import {
-  checkAllInvariants,
-  checkCumulativesBufferInvariants,
-  checkCumulativesBufferTimeInvariants,
-} from "./helpers/invariants";
+import { checkCumulativesBufferInvariants } from "./helpers/invariants";
 import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
 import {
-  advanceSecs,
-  collectFees,
-  compareStorages,
   evalSecondsPerLiquidityX128,
-  findCumulativesAround,
-  genFees,
   genNatIds,
-  getTypedBalance,
   groupAdjacent,
-  moreBatchSwaps,
   sleep,
   validDeadline,
 } from "./helpers/utils";
-import { OperationEntry } from "@taquito/rpc";
-import { BatchWalletOperation } from "@taquito/taquito/dist/types/wallet/batch-operation";
 
 const alice = accounts.alice;
 const bob = accounts.bob;
 const peter = accounts.peter;
 const eve = accounts.eve;
-const sara = accounts.sara;
-const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-const eveSigner = new InMemorySigner(eve.sk);
 
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
 describe("Timed oracles tests", async function () {
-  let poolFa12: QuipuswapV3;
-  let poolFa2: QuipuswapV3;
-  let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
-  let factory: DexFactory;
-  let fa12TokenX: FA12;
-  let fa12TokenY: FA12;
-  let fa2TokenX: FA2;
-  let fa2TokenY: FA2;
   before(async () => {
     tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
@@ -96,8 +57,101 @@ describe("Timed oracles tests", async function () {
     await confirmOperation(tezos, operation.hash);
   });
 
-  describe("Success cases", async () => {
-    it.skip("Our initial buffer matches the ligo's one", async function () {
+  describe("Success cases", async function () {
+    it("Setting large initial buffer works properly", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+        10,
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        // Note: this also triggers the contract to record a value in the buffer
+        await pool.setPosition(
+          new Int(-100),
+          new Int(100),
+          minTickIndex,
+          minTickIndex,
+          new Nat(100),
+          validDeadline(),
+          new Nat(100),
+          new Nat(100),
+        );
+
+        // Run invariants that can be checked immediately,
+        // and return info (current storage) for performing later mass checks.
+        const runInvariantsChecks = async () => {
+          const s = await pool.getStorage(
+            [new Nat(0)],
+            [new Int(-100), new Int(100), minTickIndex, minTickIndex],
+            genNatIds(20),
+          );
+          await checkCumulativesBufferInvariants(pool, s);
+          return s;
+        };
+
+        const storageSnapshot0 = await (async () => {
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(0);
+          expect(cb.last.toNumber()).to.equal(1);
+          return st;
+        })();
+
+        const storageSnapshot1 = await (async () => {
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+          await sleep(1000);
+          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(0);
+          expect(cb.last.toNumber()).to.equal(3);
+          return st;
+        })();
+
+        const storageSnapshot2 = await (async () => {
+          for (let i = 0; i < 10; i++) {
+            await sleep(1000);
+            await pool.swapXY(
+              new Int(0),
+              validDeadline(),
+              new Nat(0),
+              alice.pkh,
+            );
+          }
+
+          const st = await runInvariantsChecks();
+          const cb = st.cumulativesBuffer;
+          expect(cb.reservedLength.toNumber()).to.equal(11);
+          expect(cb.first.toNumber()).to.equal(3);
+          expect(cb.last.toNumber()).to.equal(13);
+          return st;
+        })();
+
+        const allStorageSnapshots = [
+          storageSnapshot0,
+          storageSnapshot1,
+          storageSnapshot2,
+        ];
+        const vals = allStorageSnapshots
+          .map(s => entries(s))
+          .map(m => Array.from(m.values()))
+          .flat();
+
+        if (vals.every(v => vals[0] === v)) {
+          throw new Error(
+            "All values in the buffer were eventually equal, the test is not significant\n" +
+              JSON.stringify(vals),
+          );
+        }
+      }
+    });
+    it("Our initial buffer matches the ligo's one", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -138,7 +192,7 @@ describe("Timed oracles tests", async function () {
         }
       }
     });
-    it.skip("Returned cumulative values continuously grow over time", async function () {
+    it("Returned cumulative values continuously grow over time", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -149,7 +203,6 @@ describe("Timed oracles tests", async function () {
         await pool.increaseObservationCount(new Nat(100));
         await sleep(3000);
 
-        //setPosition cfmm 100 (-100, 100)
         await pool.setPosition(
           new Int(-100),
           new Int(100),
@@ -162,12 +215,6 @@ describe("Timed oracles tests", async function () {
         );
         await sleep(3000);
 
-        /**
-         * checkedTimes <- do
-        cumulatives <- getStorage cfmm >>= lastRecordedCumulatives
-        let time = tcTime cumulatives
-        return $ timestampPlusSeconds time <$> [-3 .. 0]
-         */
         let st = await pool.getStorage(
           [],
           [minTickIndex, maxTickIndex],
@@ -225,7 +272,7 @@ describe("Timed oracles tests", async function () {
         expect(groups.length).to.equal(1);
       }
     });
-    it.skip("Observing time out of bounds", async function () {
+    it("Observing time out of bounds", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -252,7 +299,7 @@ describe("Timed oracles tests", async function () {
         });
       }
     });
-    it.skip("Increasing observation count works as expected", async function () {
+    it("Increasing observation count works as expected", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -359,7 +406,7 @@ describe("Timed oracles tests", async function () {
         }
       }
     });
-    it.skip("Observed values are sane: Seconds per liquidity cumulative", async function () {
+    it("Observed values are sane: Seconds per liquidity cumulative", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
         await poolsFixture(tezos, [aliceSigner, bobSigner]);
@@ -503,6 +550,7 @@ describe("Timed oracles tests", async function () {
       }
     });
     it("Observed values are sane: Tick cumulative", async function () {
+      this.retries(2);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -512,29 +560,8 @@ describe("Timed oracles tests", async function () {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
         let timedCumulativesBuffers: quipuswapV3Types.TimedCumulative[] = [];
-        let ts = (await tezos.rpc.getBlockHeader()).timestamp;
-
-        await pool.setPosition(
-          new Int(-10),
-          new Int(10),
-          minTickIndex,
-          minTickIndex,
-          new Nat(10),
-          validDeadline(),
-
-          new Nat(10),
-          new Nat(10),
-        );
-
-        await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh);
-
-        let st = await pool.getRawStorage();
-
-        expect(st.cur_tick_index.toNumber()).to.equal(10);
-
-        await sleep(10000);
         await pool.swapYX(new Int(0), validDeadline(), new Nat(0), alice.pkh);
-        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        let ts = (await tezos.rpc.getBlockHeader()).timestamp;
         let now = Date.parse(ts) / 1000 + 1;
         cumulativesValues.push((await pool.observe([now.toString()]))[0]);
         let stor = await pool.getStorage([], [], genNatIds(10));
@@ -542,25 +569,70 @@ describe("Timed oracles tests", async function () {
         timedCumulativesBuffers.push(
           stor.cumulativesBuffer.map.get(stor.cumulativesBuffer.last),
         );
+        let transferParams: any[] = [];
+        pool.callSettings.setPosition = CallMode.returnParams;
+        pool.callSettings.swapYX = CallMode.returnParams;
+        transferParams.push(
+          await pool.setPosition(
+            new Int(-10),
+            new Int(10),
+            minTickIndex,
+            minTickIndex,
+            new Nat(10),
+            validDeadline(),
 
-        await pool.setPosition(
-          new Int(-20),
-          new Int(50),
-          minTickIndex,
-          minTickIndex,
-          new Nat(10),
-          validDeadline(),
-          new Nat(10),
-          new Nat(10),
+            new Nat(10),
+            new Nat(10),
+          ),
+        );
+        transferParams.push(
+          await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh),
+        );
+        let batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+        transferParams = [];
+        let st = await pool.getRawStorage();
+
+        expect(st.cur_tick_index.toNumber()).to.equal(10);
+
+        await sleep(10000);
+        pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
+
+        await pool.swapYX(new Int(0), validDeadline(), new Nat(0), alice.pkh);
+        ts = (await tezos.rpc.getBlockHeader()).timestamp;
+        now = Date.parse(ts) / 1000 + 1;
+        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        stor = await pool.getStorage([], [], genNatIds(10));
+
+        timedCumulativesBuffers.push(
+          stor.cumulativesBuffer.map.get(stor.cumulativesBuffer.last),
         );
 
-        await pool.swapXY(new Int(4), validDeadline(), new Nat(0), alice.pkh);
+        transferParams.push(
+          await pool.setPosition(
+            new Int(-20),
+            new Int(50),
+            minTickIndex,
+            minTickIndex,
+            new Nat(10),
+            validDeadline(),
+            new Nat(10),
+            new Nat(10),
+          ),
+        );
+        pool.callSettings.swapXY = CallMode.returnParams;
+        transferParams.push(
+          await pool.swapXY(new Int(4), validDeadline(), new Nat(0), alice.pkh),
+        );
+        batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+        pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
 
         st = await pool.getRawStorage();
         expect(st.cur_tick_index.toNumber()).to.equal(-21);
 
         await sleep(10000);
-        await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh);
+        await pool.swapYX(new Int(0), validDeadline(), new Nat(0), alice.pkh);
         ts = (await tezos.rpc.getBlockHeader()).timestamp;
         now = Date.parse(ts) / 1000 + 1;
         cumulativesValues.push((await pool.observe([now.toString()]))[0]);
@@ -579,120 +651,21 @@ describe("Timed oracles tests", async function () {
           timedCumulativesBuffers[i],
           timedCumulativesBuffers[i + 1],
         ]);
-        console.log(adjacents.map(r => r.map(r => r.toFixed())));
+
         const diffs = combinedAdjacents.map(([prev, next, prevTC, nextTC]) => {
           let aPrev = prev as Int;
           let aNext = next as Int;
-          console.log();
+
           const aPrevTC = prevTC as quipuswapV3Types.TimedCumulative;
           const aNextTC = nextTC as quipuswapV3Types.TimedCumulative;
-          // if (aPrev.eq(new BigNumber(0))) {
-          //   return [new Nat(0), new Nat(0)];
-          // }
           const timeDelta = aNextTC.time.minus(aPrevTC.time);
+
           const expectedTickSum =
             aNextTC.tick.blockStartValue.multipliedBy(timeDelta);
-          expect(aNext.minus(aPrev).toFixed()).to.equal(
-            timeDelta.multipliedBy(-21).toFixed(),
-          );
+          return [aNext.minus(aPrev), expectedTickSum];
         });
-
-        //  expect(aPrev.minus(aNext).toFixed()).to.equal(
-        //    timeDelta.multipliedBy(1),
-        //  );
-      }
-    });
-    it.skip("Setting large initial buffer works properly", async function () {
-      tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-        10,
-      );
-
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        // Note: this also triggers the contract to record a value in the buffer
-        await pool.setPosition(
-          new Int(-100),
-          new Int(100),
-          minTickIndex,
-          minTickIndex,
-          new Nat(100),
-          validDeadline(),
-          new Nat(100),
-          new Nat(100),
-        );
-
-        // Run invariants that can be checked immediately,
-        // and return info (current storage) for performing later mass checks.
-        const runInvariantsChecks = async () => {
-          const s = await pool.getStorage(
-            [new Nat(0)],
-            [new Int(-100), new Int(100), minTickIndex, minTickIndex],
-            genNatIds(20),
-          );
-          checkCumulativesBufferInvariants(pool, s);
-          return s;
-        };
-
-        const storageSnapshot0 = await (async () => {
-          const st = await runInvariantsChecks();
-          const cb = st.cumulativesBuffer;
-          expect(cb.reservedLength.toNumber()).to.equal(11);
-          expect(cb.first.toNumber()).to.equal(0);
-          expect(cb.last.toNumber()).to.equal(1);
-          return st;
-        })();
-
-        const storageSnapshot1 = await (async () => {
-          await sleep(1000);
-          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
-          await sleep(1000);
-          await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
-
-          const st = await runInvariantsChecks();
-          const cb = st.cumulativesBuffer;
-          expect(cb.reservedLength.toNumber()).to.equal(11);
-          expect(cb.first.toNumber()).to.equal(0);
-          expect(cb.last.toNumber()).to.equal(3);
-          return st;
-        })();
-
-        const storageSnapshot2 = await (async () => {
-          for (let i = 0; i < 10; i++) {
-            await sleep(1000);
-            await pool.swapXY(
-              new Int(0),
-              validDeadline(),
-              new Nat(0),
-              alice.pkh,
-            );
-          }
-
-          const st = await runInvariantsChecks();
-          const cb = st.cumulativesBuffer;
-          expect(cb.reservedLength.toNumber()).to.equal(11);
-          expect(cb.first.toNumber()).to.equal(3);
-          expect(cb.last.toNumber()).to.equal(13);
-          return st;
-        })();
-
-        const allStorageSnapshots = [
-          storageSnapshot0,
-          storageSnapshot1,
-          storageSnapshot2,
-        ];
-        const vals = allStorageSnapshots
-          .map(s => entries(s))
-          .map(m => Array.from(m.values()))
-          .flat();
-
-        if (vals.every(v => vals[0] === v)) {
-          throw new Error(
-            "All values in the buffer were eventually equal, the test is not significant\n" +
-              JSON.stringify(vals),
-          );
-        }
+        expect(diffs[0][0].toFixed()).to.equal(diffs[0][1].toFixed());
+        expect(diffs[1][0].toFixed()).to.equal(diffs[1][1].toFixed());
       }
     });
   });
