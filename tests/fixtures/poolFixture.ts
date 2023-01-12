@@ -186,7 +186,13 @@ export async function poolsFixture(
       poolFa2_1Dublicate,
     ]);
   }
-
+  const deployedConsumer = await migrate(
+    tezos,
+    "consumer",
+    { snapshot_id: 0, snapshots: MichelsonMap.fromLiteral({}) },
+    "development",
+  );
+  const consumer = await tezos.contract.at(deployedConsumer!);
   // update operators
   for (let i = 0; i < signers.length; i++) {
     const approvesParamsList: TransferParams[] = [];
@@ -238,14 +244,6 @@ export async function poolsFixture(
       await confirmOperation(tezos, approvesOperation.opHash);
     }
   }
-
-  const deployedConsumer = await migrate(
-    tezos,
-    "consumer",
-    { snapshot_id: 0, snapshots: MichelsonMap.fromLiteral({}) },
-    "development",
-  );
-  const consumer = await tezos.contract.at(deployedConsumer!);
 
   return {
     factory,

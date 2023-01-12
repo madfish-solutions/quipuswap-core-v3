@@ -63,17 +63,18 @@ export async function checkAccumulatorsInvariants(
     BigNumber.ROUND_CEIL,
   );
 
-  const {
-    tick_cumulative: cvTickCumulative,
-    seconds_per_liquidity_cumulative: cvSecondsPerLiquidityCumulative,
-  } = await safeObserve(cfmm, currentTime);
+  const { tickCumulative, secondsPerLiquidity } = await safeObserve(
+    cfmm,
+    currentTime,
+  );
 
   const globalAccumulators = {
     aSeconds: currentTime,
-    aTickCumulative: cvTickCumulative,
+    aTickCumulative: tickCumulative,
     aFeeGrowth: storage.feeGrowth.x.plus(storage.feeGrowth.y),
-    aSecondsPerLiquidity: cvSecondsPerLiquidityCumulative,
+    aSecondsPerLiquidity: secondsPerLiquidity,
   };
+
   equal(
     globalAccumulators.aSeconds.toFixed(),
     sumInsideAccumulators.aSeconds.toFixed(),

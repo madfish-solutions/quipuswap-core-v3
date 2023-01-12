@@ -174,11 +174,12 @@ export const collectFees = async (
         new BigNumber(0),
         recipient,
         recipient,
-        new Date("2023-01-01T00:00:00Z").toString(),
+        validDeadline(),
         new BigNumber(0),
         new BigNumber(0),
       );
     } catch (e) {
+      console.log(e);
       return;
     }
   }
