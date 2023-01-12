@@ -101,7 +101,7 @@ describe("XtoY Tests", async function () {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  describe.skip("Failed cases", async () => {
+  describe("Failed cases", async () => {
     it("Shouldn't swap if it's past the deadline", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
@@ -175,7 +175,7 @@ describe("XtoY Tests", async function () {
       }
     });
   });
-  it.skip("Should swapping within a single tick range", async function () {
+  it("Should swapping within a single tick range", async function () {
     this.retries(3);
 
     const liquidity = new BigNumber(1e7);
@@ -189,6 +189,7 @@ describe("XtoY Tests", async function () {
     const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       genFees(4),
     );
 
@@ -392,7 +393,7 @@ describe("XtoY Tests", async function () {
       expect(finalBalanceFeeReceiverY.toFixed()).to.be.equal("0");
     }
   });
-  it.skip("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+  it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
     this.retries(3);
 
     const liquidity = new BigNumber(1e7);
@@ -414,6 +415,7 @@ describe("XtoY Tests", async function () {
     } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       genFees(8, true),
       true,
     );
@@ -602,7 +604,7 @@ describe("XtoY Tests", async function () {
       expect(cfmm1XBalance.toFixed()).to.be.equal(cfmm2XBalance.toFixed());
     }
   });
-  it.skip("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
+  it("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
     this.retries(3);
     const liquidity = new BigNumber(1e4);
     const lowerTickIndex = new Int(-100);
@@ -615,6 +617,7 @@ describe("XtoY Tests", async function () {
     const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       genFees(4, true),
     );
 
@@ -736,7 +739,7 @@ describe("XtoY Tests", async function () {
       expect(finalBalance).to.be.deep.eq(initialBalance);
     }
   });
-  it.skip("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async function () {
+  it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async function () {
     this.retries(3);
     const liquidity = new BigNumber(1e6);
     const lowerTickIndex = new Int(-1000);
@@ -759,6 +762,7 @@ describe("XtoY Tests", async function () {
     } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       [200, 200, 200, 200, 200, 200, 200, 200],
       true,
     );
@@ -858,7 +862,7 @@ describe("XtoY Tests", async function () {
       let batchOp = await sendBatch(tezos, transferParams);
       await confirmOperation(tezos, batchOp.opHash);
       transferParams = [];
-      console.log("firstInv");
+
       await checkAllInvariants(
         pool_1,
         { [alice.pkh]: aliceSigner },
@@ -1165,7 +1169,7 @@ describe("XtoY Tests", async function () {
       console.log("win");
     }
   });
-  it.skip("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async function () {
+  it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async function () {
     this.retries(3);
     const lowerTickIndex = new Int(-100);
     const upperTickIndex = new Int(100);
@@ -1177,6 +1181,7 @@ describe("XtoY Tests", async function () {
     const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       [200, 200, 200, 200],
     );
 
@@ -1263,7 +1268,7 @@ describe("XtoY Tests", async function () {
       );
     }
   });
-  it.skip("Should assigning correctly fees to each position", async function () {
+  it("Should assigning correctly fees to each position", async function () {
     this.retries(3);
     const liquidityProvider = aliceSigner;
     const swapper = bobSigner;
@@ -1274,6 +1279,7 @@ describe("XtoY Tests", async function () {
     const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
       tezos,
       [aliceSigner, bobSigner],
+      0,
       [5000, 5000, 5000, 5000],
     );
 
