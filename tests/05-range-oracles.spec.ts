@@ -1,81 +1,35 @@
-import { equal, notEqual, ok, rejects } from "assert";
+import { equal, rejects } from "assert";
 import { expect } from "chai";
 import { BigNumber } from "bignumber.js";
 
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallMode } from "@madfish/quipuswap-v3/dist/types";
-import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import {
-  sendBatch,
-  isInRangeNat,
-  isInRange,
-  initTimedCumulativesBuffer,
-  Timestamp,
-  entries,
-} from "@madfish/quipuswap-v3/dist/utils";
-import {
-  adjustScale,
-  calcSwapFee,
-  calcNewPriceX,
-  calcReceivedY,
-  shiftLeft,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
 
+import { adjustScale } from "@madfish/quipuswap-v3/dist/helpers/math";
+
+import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
 import {
-  checkAllInvariants,
-  checkCumulativesBufferInvariants,
-  checkCumulativesBufferTimeInvariants,
-} from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
-import {
-  advanceSecs,
-  collectFees,
-  compareStorages,
   evalSecondsPerLiquidityX128,
-  genFees,
-  genNatIds,
   getCumulativesInsideDiff,
-  getTypedBalance,
-  groupAdjacent,
-  moreBatchSwaps,
   sleep,
   validDeadline,
 } from "./helpers/utils";
-import { OperationEntry } from "@taquito/rpc";
-import { BatchWalletOperation } from "@taquito/taquito/dist/types/wallet/batch-operation";
 
 const alice = accounts.alice;
 const bob = accounts.bob;
 const peter = accounts.peter;
 const eve = accounts.eve;
-const sara = accounts.sara;
-const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-const eveSigner = new InMemorySigner(eve.sk);
 
 const minTickIndex = new Int(-1048575);
-const maxTickIndex = new Int(1048575);
 
 describe("Range oracles tests", async function () {
-  let poolFa12: QuipuswapV3;
-  let poolFa2: QuipuswapV3;
-  let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
-  let factory: DexFactory;
-  let fa12TokenX: FA12;
-  let fa12TokenY: FA12;
-  let fa2TokenX: FA2;
-  let fa2TokenY: FA2;
   before(async () => {
     tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
@@ -133,6 +87,7 @@ describe("Range oracles tests", async function () {
         await poolsFixture(tezos, [aliceSigner, bobSigner]);
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
         await pool.setPosition(
           new Int(0),
           new Int(10),
