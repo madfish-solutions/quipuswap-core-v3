@@ -25,7 +25,7 @@ import {
 } from "@madfish/quipuswap-v3/dist/helpers/math";
 
 import { checkAllInvariants } from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
 import {
   advanceSecs,
   collectFees,
@@ -38,7 +38,6 @@ import {
   getTypedBalance,
   inRange,
   safeSwap,
-  sleep,
   validDeadline,
 } from "./helpers/utils";
 
@@ -53,13 +52,11 @@ const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
 const peterSigner = new InMemorySigner(peter.sk);
 const eveSigner = new InMemorySigner(eve.sk);
-const carolSigner = new InMemorySigner(carol.sk);
 
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
-const tickSpacing = 1;
 
-describe.skip("Position Tests", async () => {
+describe("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -110,7 +107,7 @@ describe.skip("Position Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it.skip("Shouldn't setting position with lower_tick=upper_tick", async () => {
+    it("Shouldn't setting position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -128,7 +125,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with lower_tick>upper_tick", async () => {
+    it("Shouldn't setting a position with lower_tick>upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -146,7 +143,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with zero liquidity is a no-op", async () => {
+    it("Shouldn't setting a position with zero liquidity is a no-op", async () => {
       const prevLiquidity = (await poolFa12.getRawStorage()).liquidity;
       await poolFa12.setPosition(
         new BigNumber(-10),
@@ -161,7 +158,7 @@ describe.skip("Position Tests", async () => {
       const actualLiquidity = (await poolFa12.getRawStorage()).liquidity;
       deepEqual(prevLiquidity, actualLiquidity);
     });
-    it.skip("Shouldn't setting a position with wrong ticket witness", async () => {
+    it("Shouldn't setting a position with wrong ticket witness", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -227,7 +224,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with past the deadline", async () => {
+    it("Shouldn't setting a position with past the deadline", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -280,7 +277,7 @@ describe.skip("Position Tests", async () => {
         new BigNumber(1e7),
       );
     });
-    it.skip("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
+    it("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
       const poolAddress = await factory.deployPool(
         fa12TokenX.contract.address,
         "fa12",
@@ -288,6 +285,7 @@ describe.skip("Position Tests", async () => {
         "fa12",
         0,
         10,
+        0,
         MichelsonMap.fromLiteral({}),
       );
       const wrongPool = await new QuipuswapV3().init(tezos, poolAddress);
@@ -322,7 +320,7 @@ describe.skip("Position Tests", async () => {
           return true;
         };
     });
-    it.skip("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
+    it("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -359,7 +357,7 @@ describe.skip("Position Tests", async () => {
       }
     });
 
-    it.skip("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
+    it("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -407,7 +405,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
+    it("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const storage = await pool.getRawStorage();
         const liquidityDelta = 10_000;
@@ -451,7 +449,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't updating a non-existing position properly fails", async () => {
+    it("Shouldn't updating a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -470,7 +468,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't attempt to update a non-existing position properly fails", async () => {
+    it("Shouldn't attempt to update a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -499,7 +497,7 @@ describe.skip("Position Tests", async () => {
           new BigNumber(minTickIndex),
           new BigNumber(minTickIndex),
           new BigNumber(1e7),
-          new Date("2023-01-01").toString(),
+          validDeadline(),
           new BigNumber(1e7),
           new BigNumber(1e7),
         );
@@ -511,7 +509,7 @@ describe.skip("Position Tests", async () => {
             new BigNumber(1e7),
             bob.pkh,
             bob.pkh,
-            new Date("2023-01-01").toString(),
+            validDeadline(),
             new BigNumber(0),
             new BigNumber(0),
           ),
@@ -524,7 +522,7 @@ describe.skip("Position Tests", async () => {
     });
   });
   describe("Success cases", async () => {
-    it.skip("Should depositing and withdrawing the same amount of liquidity+", async () => {
+    it("Should depositing and withdrawing the same amount of liquidity+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -536,7 +534,7 @@ describe.skip("Position Tests", async () => {
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
         poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(4, true));
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(4, true));
       for (const pool of [_poolFa12, _poolFa2, _poolFa1_2, _poolFa2_1]) {
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -583,7 +581,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should adding liquidity twice is the same as adding it onc+", async () => {
+    it("Should adding liquidity twice is the same as adding it onc+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -599,7 +597,7 @@ describe.skip("Position Tests", async () => {
         poolFa2Dublicate: poolFa2Dublicate,
         poolFa1_2Dublicate: poolFa1_2Dublicate,
         poolFa2_1Dublicate: poolFa2_1Dublicate,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(8, true), true);
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
@@ -708,19 +706,15 @@ describe.skip("Position Tests", async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it.skip("Should be lowest and highest ticks cannot be garbage collected", async () => {
+    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
-        fa12TokenX: fa12TokenX,
-        fa12TokenY: fa12TokenY,
-        fa2TokenX: fa2TokenX,
-        fa2TokenY: fa2TokenY,
         poolFa12: poolFa12,
         poolFa2: poolFa2,
         poolFa1_2: poolFa1_2,
         poolFa2_1: poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(8, true), true);
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
       const sleep = (ms: number) =>
         new Promise(resolve => setTimeout(resolve, ms));
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -787,6 +781,7 @@ describe.skip("Position Tests", async () => {
     it("Should allow admins earning dev fees from swaps", async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = [5000, 5000, 5000, 5000];
+
       const swappers = [bobSigner, peterSigner];
       const devFeeRecipient = sara.pkh;
       const {
@@ -802,10 +797,12 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
+        0,
         fees,
         false,
         5000,
       );
+
       factory = _factory;
       fa12TokenX = _fa12TokenX;
       fa12TokenY = _fa12TokenY;
@@ -833,6 +830,7 @@ describe.skip("Position Tests", async () => {
           initialSt.constants.token_y,
           devFeeRecipient,
         );
+
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -914,7 +912,8 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
+    it("Should allow Liquidity Providers earning fees from swaps", async () => {
+      tezos.setSignerProvider(aliceSigner);
       const fees = genFees(4);
       const swappers = [bobSigner, peterSigner];
       const {
@@ -930,7 +929,9 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
+        0,
         fees,
+        false,
       );
       factory = _factory;
       fa12TokenX = _fa12TokenX;
@@ -972,9 +973,11 @@ describe.skip("Position Tests", async () => {
         );
         let xFees: BigNumber = new BigNumber(0);
         let yFees: BigNumber = new BigNumber(0);
+
         for (const swapper of swappers) {
           const initialSt = await pool.getRawStorage();
           const feeBps = initialSt.constants.fee_bps;
+
           tezos.setSignerProvider(swapper);
           const swapperAddr = await swapper.publicKeyHash();
           await pool.swapXY(
@@ -997,7 +1000,9 @@ describe.skip("Position Tests", async () => {
           yFees = yFees.plus(yFee);
         }
         tezos.setSignerProvider(aliceSigner);
-        await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
+
+        await collectFees(pool, eve.pkh, [new Nat(0)]);
+
         const eveBalanceX = (
           await getTypedBalance(
             tezos,
@@ -1014,6 +1019,7 @@ describe.skip("Position Tests", async () => {
             eve.pkh,
           )
         ).minus(prevEveBalanceY);
+
         ok(isInRangeNat(eveBalanceX, xFees, new Nat(1), new Nat(0)));
         ok(isInRangeNat(eveBalanceY, yFees, new Nat(1), new Nat(0)));
         /**  Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable. */
@@ -1027,7 +1033,8 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
+    it("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
+      tezos.setSignerProvider(aliceSigner);
       const fees = [
         Math.floor(Math.random() * 1e4),
         Math.floor(Math.random() * 1e4),
@@ -1048,6 +1055,7 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner, eveSigner],
+        0,
         fees,
       );
       factory = _factory;
@@ -1060,6 +1068,7 @@ describe.skip("Position Tests", async () => {
       poolFa1_2 = _poolFa1_2;
       poolFa2_1 = _poolFa2_1;
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -1115,8 +1124,7 @@ describe.skip("Position Tests", async () => {
         for (const swapper of swappers) {
           const initialSt = await pool.getRawStorage();
           const feeBps = initialSt.constants.fee_bps;
-          const prevXFeeBalance = initialSt.fee_growth.x;
-          const prevYFeeBalance = initialSt.fee_growth.y;
+
           tezos.setSignerProvider(swapper);
           const swapperAddr = await swapper.publicKeyHash();
           await pool.swapXY(
@@ -1131,23 +1139,14 @@ describe.skip("Position Tests", async () => {
             new BigNumber(1),
             swapperAddr,
           );
-          const storage = await pool.getRawStorage();
-          const xFeeBalance = storage.fee_growth.x;
-          const yFeeBalance = storage.fee_growth.y;
           const xFee = calcSwapFee(feeBps, transferAmount);
           const yFee = calcSwapFee(feeBps, transferAmount);
           xFees = xFees.plus(xFee);
           yFees = yFees.plus(yFee);
         }
-        const st = await pool.getRawStorage();
-        const poolSt = await pool.getStorage();
         const upperTi = new Int(10000);
         const lowerTi = new Int(-10000);
-        const st2 = await pool.getStorage(
-          [(new Nat(0), new Nat(1))],
-          [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
-          [new Nat(0), new Nat(1), new Nat(2), new Nat(3), new Nat(4)],
-        );
+
         await checkAllInvariants(
           pool,
           { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
@@ -1155,8 +1154,10 @@ describe.skip("Position Tests", async () => {
           [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
           genNatIds(50),
         );
-        tezos.setSignerProvider(aliceSigner);
+
+        tezos.setSignerProvider(eveSigner);
         await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
+        tezos.setSignerProvider(aliceSigner);
         await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
         const eveBalanceX = (
           await getTypedBalance(
@@ -1203,6 +1204,7 @@ describe.skip("Position Tests", async () => {
             new BigNumber(0),
           ),
         );
+
         ok(
           isInRangeNat(
             eveBalanceY,
@@ -1229,7 +1231,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Liquidity Providers do not receive past fees", async () => {
+    it("Liquidity Providers do not receive past fees", async () => {
       const swapper = peterSigner;
       const feeReceiver1 = carol.pkh;
       const feeReceiver2 = sara.pkh;
@@ -1246,6 +1248,7 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
+        0,
         genFees(4),
       );
 
@@ -1265,8 +1268,6 @@ describe.skip("Position Tests", async () => {
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
         const feeBps = initialSt.constants.fee_bps;
-        const prevXFeeBalance = initialSt.fee_growth.x;
-        const prevYFeeBalance = initialSt.fee_growth.y;
         const prevfeeReceiver1BalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
@@ -1320,8 +1321,6 @@ describe.skip("Position Tests", async () => {
         );
 
         const storage = await pool.getRawStorage();
-        const xFeeBalance = storage.fee_growth.x;
-        const yFeeBalance = storage.fee_growth.y;
         const prevXBefore = calcSwapFee(feeBps, transferAmountB);
         const prevYBefore = calcSwapFee(feeBps, transferAmountB);
         tezos.setSignerProvider(bobSigner);
@@ -1352,8 +1351,6 @@ describe.skip("Position Tests", async () => {
         );
 
         const storage2 = await pool.getRawStorage();
-        const xFeeBalance2 = storage2.fee_growth.x;
-        const yFeeBalance2 = storage2.fee_growth.y;
         const prevXAfter = calcSwapFee(feeBps, transferAmountA);
         const prevYAfter = calcSwapFee(feeBps, transferAmountA);
         await checkAllInvariants(
@@ -1372,7 +1369,7 @@ describe.skip("Position Tests", async () => {
         await collectFees(pool, feeReceiver1, [new BigNumber(0)]);
         tezos.setSignerProvider(bobSigner);
         await collectFees(pool, feeReceiver2, [new BigNumber(1)]);
-        const st = await pool.getRawStorage();
+
         const feeReceiver1BalanceX = await getTypedBalance(
           tezos,
           tokenTypeX,
@@ -1442,15 +1439,14 @@ describe.skip("Position Tests", async () => {
           ],
           genNatIds(50),
         );
-        // (xFeesBefore, yFeesBefore) <- placeSwaps beforeSwaps from Haskel to TS
       }
     });
-    it.skip("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
+    it("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const swappers = [bobSigner, peterSigner];
       const feeReceiver = sara.pkh;
-      //const cerychSigner = new InMemorySigner(accounts.peter.sk);
+
       const {
         factory: _factory,
         fa12TokenX: _fa12TokenX,
@@ -1464,6 +1460,7 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, peterSigner, bobSigner],
+        0,
         genFees(4, false),
       );
 
@@ -1564,7 +1561,6 @@ describe.skip("Position Tests", async () => {
           initialSt.constants.token_y,
           feeReceiver,
         );
-        //let PerToken xDelta yDelta = liquidityDeltaToTokensDelta (fromIntegral liquidityDelta) lowerTickIndex upperTickIndex (sCurTickIndexRPC st) (sSqrtPriceRPC st)
         const liquidityDelta = liquidityDeltaToTokensDelta(
           new Int(1e7),
           new Int(lowerTickIndex),
@@ -1602,7 +1598,7 @@ describe.skip("Position Tests", async () => {
         strictEqual(feeReceiverBalanceY.toFixed(), "0");
       }
     });
-    it.skip("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
+    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const liquidityDelta = new BigNumber(1e7);
@@ -1624,6 +1620,7 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, eveSigner, bobSigner],
+        0,
         [50_00, 50_00, 50_00, 50_00],
       );
       factory = _factory;
@@ -1786,7 +1783,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
+    it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1797,17 +1794,12 @@ describe.skip("Position Tests", async () => {
       let ti2 = new Int(50);
       let ti3 = new Int(100);
       let ti4 = new Int(150);
-      const {
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+        0,
+        genFees(4),
+      );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(liquidityProvider);
@@ -1914,7 +1906,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should initializing correctly position", async () => {
+    it("Should initializing correctly position", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1924,17 +1916,12 @@ describe.skip("Position Tests", async () => {
         { length: createPositionData.length },
         () => genSwapDirection(),
       );
-      const {
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+        0,
+        genFees(4),
+      );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await pool.increaseObservationCount(new BigNumber(1));
