@@ -522,6 +522,192 @@ describe("Position Tests", async () => {
     });
   });
   describe("Success cases", async () => {
+    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const lowerTickIndex = -10000;
+      const upperTickIndex = 10000;
+      const liquidityDelta = new BigNumber(1e7);
+      const swapper = bobSigner;
+      const liquidityProvider1 = aliceSigner;
+      const liquidityProvider2 = eveSigner;
+      const receiver1 = sara.pkh;
+      const receiver2 = dave.pkh;
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, eveSigner, bobSigner],
+        0,
+        [50_00, 50_00, 50_00, 50_00],
+      );
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      const swapData = [
+        { swapDirection: "XToY", swapAmt: new BigNumber(1000) },
+        { swapDirection: "YToX", swapAmt: new BigNumber(3000) },
+        { swapDirection: "XToY", swapAmt: new BigNumber(400) },
+      ];
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+        tezos.setSignerProvider(liquidityProvider1);
+        await pool.setPosition(
+          new BigNumber(lowerTickIndex),
+          new BigNumber(upperTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        tezos.setSignerProvider(liquidityProvider2);
+        await pool.setPosition(
+          new BigNumber(lowerTickIndex),
+          new BigNumber(upperTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        tezos.setSignerProvider(bobSigner);
+        const swapperAddr = await swapper.publicKeyHash();
+        const newCallSettings: CallSettings = {
+          swapXY: CallMode.returnParams,
+          swapYX: CallMode.returnParams,
+          setPosition: CallMode.returnParams,
+          updatePosition: CallMode.returnConfirmatedOperation,
+          transfer: CallMode.returnParams,
+          updateOperators: CallMode.returnParams,
+          increaseObservationCount: CallMode.returnConfirmatedOperation,
+        };
+        pool.setCallSetting(newCallSettings);
+        let transferParams: any = [];
+        for (const { swapDirection, swapAmt } of swapData) {
+          switch (swapDirection) {
+            case "XToY":
+              transferParams.push(
+                await pool.swapXY(
+                  swapAmt,
+                  validDeadline(),
+                  new BigNumber(1),
+                  swapperAddr,
+                ),
+              );
+              break;
+            default:
+              transferParams.push(
+                await pool.swapYX(
+                  swapAmt,
+                  validDeadline(),
+                  new BigNumber(1),
+                  swapperAddr,
+                ),
+              );
+          }
+        }
+
+        const swapOps = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, swapOps.opHash);
+        // -- Liquidate the position all at once
+        //withSender liquidityProvider1 $ updatePosition cfmm receiver1 (- toInteger liquidityDelta) 0
+        tezos.setSignerProvider(liquidityProvider1);
+        await pool.updatePosition(
+          new BigNumber(0),
+          new BigNumber(-liquidityDelta),
+          receiver1,
+          receiver1,
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        // -- Liquidate the position in small steps
+        //  -- Doing all 10 calls in one batch may go over the gas limit,
+        //  -- so we do it in 2 batches of 5 instead.
+        newCallSettings.updatePosition = CallMode.returnParams;
+        pool.setCallSetting(newCallSettings);
+        tezos.setSignerProvider(liquidityProvider2);
+        const updatePositionParams: any = [];
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 5; j++) {
+            updatePositionParams.push(
+              await pool.updatePosition(
+                new BigNumber(1),
+                new BigNumber(-liquidityDelta.div(10)),
+                receiver2,
+                receiver2,
+                validDeadline(),
+                new BigNumber(1e7),
+                new BigNumber(1e7),
+              ),
+            );
+          }
+        }
+        const updatePositionOps = await sendBatch(tezos, updatePositionParams);
+        await confirmOperation(tezos, updatePositionOps.opHash);
+        // -- Check that the balances are the same
+        const balanceReceiver1X = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          receiver1,
+        );
+        const balanceReceiver1Y = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          receiver1,
+        );
+        const balanceReceiver2X = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          receiver2,
+        );
+        const balanceReceiver2Y = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          receiver2,
+        );
+        // -- Liquidating in 10 smaller steps may lead
+        // -- to `receiver2` receiving up to 10 fewer tokens due to rounding errors.
+        ok(
+          isInRangeNat(
+            balanceReceiver2X,
+            balanceReceiver1X,
+            new BigNumber(10),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            balanceReceiver2Y,
+            balanceReceiver1Y,
+            new BigNumber(10),
+            new BigNumber(0),
+          ),
+        );
+      }
+    });
     it("Should depositing and withdrawing the same amount of liquidity+", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
@@ -1597,192 +1783,6 @@ describe("Position Tests", async () => {
          */
         strictEqual(feeReceiverBalanceX.toFixed(), "0");
         strictEqual(feeReceiverBalanceY.toFixed(), "0");
-      }
-    });
-    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
-      tezos.setSignerProvider(aliceSigner);
-      const lowerTickIndex = -10000;
-      const upperTickIndex = 10000;
-      const liquidityDelta = new BigNumber(1e7);
-      const swapper = bobSigner;
-      const liquidityProvider1 = aliceSigner;
-      const liquidityProvider2 = eveSigner;
-      const receiver1 = sara.pkh;
-      const receiver2 = dave.pkh;
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(
-        tezos,
-        [aliceSigner, eveSigner, bobSigner],
-        0,
-        [50_00, 50_00, 50_00, 50_00],
-      );
-      factory = _factory;
-      fa12TokenX = _fa12TokenX;
-      fa12TokenY = _fa12TokenY;
-      fa2TokenX = _fa2TokenX;
-      fa2TokenY = _fa2TokenY;
-      poolFa12 = _poolFa12;
-      poolFa2 = _poolFa2;
-      poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      const swapData = [
-        { swapDirection: "XToY", swapAmt: new BigNumber(1000) },
-        { swapDirection: "YToX", swapAmt: new BigNumber(3000) },
-        { swapDirection: "XToY", swapAmt: new BigNumber(400) },
-      ];
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-        tezos.setSignerProvider(liquidityProvider1);
-        await pool.setPosition(
-          new BigNumber(lowerTickIndex),
-          new BigNumber(upperTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        tezos.setSignerProvider(liquidityProvider2);
-        await pool.setPosition(
-          new BigNumber(lowerTickIndex),
-          new BigNumber(upperTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        tezos.setSignerProvider(bobSigner);
-        const swapperAddr = await swapper.publicKeyHash();
-        const newCallSettings: CallSettings = {
-          swapXY: CallMode.returnParams,
-          swapYX: CallMode.returnParams,
-          setPosition: CallMode.returnParams,
-          updatePosition: CallMode.returnConfirmatedOperation,
-          transfer: CallMode.returnParams,
-          updateOperators: CallMode.returnParams,
-          increaseObservationCount: CallMode.returnConfirmatedOperation,
-        };
-        pool.setCallSetting(newCallSettings);
-        let transferParams: any = [];
-        for (const { swapDirection, swapAmt } of swapData) {
-          switch (swapDirection) {
-            case "XToY":
-              transferParams.push(
-                await pool.swapXY(
-                  swapAmt,
-                  validDeadline(),
-                  new BigNumber(1),
-                  swapperAddr,
-                ),
-              );
-              break;
-            default:
-              transferParams.push(
-                await pool.swapYX(
-                  swapAmt,
-                  validDeadline(),
-                  new BigNumber(1),
-                  swapperAddr,
-                ),
-              );
-          }
-        }
-
-        const swapOps = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, swapOps.opHash);
-        // -- Liquidate the position all at once
-        //withSender liquidityProvider1 $ updatePosition cfmm receiver1 (- toInteger liquidityDelta) 0
-        tezos.setSignerProvider(liquidityProvider1);
-        await pool.updatePosition(
-          new BigNumber(0),
-          new BigNumber(-liquidityDelta),
-          receiver1,
-          receiver1,
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        // -- Liquidate the position in small steps
-        //  -- Doing all 10 calls in one batch may go over the gas limit,
-        //  -- so we do it in 2 batches of 5 instead.
-        newCallSettings.updatePosition = CallMode.returnParams;
-        pool.setCallSetting(newCallSettings);
-        tezos.setSignerProvider(liquidityProvider2);
-        const updatePositionParams: any = [];
-        for (let i = 0; i < 2; i++) {
-          for (let j = 0; j < 5; j++) {
-            updatePositionParams.push(
-              await pool.updatePosition(
-                new BigNumber(1),
-                new BigNumber(-liquidityDelta.div(10)),
-                receiver2,
-                receiver2,
-                validDeadline(),
-                new BigNumber(1e7),
-                new BigNumber(1e7),
-              ),
-            );
-          }
-        }
-        const updatePositionOps = await sendBatch(tezos, updatePositionParams);
-        await confirmOperation(tezos, updatePositionOps.opHash);
-        // -- Check that the balances are the same
-        const balanceReceiver1X = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          receiver1,
-        );
-        const balanceReceiver1Y = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          receiver1,
-        );
-        const balanceReceiver2X = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          receiver2,
-        );
-        const balanceReceiver2Y = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          receiver2,
-        );
-        // -- Liquidating in 10 smaller steps may lead
-        // -- to `receiver2` receiving up to 10 fewer tokens due to rounding errors.
-        ok(
-          isInRangeNat(
-            balanceReceiver2X,
-            balanceReceiver1X,
-            new BigNumber(10),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            balanceReceiver2Y,
-            balanceReceiver1Y,
-            new BigNumber(10),
-            new BigNumber(0),
-          ),
-        );
       }
     });
     it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
