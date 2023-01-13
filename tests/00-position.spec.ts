@@ -1442,6 +1442,7 @@ describe("Position Tests", async () => {
       }
     });
     it("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
+      tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const swappers = [bobSigner, peterSigner];
@@ -1599,6 +1600,7 @@ describe("Position Tests", async () => {
       }
     });
     it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
+      tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const liquidityDelta = new BigNumber(1e7);
