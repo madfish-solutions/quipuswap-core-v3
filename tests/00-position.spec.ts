@@ -56,7 +56,7 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
-describe.skip("Position Tests", async () => {
+describe("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -767,7 +767,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it("Should adding liquidity twice is the same as adding it onc+", async () => {
+    it("Should adding liquidity twice is the same as adding it oncе", async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
