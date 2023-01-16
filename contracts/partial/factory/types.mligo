@@ -1,7 +1,6 @@
 type pool_key_t =
     [@layout:comb] {
     fee_bps : nat ;
-    dev_fee_bps: nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
 }

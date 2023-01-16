@@ -4,7 +4,6 @@ let deploy_pool (s, p : factory_storage_t * create_dex_t) : return_t =
 
     let pool_key = {
         fee_bps = p.fee_bps ;
-        dev_fee_bps = s.dev_fee_bps ;
         token_x = p.token_x ;
         token_y = p.token_y ;
     } in
@@ -22,7 +21,7 @@ let deploy_pool (s, p : factory_storage_t * create_dex_t) : return_t =
     ([create_op], s)
 
 let set_dev_fee (s, p : factory_storage_t * nat) : return_t =
-    let _checkOwner = if owner <> (Tezos.get_sender ())
+    let _checkOwner = if s.owner <> (Tezos.get_sender ())
         then failwith not_owner_err in
 
     let _checkFee = if p >= 10000n
