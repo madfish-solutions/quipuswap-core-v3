@@ -1,7 +1,16 @@
+type pool_key_t =
+    [@layout:comb] {
+    fee_bps : nat ;
+    dev_fee_bps: nat ;
+    token_x : asset_standard_t;
+    token_y : asset_standard_t;
+}
+
 type factory_storage_t = {
   owner: address;
   pool_count: nat;
   pools: (nat, address) big_map;
+  pool_ids: (pool_key_t, nat) big_map;
   dev_fee_bps : nat;
 }
 
@@ -21,4 +30,4 @@ type create_dex_t =
 
 type parameter_t =
 | Deploy_pool of create_dex_t
-| Default     of unit
+| Set_dev_fee of nat
