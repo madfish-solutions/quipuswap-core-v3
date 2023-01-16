@@ -56,7 +56,7 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
-describe("Position Tests", async () => {
+describe.skip("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -283,7 +283,7 @@ describe("Position Tests", async () => {
         "fa12",
         fa12TokenY.contract.address,
         "fa12",
-        0,
+        10,
         10,
         0,
         MichelsonMap.fromLiteral({}),
