@@ -57,11 +57,6 @@ describe("XtoY Tests", async function () {
   let poolFa1_2: QuipuswapV3;
   let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
-  let factory: DexFactory;
-  let fa12TokenX: FA12;
-  let fa12TokenY: FA12;
-  let fa2TokenX: FA2;
-  let fa2TokenY: FA2;
   before(async () => {
     tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
@@ -77,11 +72,6 @@ describe("XtoY Tests", async function () {
       poolFa1_2: _poolFa1_2,
       poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
-    factory = _factory;
-    fa12TokenX = _fa12TokenX;
-    fa12TokenY = _fa12TokenY;
-    fa2TokenX = _fa2TokenX;
-    fa2TokenY = _fa2TokenY;
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;

@@ -1,34 +1,19 @@
-import { equal, notEqual, ok, rejects } from "assert";
+import { equal, rejects } from "assert";
 
-import { BigNumber } from "bignumber.js";
-
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
+import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
 
 import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
-import { validDeadline } from "./helpers/utils";
-import { fa12Storage } from "./../storage/test/FA12";
-import { fa2Storage } from "./../storage/test/FA2";
+import { Int } from "@madfish/quipuswap-v3/dist/types";
 
 const alice = accounts.alice;
 const bob = accounts.bob;
-const peter = accounts.peter;
-const eve = accounts.eve;
-const sara = accounts.sara;
-const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-const eveSigner = new InMemorySigner(eve.sk);
-
-const minTickIndex = new Int(-1048575);
 
 describe("Factory Tests", async function () {
   let tezos: TezosToolkit;
@@ -42,8 +27,6 @@ describe("Factory Tests", async function () {
   });
   describe("Failed cases", async () => {
     it("Shouldn't creating pool with too high fee bps", async function () {
-      const xTokenType = "fa12";
-      const yTokenType = "fa12";
       await rejects(
         factory.deployPool(
           alice.pkh,
@@ -115,17 +98,8 @@ describe("Factory Tests", async function () {
       equal(storage.dev_fee_bps.toNumber(), 1);
     });
     it("Should creating many pools", async function () {
-      const {
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
+      const { factory, poolFa12, poolFa2, poolFa1_2, poolFa2_1 } =
+        await poolsFixture(tezos, [aliceSigner, bobSigner]);
       const storage: any = await factory.contract.storage();
       const poolFa12Storage: any = await poolFa12.contract.storage();
       const poolFa2Storage: any = await poolFa2.contract.storage();
