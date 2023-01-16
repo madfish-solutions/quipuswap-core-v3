@@ -228,6 +228,36 @@ describe("FA2 Tests", async function () {
     });
   });
   describe("Success cases", async () => {
+    it("Should allow get balance of", async function () {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
+        const balance = await pool.contract.views
+          .balance_of([{ owner: alice.pkh, token_id: "0" }])
+          .read();
+        equal(balance[0].balance.toNumber() > 0, true);
+      }
+    });
+    it("Should allow selt-to-self transfer", async () => {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
+        await pool.transfer([
+          {
+            from_: alice.pkh,
+            txs: [
+              {
+                to_: alice.pkh,
+                token_id: new BigNumber(0),
+                amount: new BigNumber(1),
+              },
+            ],
+          },
+        ]);
+        const st = await pool.getStorage([new Nat(0), new Nat(1)]);
+        const transferedPosition = st.positions.get(new Nat(1));
+
+        equal(transferedPosition.owner, alice.pkh);
+      }
+    });
     it("Should allow transfer position", async function () {
       tezos.setSignerProvider(aliceSigner);
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -305,24 +335,6 @@ describe("FA2 Tests", async function () {
 
         equal(updatedPosition.owner, eve.pkh);
 
-        await rejects(
-          pool.transfer([
-            {
-              from_: alice.pkh,
-              txs: [
-                {
-                  to_: alice.pkh,
-                  token_id: new BigNumber(1),
-                  amount: new BigNumber(1),
-                },
-              ],
-            },
-          ]),
-          (err: Error) => {
-            equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
-            return true;
-          },
-        );
         tezos.setSignerProvider(aliceSigner);
         await rejects(
           pool.transfer([
@@ -412,15 +424,6 @@ describe("FA2 Tests", async function () {
             ],
           },
         ]);
-      }
-    });
-    it("Should allow get balance of", async function () {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        tezos.setSignerProvider(aliceSigner);
-        const balance = await pool.contract.views
-          .balance_of([{ owner: alice.pkh, token_id: "0" }])
-          .read();
-        equal(balance[0].balance.toNumber() >= 0, true);
       }
     });
   });
