@@ -128,6 +128,42 @@ describe("YtoX Tests", async () => {
         );
       }
     });
+    it("Shouldn't swap if the user would receiver less than min_dx", async function () {
+      const liquidityProvider = aliceSigner;
+      const swapper = bobSigner;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const liquidity = new BigNumber(1e7);
+
+        const lowerTickIndex = new Int(-1000);
+        const upperTickIndex = new Int(1000);
+
+        tezos.setSignerProvider(liquidityProvider);
+        await pool.setPosition(
+          lowerTickIndex,
+          upperTickIndex,
+          minTickIndex,
+          minTickIndex,
+          liquidity,
+          validDeadline(),
+          liquidity,
+          liquidity,
+        );
+
+        tezos.setSignerProvider(swapper);
+        await rejects(
+          pool.swapYX(
+            new BigNumber(1),
+            validDeadline(),
+            new BigNumber(1000),
+            eve.pkh,
+          ),
+          (err: Error) => {
+            equal(err.message.includes("104"), true);
+            return true;
+          },
+        );
+      }
+    });
   });
   describe("Success cases", async function () {
     it("Should swapping within a single tick range", async () => {
@@ -135,7 +171,6 @@ describe("YtoX Tests", async () => {
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
       const liquidityProvider = aliceSigner;
-      const liquidityProviderAddr = alice.pkh;
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
       const swapReceiver = sara.pkh;
@@ -1227,6 +1262,134 @@ describe("YtoX Tests", async () => {
           ],
           genNatIds(10),
         );
+      }
+    });
+    it("Should assigning correctly fees to each position", async function () {
+      this.retries(3);
+      const liquidityProvider = aliceSigner;
+      const swapper = bobSigner;
+      const swapperAddr = bob.pkh;
+      const feeReceiver1 = sara.pkh;
+      const feeReceiver2 = carol.pkh;
+
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+        0,
+        [5000, 5000, 5000, 5000],
+      );
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const rawSt = await pool.getRawStorage();
+        tezos.setSignerProvider(liquidityProvider);
+        const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(rawSt.constants.token_y)[0];
+        let transferParams: any[] = [];
+        pool.callSettings.setPosition = CallMode.returnParams;
+        transferParams.push(
+          await pool.setPosition(
+            new Int(-100),
+            new Int(100),
+            minTickIndex,
+            minTickIndex,
+            new BigNumber(1e6),
+            validDeadline(),
+            new BigNumber(1e6),
+            new BigNumber(1e6),
+          ),
+          await pool.setPosition(
+            new Int(100),
+            new Int(200),
+            minTickIndex,
+            minTickIndex,
+            new BigNumber(1e6),
+            validDeadline(),
+            new BigNumber(1e6),
+            new BigNumber(1e6),
+          ),
+        );
+        let batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+        transferParams = [];
+        tezos.setSignerProvider(swapper);
+        //Place a small x-to-y swap.
+        //It's small enough to be executed within the [-100, 100] range,
+        //so the X fee is paid to position1 only.
+
+        pool.callSettings.swapXY = CallMode.returnParams;
+        pool.callSettings.swapYX = CallMode.returnParams;
+        transferParams.push(
+          await pool.swapXY(
+            new BigNumber(1000),
+            validDeadline(),
+            new BigNumber(0),
+            swapperAddr,
+          ),
+        );
+        //Place a big y-to-x swap.
+        //It's big enough to cross from the [-100, 100] range into the [100, 200] range,
+        //so the Y fee is paid to both position1 and position2.
+        transferParams.push(
+          await pool.swapYX(
+            new BigNumber(20000),
+            validDeadline(),
+            new BigNumber(0),
+            swapperAddr,
+          ),
+        );
+        batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+        pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
+        await checkAllInvariants(
+          pool,
+          [liquidityProvider],
+          genNatIds(2),
+          [
+            minTickIndex,
+            new Int(-100),
+            new Int(100),
+            new Int(200),
+            maxTickIndex,
+          ],
+          genNatIds(50),
+        );
+
+        // position1 should have earned both X and Y fees.
+        tezos.setSignerProvider(liquidityProvider);
+        await collectFees(pool, feeReceiver1, [new Nat(0)]);
+        const balanceFeeReceiverX_1 = await getTypedBalance(
+          pool.tezos,
+          tokenTypeX,
+          rawSt.constants.token_x,
+          feeReceiver1,
+        );
+        const balanceFeeReceiverY_1 = await getTypedBalance(
+          pool.tezos,
+          tokenTypeY,
+          rawSt.constants.token_y,
+          feeReceiver1,
+        );
+
+        expect(balanceFeeReceiverX_1.toFixed()).to.be.not.eq("0");
+        expect(balanceFeeReceiverY_1.toFixed()).to.be.not.eq("0");
+
+        // position2 should have earned X fees only.
+        await collectFees(pool, feeReceiver2, [new Nat(1)]);
+        const balanceFeeReceiverX_2 = await getTypedBalance(
+          pool.tezos,
+          tokenTypeX,
+          rawSt.constants.token_x,
+          feeReceiver2,
+        );
+        const balanceFeeReceiverY_2 = await getTypedBalance(
+          pool.tezos,
+          tokenTypeY,
+          rawSt.constants.token_y,
+          feeReceiver2,
+        );
+
+        expect(balanceFeeReceiverX_2.toFixed()).to.be.eq("0");
+        expect(balanceFeeReceiverY_2.toFixed()).to.be.not.eq("0");
       }
     });
   });
