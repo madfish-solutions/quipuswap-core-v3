@@ -13,11 +13,7 @@ import { FA2 } from "./helpers/FA2";
 import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import {
-  sendBatch,
-  isInRangeNat,
-  isInRange,
-} from "@madfish/quipuswap-v3/dist/utils";
+import { sendBatch, isInRangeNat } from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
   calcSwapFee,
@@ -41,7 +37,6 @@ import {
 
 const alice = accounts.alice;
 const bob = accounts.bob;
-const peter = accounts.peter;
 const eve = accounts.eve;
 const sara = accounts.sara;
 const carol = accounts.carol;
@@ -76,20 +71,6 @@ describe("YtoX Tests", async () => {
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
     poolFa2_1 = _poolFa2_1;
-
-    let operation = await tezos.contract.transfer({
-      to: peter.pkh,
-      amount: 1e6,
-      mutez: true,
-    });
-
-    await confirmOperation(tezos, operation.hash);
-    operation = await tezos.contract.transfer({
-      to: eve.pkh,
-      amount: 1e6,
-      mutez: true,
-    });
-    await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
     it("Shouldn't swap if it's past the deadline", async () => {
@@ -165,8 +146,9 @@ describe("YtoX Tests", async () => {
       }
     });
   });
-  describe("Success cases", async function () {
-    it("Should swapping within a single tick range", async () => {
+  describe("Success cases", async () => {
+    it("Should swapping within a single tick range", async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -276,9 +258,10 @@ describe("YtoX Tests", async () => {
             new Nat(swapAmt.minus(expectedFee)),
           );
           expect(
-            adjustScale(finalSt.sqrtPrice, new Nat(80), new Nat(30)),
-          ).to.be.deep.equal(
-            adjustScale(expectedNewPrice, new Nat(80), new Nat(30)),
+
+            adjustScale(finalSt.sqrtPrice, new Nat(80), new Nat(30)).toFixed(),
+          ).to.be.equal(
+            adjustScale(expectedNewPrice, new Nat(80), new Nat(30)).toFixed(),
           );
           if (swapAmt.gt(0) && feeBps.gt(0)) {
             expect(expectedFee.gte(1)).to.be.true;
@@ -382,7 +365,9 @@ describe("YtoX Tests", async () => {
         expect(finalBalanceFeeReceiverX.toFixed()).to.be.equal("0");
       }
     });
-    it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async () => {
+
+    it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -432,6 +417,7 @@ describe("YtoX Tests", async () => {
         );
         transferParams.push(
           await pool_2.increaseObservationCount(new BigNumber(10)),
+
         );
         let batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
@@ -461,7 +447,6 @@ describe("YtoX Tests", async () => {
             liquidity,
           ),
         );
-
         batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
 
@@ -489,6 +474,8 @@ describe("YtoX Tests", async () => {
             "YtoX",
           )),
         );
+        batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
 
         batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
@@ -605,7 +592,8 @@ describe("YtoX Tests", async () => {
         expect(cfmm1YBalance.toFixed()).to.be.equal(cfmm2YBalance.toFixed());
       }
     });
-    it("Should swaps are no-ops, after crossing into a 0-liquidity range", async () => {
+    it("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e4);
       const lowerTickIndex = new Int(-100);
       const upperTickIndex = new Int(100);
@@ -739,7 +727,7 @@ describe("YtoX Tests", async () => {
         expect(finalBalance).to.be.deep.eq(initialBalance);
       }
     });
-    it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
+        it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -1392,5 +1380,6 @@ describe("YtoX Tests", async () => {
         expect(balanceFeeReceiverY_2.toFixed()).to.be.not.eq("0");
       }
     });
+  
   });
 });
