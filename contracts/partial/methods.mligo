@@ -1,5 +1,5 @@
 let claim_dev_fee (s : storage) (recipient : address) : result =
-    let owner = unwrap (Tezos.call_view "%get_owner" unit s.constants.factory_address : address option ) "not_owner" in
+    let owner = unwrap (Tezos.call_view "get_owner" unit s.constants.factory_address : address option ) "not_get_owner" in
     let _: unit = if Tezos.get_sender () <> owner
         then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
             (not_owner_err : nat) : unit)

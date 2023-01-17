@@ -25,7 +25,7 @@ import {
 } from "@madfish/quipuswap-v3/dist/helpers/math";
 
 import { checkAllInvariants } from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
 import {
   advanceSecs,
   collectFees,
@@ -38,7 +38,6 @@ import {
   getTypedBalance,
   inRange,
   safeSwap,
-  sleep,
   validDeadline,
 } from "./helpers/utils";
 
@@ -53,13 +52,11 @@ const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
 const peterSigner = new InMemorySigner(peter.sk);
 const eveSigner = new InMemorySigner(eve.sk);
-const carolSigner = new InMemorySigner(carol.sk);
 
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
-const tickSpacing = 1;
 
-describe.skip("Position Tests", async () => {
+describe("Position Tests", async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -110,7 +107,7 @@ describe.skip("Position Tests", async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe("Failed cases", async () => {
-    it.skip("Shouldn't setting position with lower_tick=upper_tick", async () => {
+    it("Shouldn't setting position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -128,7 +125,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with lower_tick>upper_tick", async () => {
+    it("Shouldn't setting a position with lower_tick>upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -146,7 +143,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with zero liquidity is a no-op", async () => {
+    it("Shouldn't setting a position with zero liquidity is a no-op", async () => {
       const prevLiquidity = (await poolFa12.getRawStorage()).liquidity;
       await poolFa12.setPosition(
         new BigNumber(-10),
@@ -161,7 +158,7 @@ describe.skip("Position Tests", async () => {
       const actualLiquidity = (await poolFa12.getRawStorage()).liquidity;
       deepEqual(prevLiquidity, actualLiquidity);
     });
-    it.skip("Shouldn't setting a position with wrong ticket witness", async () => {
+    it("Shouldn't setting a position with wrong ticket witness", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -227,7 +224,7 @@ describe.skip("Position Tests", async () => {
         },
       );
     });
-    it.skip("Shouldn't setting a position with past the deadline", async () => {
+    it("Shouldn't setting a position with past the deadline", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(-10),
@@ -280,14 +277,15 @@ describe.skip("Position Tests", async () => {
         new BigNumber(1e7),
       );
     });
-    it.skip("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
+    it("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
       const poolAddress = await factory.deployPool(
         fa12TokenX.contract.address,
         "fa12",
         fa12TokenY.contract.address,
         "fa12",
-        0,
         10,
+        10,
+        0,
         MichelsonMap.fromLiteral({}),
       );
       const wrongPool = await new QuipuswapV3().init(tezos, poolAddress);
@@ -322,7 +320,7 @@ describe.skip("Position Tests", async () => {
           return true;
         };
     });
-    it.skip("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
+    it("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -359,7 +357,7 @@ describe.skip("Position Tests", async () => {
       }
     });
 
-    it.skip("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
+    it("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.setPosition(
@@ -407,7 +405,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
+    it("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const storage = await pool.getRawStorage();
         const liquidityDelta = 10_000;
@@ -451,7 +449,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't updating a non-existing position properly fails", async () => {
+    it("Shouldn't updating a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -470,7 +468,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Shouldn't attempt to update a non-existing position properly fails", async () => {
+    it("Shouldn't attempt to update a non-existing position properly fails", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
           pool.updatePosition(
@@ -490,7 +488,7 @@ describe.skip("Position Tests", async () => {
       }
     });
     it("Shouldn't updating a someone else's positions", async () => {
-      for (pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const storage = await pool.getRawStorage();
         tezos.setSignerProvider(aliceSigner);
         await pool.setPosition(
@@ -499,7 +497,7 @@ describe.skip("Position Tests", async () => {
           new BigNumber(minTickIndex),
           new BigNumber(minTickIndex),
           new BigNumber(1e7),
-          new Date("2023-01-01").toString(),
+          validDeadline(),
           new BigNumber(1e7),
           new BigNumber(1e7),
         );
@@ -511,7 +509,7 @@ describe.skip("Position Tests", async () => {
             new BigNumber(1e7),
             bob.pkh,
             bob.pkh,
-            new Date("2023-01-01").toString(),
+            validDeadline(),
             new BigNumber(0),
             new BigNumber(0),
           ),
@@ -524,955 +522,8 @@ describe.skip("Position Tests", async () => {
     });
   });
   describe("Success cases", async () => {
-    it.skip("Should depositing and withdrawing the same amount of liquidity+", async () => {
+    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
       tezos.setSignerProvider(aliceSigner);
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(4, true));
-      for (const pool of [_poolFa12, _poolFa2, _poolFa1_2, _poolFa2_1]) {
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-        await pool.setPosition(
-          new BigNumber(-10),
-          new BigNumber(15),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        await pool.updatePosition(
-          initialSt.new_position_id,
-          new BigNumber(-1e7),
-          alice.pkh,
-          alice.pkh,
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        const poolStorage = (await pool.contract.storage()) as any;
-        const xBalance = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          pool.contract.address,
-        );
-        const yBalance = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          pool.contract.address,
-        );
-        // The contract's balance should be 0.
-        // There is a margin of error, so the contract may end up with at most 1 token.
-        expect(xBalance.toNumber()).to.be.closeTo(0, 1);
-        expect(yBalance.toNumber()).to.be.closeTo(0, 1);
-        equal(
-          poolStorage.new_position_id.toNumber(),
-          initialSt.new_position_id.toNumber() + 1,
-        );
-      }
-    });
-    it.skip("Should adding liquidity twice is the same as adding it onc+", async () => {
-      tezos.setSignerProvider(aliceSigner);
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: poolFa12,
-        poolFa2: poolFa2,
-        poolFa1_2: poolFa1_2,
-        poolFa2_1: poolFa2_1,
-        poolFa12Dublicate: poolFa12Dublicate,
-        poolFa2Dublicate: poolFa2Dublicate,
-        poolFa1_2Dublicate: poolFa1_2Dublicate,
-        poolFa2_1Dublicate: poolFa2_1Dublicate,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(8, true), true);
-      for (const pools of [
-        [poolFa12, poolFa12Dublicate],
-        [poolFa2, poolFa2Dublicate],
-        [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
-      ]) {
-        const [pool1, pool2] = pools;
-        const defaultCallSettings: CallSettings = {
-          swapXY: CallMode.returnParams,
-          swapYX: CallMode.returnParams,
-          setPosition: CallMode.returnParams,
-          updatePosition: CallMode.returnParams,
-          transfer: CallMode.returnParams,
-          updateOperators: CallMode.returnParams,
-          increaseObservationCount: CallMode.returnParams,
-        };
-        const onlyTransferPool1 = await new QuipuswapV3(
-          defaultCallSettings,
-        ).init(tezos, pool1.contract.address);
-        const onlyTransferPool2 = await new QuipuswapV3(
-          defaultCallSettings,
-        ).init(tezos, pool2.contract.address);
-        const initialSt = await pool1.getRawStorage();
-        const inistSt2 = await pool2.getRawStorage();
-        let transferParams: any = [
-          await onlyTransferPool1.setPosition(
-            new BigNumber(-10),
-            new BigNumber(15),
-            new BigNumber(minTickIndex),
-            new BigNumber(minTickIndex),
-            new BigNumber(1e7),
-            validDeadline(),
-            new BigNumber(1e7),
-            new BigNumber(1e7),
-          ),
-          await onlyTransferPool1.updatePosition(
-            initialSt.new_position_id,
-            new BigNumber(1e7),
-            alice.pkh,
-            alice.pkh,
-            validDeadline(),
-            new BigNumber(1e7),
-            new BigNumber(1e7),
-          ),
-          await onlyTransferPool2.setPosition(
-            new BigNumber(-10),
-            new BigNumber(15),
-            new BigNumber(minTickIndex),
-            new BigNumber(minTickIndex),
-            new BigNumber(2e7),
-            validDeadline(),
-            new BigNumber(2e7),
-            new BigNumber(2e7),
-          ),
-        ];
-        const ops = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, ops.opHash);
-        const poolStorage1 = await pool1.getStorage(
-          [new Nat(0)],
-          [
-            new Int(minTickIndex),
-            new Int(maxTickIndex),
-            new Int(-10),
-            new Int(15),
-          ],
-          [new Nat(0), new Nat(1), new Nat(2)],
-        );
-        const poolStorage2 = await pool2.getStorage(
-          [new Nat(0)],
-          [
-            new Int(minTickIndex),
-            new Int(maxTickIndex),
-            new Int(-10),
-            new Int(15),
-          ],
-          [new Nat(0), new Nat(1), new Nat(2)],
-        );
-        compareStorages(poolStorage1, poolStorage2);
-        const xBalance1 = await getTypedBalance(
-          tezos,
-          Object.keys(initialSt.constants.token_x)[0],
-          initialSt.constants.token_x,
-          pool1.contract.address,
-        );
-        const yBalance1 = await getTypedBalance(
-          tezos,
-          Object.keys(initialSt.constants.token_y)[0],
-          initialSt.constants.token_y,
-          pool1.contract.address,
-        );
-        const xBalance2 = await getTypedBalance(
-          tezos,
-          Object.keys(initialSt.constants.token_x)[0],
-          initialSt.constants.token_x,
-          pool2.contract.address,
-        );
-        const yBalance2 = await getTypedBalance(
-          tezos,
-          Object.keys(initialSt.constants.token_y)[0],
-          initialSt.constants.token_y,
-          pool2.contract.address,
-        );
-        expect(xBalance1.toNumber()).to.be.closeTo(xBalance2.toNumber(), 1);
-        expect(yBalance1.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
-        expect(xBalance2.toNumber()).to.be.closeTo(xBalance2.toNumber(), 1);
-        expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
-      }
-    });
-    it.skip("Should be lowest and highest ticks cannot be garbage collected", async () => {
-      tezos.setSignerProvider(aliceSigner);
-      const {
-        factory: _factory,
-        fa12TokenX: fa12TokenX,
-        fa12TokenY: fa12TokenY,
-        fa2TokenX: fa2TokenX,
-        fa2TokenY: fa2TokenY,
-        poolFa12: poolFa12,
-        poolFa2: poolFa2,
-        poolFa1_2: poolFa1_2,
-        poolFa2_1: poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner], genFees(8, true), true);
-      const sleep = (ms: number) =>
-        new Promise(resolve => setTimeout(resolve, ms));
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        const initialSt = await pool.getStorage(
-          [],
-          [new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(10),
-        );
-        const transferParams: TransferParams[] = [];
-        const newCallSettings: CallSettings = {
-          swapXY: CallMode.returnParams,
-          swapYX: CallMode.returnParams,
-          setPosition: CallMode.returnParams,
-          updatePosition: CallMode.returnParams,
-          transfer: CallMode.returnParams,
-          updateOperators: CallMode.returnParams,
-          increaseObservationCount: CallMode.returnConfirmatedOperation,
-        };
-        pool.setCallSetting(newCallSettings);
-
-        await sleep(5000);
-        transferParams.push(
-          (await pool.setPosition(
-            new BigNumber(minTickIndex),
-            new BigNumber(maxTickIndex),
-            new BigNumber(minTickIndex),
-            new BigNumber(minTickIndex),
-            new BigNumber(1),
-            validDeadline(),
-            new BigNumber(1),
-            new BigNumber(1),
-          )) as TransferParams,
-        );
-        transferParams.push(
-          (await pool.updatePosition(
-            initialSt.newPositionId,
-            new BigNumber(-1),
-            alice.pkh,
-            alice.pkh,
-            validDeadline(),
-            new BigNumber(0),
-            new BigNumber(0),
-          )) as TransferParams,
-        );
-
-        const ops = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, ops.opHash);
-
-        const poolStorage = await pool.getStorage(
-          [new Nat(0)],
-          [new Int(minTickIndex), new Int(maxTickIndex)],
-          genNatIds(10),
-        );
-        // The storage shouldn't have changed (with few exceptions).
-
-        const now =
-          Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
-
-        initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
-        initialSt.cumulativesBuffer = await cumulativesBuffer1(now.toString());
-        compareStorages(initialSt, poolStorage);
-      }
-    });
-    it.skip("Should allow Liquidity Providers earning fees from swaps", async () => {
-      const fees = genFees(4);
-      const swappers = [bobSigner, peterSigner];
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(
-        tezos,
-        [aliceSigner, bobSigner, peterSigner],
-        fees,
-      );
-      factory = _factory;
-      fa12TokenX = _fa12TokenX;
-      fa12TokenY = _fa12TokenY;
-      fa2TokenX = _fa2TokenX;
-      fa2TokenY = _fa2TokenY;
-      poolFa12 = _poolFa12;
-      poolFa2 = _poolFa2;
-      poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        tezos.setSignerProvider(aliceSigner);
-        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-
-        const prevEveBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          eve.pkh,
-        );
-        const prevEveBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          eve.pkh,
-        );
-        await pool.setPosition(
-          new BigNumber(-10000),
-          new BigNumber(10000),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        let xFees: BigNumber = new BigNumber(0);
-        let yFees: BigNumber = new BigNumber(0);
-        for (const swapper of swappers) {
-          const initialSt = await pool.getRawStorage();
-          const feeBps = initialSt.constants.fee_bps;
-          tezos.setSignerProvider(swapper);
-          const swapperAddr = await swapper.publicKeyHash();
-          await pool.swapXY(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-          await pool.swapYX(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-
-          const storage = await pool.getRawStorage();
-          const xFee = calcSwapFee(feeBps, transferAmount);
-          const yFee = calcSwapFee(feeBps, transferAmount);
-          xFees = xFees.plus(xFee);
-          yFees = yFees.plus(yFee);
-        }
-        tezos.setSignerProvider(aliceSigner);
-        await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
-        const eveBalanceX = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeX,
-            initialSt.constants.token_x,
-            eve.pkh,
-          )
-        ).minus(prevEveBalanceX);
-        const eveBalanceY = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeY,
-            initialSt.constants.token_y,
-            eve.pkh,
-          )
-        ).minus(prevEveBalanceY);
-        ok(isInRangeNat(eveBalanceX, xFees, new Nat(1), new Nat(0)));
-        ok(isInRangeNat(eveBalanceY, yFees, new Nat(1), new Nat(0)));
-        /**  Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable. */
-        expect(shiftRight(xFees, new BigNumber(128)).toNumber()).to.be.closeTo(
-          0,
-          1,
-        );
-        expect(shiftRight(yFees, new BigNumber(128)).toNumber()).to.be.closeTo(
-          0,
-          1,
-        );
-      }
-    });
-    it.skip("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
-      const fees = [
-        Math.floor(Math.random() * 1e4),
-        Math.floor(Math.random() * 1e4),
-        Math.floor(Math.random() * 1e4),
-        Math.floor(Math.random() * 1e4),
-      ];
-      const swappers = [bobSigner, peterSigner];
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(
-        tezos,
-        [aliceSigner, bobSigner, peterSigner, eveSigner],
-        fees,
-      );
-      factory = _factory;
-      fa12TokenX = _fa12TokenX;
-      fa12TokenY = _fa12TokenY;
-      fa2TokenX = _fa2TokenX;
-      fa2TokenY = _fa2TokenY;
-      poolFa12 = _poolFa12;
-      poolFa2 = _poolFa2;
-      poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-        tezos.setSignerProvider(eveSigner);
-        await pool.setPosition(
-          new BigNumber(-10000),
-          new BigNumber(10000),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        tezos.setSignerProvider(aliceSigner);
-        await pool.setPosition(
-          new BigNumber(-10000),
-          new BigNumber(10000),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7 * 3),
-          validDeadline(),
-          new BigNumber(1e7 * 3),
-          new BigNumber(1e7 * 3),
-        );
-        const prevEveBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          eve.pkh,
-        );
-        const prevEveBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          eve.pkh,
-        );
-        const prevAliceBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          alice.pkh,
-        );
-        const prevAliceBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          alice.pkh,
-        );
-        let xFees: BigNumber = new BigNumber(0);
-        let yFees: BigNumber = new BigNumber(0);
-        for (const swapper of swappers) {
-          const initialSt = await pool.getRawStorage();
-          const feeBps = initialSt.constants.fee_bps;
-          const prevXFeeBalance = initialSt.fee_growth.x;
-          const prevYFeeBalance = initialSt.fee_growth.y;
-          tezos.setSignerProvider(swapper);
-          const swapperAddr = await swapper.publicKeyHash();
-          await pool.swapXY(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-          await pool.swapYX(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-          const storage = await pool.getRawStorage();
-          const xFeeBalance = storage.fee_growth.x;
-          const yFeeBalance = storage.fee_growth.y;
-          const xFee = calcSwapFee(feeBps, transferAmount);
-          const yFee = calcSwapFee(feeBps, transferAmount);
-          xFees = xFees.plus(xFee);
-          yFees = yFees.plus(yFee);
-        }
-        const st = await pool.getRawStorage();
-        const poolSt = await pool.getStorage();
-        const upperTi = new Int(10000);
-        const lowerTi = new Int(-10000);
-        const st2 = await pool.getStorage(
-          [(new Nat(0), new Nat(1))],
-          [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
-          [new Nat(0), new Nat(1), new Nat(2), new Nat(3), new Nat(4)],
-        );
-        await checkAllInvariants(
-          pool,
-          { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
-          [new Nat(0), new Nat(1), new Nat(2)],
-          [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
-          genNatIds(50),
-        );
-        tezos.setSignerProvider(aliceSigner);
-        await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
-        await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
-        const eveBalanceX = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeX,
-            initialSt.constants.token_x,
-            eve.pkh,
-          )
-        ).minus(prevEveBalanceX);
-        const eveBalanceY = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeY,
-            initialSt.constants.token_y,
-            eve.pkh,
-          )
-        ).minus(prevEveBalanceY);
-        const aliceBalanceX = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeX,
-            initialSt.constants.token_x,
-            alice.pkh,
-          )
-        ).minus(prevAliceBalanceX);
-        const aliceBalanceY = (
-          await getTypedBalance(
-            tezos,
-            tokenTypeY,
-            initialSt.constants.token_y,
-            alice.pkh,
-          )
-        ).minus(prevAliceBalanceY);
-        /**
-         *  -- Position 2 has triple the liquidity of Position 1,
-            -- so `feeReceiver1` should get 1/4 of all earned fees and `feeReceiver2` should get 3/4.
-            -- Note: Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable.
-        */
-        ok(
-          isInRangeNat(
-            eveBalanceX,
-            xFees.dividedBy(4),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            eveBalanceY,
-            yFees.dividedBy(4),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            aliceBalanceX,
-            xFees.multipliedBy(3).dividedBy(4),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            aliceBalanceY,
-            yFees.multipliedBy(3).dividedBy(4),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-      }
-    });
-    it.skip("Liquidity Providers do not receive past fees", async () => {
-      const swapper = peterSigner;
-      const feeReceiver1 = carol.pkh;
-      const feeReceiver2 = sara.pkh;
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(
-        tezos,
-        [aliceSigner, bobSigner, peterSigner],
-        genFees(4),
-      );
-
-      factory = _factory;
-      fa12TokenX = _fa12TokenX;
-      fa12TokenY = _fa12TokenY;
-      fa2TokenX = _fa2TokenX;
-      fa2TokenY = _fa2TokenY;
-      poolFa12 = _poolFa12;
-      poolFa2 = _poolFa2;
-      poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        const transferAmountB = new BigNumber(Math.floor(Math.random() * 1e4));
-        const transferAmountA = new BigNumber(Math.floor(Math.random() * 1e4));
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-        const feeBps = initialSt.constants.fee_bps;
-        const prevXFeeBalance = initialSt.fee_growth.x;
-        const prevYFeeBalance = initialSt.fee_growth.y;
-        const prevfeeReceiver1BalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          feeReceiver1,
-        );
-        const prevfeeReceiver1BalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          feeReceiver1,
-        );
-        const prevfeeReceiver2BalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          feeReceiver2,
-        );
-        const prevfeeReceiver2BalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          feeReceiver2,
-        );
-
-        tezos.setSignerProvider(aliceSigner);
-        await pool.setPosition(
-          new BigNumber(-10000),
-          new BigNumber(10000),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-
-        tezos.setSignerProvider(swapper);
-        const swapperAddr = await swapper.publicKeyHash();
-        await pool.swapXY(
-          transferAmountB,
-          validDeadline(),
-          new BigNumber(1),
-          swapperAddr,
-        );
-        await pool.swapYX(
-          transferAmountB,
-          validDeadline(),
-          new BigNumber(1),
-          swapperAddr,
-        );
-
-        const storage = await pool.getRawStorage();
-        const xFeeBalance = storage.fee_growth.x;
-        const yFeeBalance = storage.fee_growth.y;
-        const prevXBefore = calcSwapFee(feeBps, transferAmountB);
-        const prevYBefore = calcSwapFee(feeBps, transferAmountB);
-        tezos.setSignerProvider(bobSigner);
-
-        await pool.setPosition(
-          new BigNumber(-10000),
-          new BigNumber(10000),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        tezos.setSignerProvider(swapper);
-
-        await pool.swapXY(
-          transferAmountA,
-          validDeadline(),
-          new BigNumber(1),
-          swapperAddr,
-        );
-        await pool.swapYX(
-          transferAmountA,
-          validDeadline(),
-          new BigNumber(1),
-          swapperAddr,
-        );
-
-        const storage2 = await pool.getRawStorage();
-        const xFeeBalance2 = storage2.fee_growth.x;
-        const yFeeBalance2 = storage2.fee_growth.y;
-        const prevXAfter = calcSwapFee(feeBps, transferAmountA);
-        const prevYAfter = calcSwapFee(feeBps, transferAmountA);
-        await checkAllInvariants(
-          pool,
-          [],
-          genNatIds(2),
-          [
-            new Int(minTickIndex),
-            new Int(maxTickIndex),
-            new Int(-10000),
-            new Int(10000),
-          ],
-          genNatIds(50),
-        );
-        tezos.setSignerProvider(aliceSigner);
-        await collectFees(pool, feeReceiver1, [new BigNumber(0)]);
-        tezos.setSignerProvider(bobSigner);
-        await collectFees(pool, feeReceiver2, [new BigNumber(1)]);
-        const st = await pool.getRawStorage();
-        const feeReceiver1BalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          feeReceiver1,
-        );
-        const feeReceiver1BalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          feeReceiver1,
-        );
-        const feeReceiver2BalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          feeReceiver2,
-        );
-        const feeReceiver2BalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          feeReceiver2,
-        );
-
-        ok(
-          isInRangeNat(
-            feeReceiver1BalanceX.minus(prevfeeReceiver1BalanceX),
-            prevXBefore.plus(prevXAfter.div(2)),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            feeReceiver1BalanceY.minus(prevfeeReceiver1BalanceY),
-            prevYBefore.plus(prevYAfter.div(2)),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            feeReceiver2BalanceX.minus(prevfeeReceiver2BalanceX),
-            prevXAfter.div(2),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            feeReceiver2BalanceY.minus(prevfeeReceiver2BalanceY),
-            prevYAfter.div(2),
-            new BigNumber(1),
-            new BigNumber(0),
-          ),
-        );
-        await checkAllInvariants(
-          pool,
-          [],
-          genNatIds(2),
-          [
-            new Int(minTickIndex),
-            new Int(maxTickIndex),
-            new Int(-10000),
-            new Int(10000),
-          ],
-          genNatIds(50),
-        );
-        // (xFeesBefore, yFeesBefore) <- placeSwaps beforeSwaps from Haskel to TS
-      }
-    });
-    it.skip("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
-      const lowerTickIndex = -10000;
-      const upperTickIndex = 10000;
-      const swappers = [bobSigner, peterSigner];
-      const feeReceiver = sara.pkh;
-      //const cerychSigner = new InMemorySigner(accounts.peter.sk);
-      const {
-        factory: _factory,
-        fa12TokenX: _fa12TokenX,
-        fa12TokenY: _fa12TokenY,
-        fa2TokenX: _fa2TokenX,
-        fa2TokenY: _fa2TokenY,
-        poolFa12: _poolFa12,
-        poolFa2: _poolFa2,
-        poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
-      } = await poolsFixture(
-        tezos,
-        [aliceSigner, peterSigner, bobSigner],
-        genFees(4, false),
-      );
-
-      factory = _factory;
-      fa12TokenX = _fa12TokenX;
-      fa12TokenY = _fa12TokenY;
-      fa2TokenX = _fa2TokenX;
-      fa2TokenY = _fa2TokenY;
-      poolFa12 = _poolFa12;
-      poolFa2 = _poolFa2;
-      poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
-        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
-        const initialSt = await pool.getRawStorage();
-        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
-        tezos.setSignerProvider(aliceSigner);
-        await pool.setPosition(
-          new BigNumber(lowerTickIndex),
-          new BigNumber(upperTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(minTickIndex),
-          new BigNumber(1e7),
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        let xFees: BigNumber = new BigNumber(0);
-        let yFees: BigNumber = new BigNumber(0);
-        for (const swapper of swappers) {
-          const initialSt = await pool.getRawStorage();
-          const feeBps = initialSt.constants.fee_bps;
-          tezos.setSignerProvider(swapper);
-          const swapperAddr = await swapper.publicKeyHash();
-          await pool.swapXY(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-          await pool.swapYX(
-            transferAmount,
-            validDeadline(),
-            new BigNumber(1),
-            swapperAddr,
-          );
-          const storage = await pool.getRawStorage();
-          const xFee = calcSwapFee(feeBps, transferAmount);
-          const yFee = calcSwapFee(feeBps, transferAmount);
-          xFees = xFees.plus(xFee);
-          yFees = yFees.plus(yFee);
-        }
-        tezos.setSignerProvider(aliceSigner);
-        const aliceBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          alice.pkh,
-        );
-        const aliceBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          alice.pkh,
-        );
-        await pool.updatePosition(
-          new BigNumber(0),
-          new BigNumber(1e7),
-          feeReceiver,
-          feeReceiver,
-          validDeadline(),
-          new BigNumber(1e7),
-          new BigNumber(1e7),
-        );
-        const storage = await pool.getRawStorage();
-        const finalAliceBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          alice.pkh,
-        );
-        const finalAliceBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          alice.pkh,
-        );
-        const feeReceiverBalanceX = await getTypedBalance(
-          tezos,
-          tokenTypeX,
-          initialSt.constants.token_x,
-          feeReceiver,
-        );
-        const feeReceiverBalanceY = await getTypedBalance(
-          tezos,
-          tokenTypeY,
-          initialSt.constants.token_y,
-          feeReceiver,
-        );
-        //let PerToken xDelta yDelta = liquidityDeltaToTokensDelta (fromIntegral liquidityDelta) lowerTickIndex upperTickIndex (sCurTickIndexRPC st) (sSqrtPriceRPC st)
-        const liquidityDelta = liquidityDeltaToTokensDelta(
-          new Int(1e7),
-          new Int(lowerTickIndex),
-          new Int(upperTickIndex),
-          new Int(storage.cur_tick_index),
-          new Nat(storage.sqrt_price),
-        );
-        const xDelta = liquidityDelta.x;
-        const yDelta = liquidityDelta.y;
-        /**
-         * Note: Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable.
-         * Due to the floating-point math used in `liquidityDeltaToTokensDelta`, it's possible there
-         * will be an additional +/- 1 error.
-         */
-        ok(
-          isInRangeNat(
-            finalAliceBalanceX,
-            aliceBalanceX.plus(xFees).minus(xDelta),
-            new BigNumber(2),
-            new BigNumber(1),
-          ),
-        );
-        ok(
-          isInRangeNat(
-            finalAliceBalanceY,
-            aliceBalanceY.plus(yFees).minus(yDelta),
-            new BigNumber(2),
-            new BigNumber(1),
-          ),
-        );
-        /**
-         * `feeReceiver` should not receive any fees.
-         */
-        strictEqual(feeReceiverBalanceX.toFixed(), "0");
-        strictEqual(feeReceiverBalanceY.toFixed(), "0");
-      }
-    });
-    it.skip("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
       const liquidityDelta = new BigNumber(1e7);
@@ -1494,6 +545,7 @@ describe.skip("Position Tests", async () => {
       } = await poolsFixture(
         tezos,
         [aliceSigner, eveSigner, bobSigner],
+        0,
         [50_00, 50_00, 50_00, 50_00],
       );
       factory = _factory;
@@ -1656,7 +708,1084 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
+    it("Should depositing and withdrawing the same amount of liquidity+", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(4, true));
+      for (const pool of [_poolFa12, _poolFa2, _poolFa1_2, _poolFa2_1]) {
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+        await pool.setPosition(
+          new BigNumber(-10),
+          new BigNumber(15),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        await pool.updatePosition(
+          initialSt.new_position_id,
+          new BigNumber(-1e7),
+          alice.pkh,
+          alice.pkh,
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        const poolStorage = (await pool.contract.storage()) as any;
+        const xBalance = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          pool.contract.address,
+        );
+        const yBalance = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          pool.contract.address,
+        );
+        // The contract's balance should be 0.
+        // There is a margin of error, so the contract may end up with at most 1 token.
+        expect(xBalance.toNumber()).to.be.closeTo(0, 1);
+        expect(yBalance.toNumber()).to.be.closeTo(0, 1);
+        equal(
+          poolStorage.new_position_id.toNumber(),
+          initialSt.new_position_id.toNumber() + 1,
+        );
+      }
+    });
+    it("Should adding liquidity twice is the same as adding it oncе", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: poolFa12,
+        poolFa2: poolFa2,
+        poolFa1_2: poolFa1_2,
+        poolFa2_1: poolFa2_1,
+        poolFa12Dublicate: poolFa12Dublicate,
+        poolFa2Dublicate: poolFa2Dublicate,
+        poolFa1_2Dublicate: poolFa1_2Dublicate,
+        poolFa2_1Dublicate: poolFa2_1Dublicate,
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
+      for (const pools of [
+        [poolFa12, poolFa12Dublicate],
+        [poolFa2, poolFa2Dublicate],
+        [poolFa1_2, poolFa1_2Dublicate],
+        [poolFa2_1, poolFa2_1Dublicate],
+      ]) {
+        const [pool1, pool2] = pools;
+        const defaultCallSettings: CallSettings = {
+          swapXY: CallMode.returnParams,
+          swapYX: CallMode.returnParams,
+          setPosition: CallMode.returnParams,
+          updatePosition: CallMode.returnParams,
+          transfer: CallMode.returnParams,
+          updateOperators: CallMode.returnParams,
+          increaseObservationCount: CallMode.returnParams,
+        };
+        const onlyTransferPool1 = await new QuipuswapV3(
+          defaultCallSettings,
+        ).init(tezos, pool1.contract.address);
+        const onlyTransferPool2 = await new QuipuswapV3(
+          defaultCallSettings,
+        ).init(tezos, pool2.contract.address);
+        const initialSt = await pool1.getRawStorage();
+        const inistSt2 = await pool2.getRawStorage();
+        let transferParams: any = [
+          await onlyTransferPool1.setPosition(
+            new BigNumber(-10),
+            new BigNumber(15),
+            new BigNumber(minTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(1e7),
+            validDeadline(),
+            new BigNumber(1e7),
+            new BigNumber(1e7),
+          ),
+          await onlyTransferPool1.updatePosition(
+            initialSt.new_position_id,
+            new BigNumber(1e7),
+            alice.pkh,
+            alice.pkh,
+            validDeadline(),
+            new BigNumber(1e7),
+            new BigNumber(1e7),
+          ),
+          await onlyTransferPool2.setPosition(
+            new BigNumber(-10),
+            new BigNumber(15),
+            new BigNumber(minTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(2e7),
+            validDeadline(),
+            new BigNumber(2e7),
+            new BigNumber(2e7),
+          ),
+        ];
+        const ops = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, ops.opHash);
+        const poolStorage1 = await pool1.getStorage(
+          [new Nat(0)],
+          [
+            new Int(minTickIndex),
+            new Int(maxTickIndex),
+            new Int(-10),
+            new Int(15),
+          ],
+          [new Nat(0), new Nat(1), new Nat(2)],
+        );
+        const poolStorage2 = await pool2.getStorage(
+          [new Nat(0)],
+          [
+            new Int(minTickIndex),
+            new Int(maxTickIndex),
+            new Int(-10),
+            new Int(15),
+          ],
+          [new Nat(0), new Nat(1), new Nat(2)],
+        );
+        compareStorages(poolStorage1, poolStorage2);
+        const xBalance1 = await getTypedBalance(
+          tezos,
+          Object.keys(initialSt.constants.token_x)[0],
+          initialSt.constants.token_x,
+          pool1.contract.address,
+        );
+        const yBalance1 = await getTypedBalance(
+          tezos,
+          Object.keys(initialSt.constants.token_y)[0],
+          initialSt.constants.token_y,
+          pool1.contract.address,
+        );
+        const xBalance2 = await getTypedBalance(
+          tezos,
+          Object.keys(initialSt.constants.token_x)[0],
+          initialSt.constants.token_x,
+          pool2.contract.address,
+        );
+        const yBalance2 = await getTypedBalance(
+          tezos,
+          Object.keys(initialSt.constants.token_y)[0],
+          initialSt.constants.token_y,
+          pool2.contract.address,
+        );
+        expect(xBalance1.toNumber()).to.be.closeTo(xBalance2.toNumber(), 1);
+        expect(yBalance1.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
+        expect(xBalance2.toNumber()).to.be.closeTo(xBalance2.toNumber(), 1);
+        expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
+      }
+    });
+    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const {
+        factory: _factory,
+        poolFa12: poolFa12,
+        poolFa2: poolFa2,
+        poolFa1_2: poolFa1_2,
+        poolFa2_1: poolFa2_1,
+      } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
+      const sleep = (ms: number) =>
+        new Promise(resolve => setTimeout(resolve, ms));
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const initialSt = await pool.getStorage(
+          [],
+          [new Int(minTickIndex), new Int(maxTickIndex)],
+          genNatIds(10),
+        );
+        const transferParams: TransferParams[] = [];
+        const newCallSettings: CallSettings = {
+          swapXY: CallMode.returnParams,
+          swapYX: CallMode.returnParams,
+          setPosition: CallMode.returnParams,
+          updatePosition: CallMode.returnParams,
+          transfer: CallMode.returnParams,
+          updateOperators: CallMode.returnParams,
+          increaseObservationCount: CallMode.returnConfirmatedOperation,
+        };
+        pool.setCallSetting(newCallSettings);
+
+        await sleep(5000);
+        transferParams.push(
+          (await pool.setPosition(
+            new BigNumber(minTickIndex),
+            new BigNumber(maxTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(1),
+            validDeadline(),
+            new BigNumber(1),
+            new BigNumber(1),
+          )) as TransferParams,
+        );
+        transferParams.push(
+          (await pool.updatePosition(
+            initialSt.newPositionId,
+            new BigNumber(-1),
+            alice.pkh,
+            alice.pkh,
+            validDeadline(),
+            new BigNumber(0),
+            new BigNumber(0),
+          )) as TransferParams,
+        );
+
+        const ops = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, ops.opHash);
+
+        const poolStorage = await pool.getStorage(
+          [new Nat(0)],
+          [new Int(minTickIndex), new Int(maxTickIndex)],
+          genNatIds(10),
+        );
+        // The storage shouldn't have changed (with few exceptions).
+
+        const now =
+          Date.parse((await tezos.rpc.getBlockHeader()).timestamp) / 1000;
+
+        initialSt.newPositionId = new Nat(initialSt.newPositionId.plus(1));
+        initialSt.cumulativesBuffer = await cumulativesBuffer1(now.toString());
+        compareStorages(initialSt, poolStorage);
+      }
+    });
+    it("Should allow admins earning dev fees from swaps", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const fees = [5000, 5000, 5000, 5000];
+
+      const swappers = [bobSigner, peterSigner];
+      const devFeeRecipient = sara.pkh;
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner, peterSigner],
+        0,
+        fees,
+        false,
+        5000,
+      );
+
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+
+        const prevDevFeeRecipientBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          devFeeRecipient,
+        );
+        const prevDevFeeRecipientBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          devFeeRecipient,
+        );
+
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        let xFees: BigNumber = new BigNumber(0);
+        let yFees: BigNumber = new BigNumber(0);
+        for (const swapper of swappers) {
+          const initialSt = await pool.getRawStorage();
+          const feeBps = initialSt.constants.fee_bps;
+          tezos.setSignerProvider(swapper);
+          const swapperAddr = await swapper.publicKeyHash();
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          await pool.swapYX(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
+          xFees = xFees.plus(xFee);
+          yFees = yFees.plus(yFee);
+        }
+        tezos.setSignerProvider(aliceSigner);
+
+        const op = await pool.contract.methods
+          .claim_dev_fee(devFeeRecipient)
+          .send();
+        await op.confirmation();
+
+        const devFeeRecipientBalanceX = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeX,
+            initialSt.constants.token_x,
+            devFeeRecipient,
+          )
+        ).minus(prevDevFeeRecipientBalanceX);
+        const devFeeRecipientBalanceY = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeY,
+            initialSt.constants.token_y,
+            devFeeRecipient,
+          )
+        ).minus(prevDevFeeRecipientBalanceY);
+
+        const devFeeBPS = initialSt.constants.dev_fee_bps;
+        const devFeeX = xFees.multipliedBy(devFeeBPS).dividedBy(10000);
+        const devFeeY = yFees.multipliedBy(devFeeBPS).dividedBy(10000);
+
+        ok(
+          isInRangeNat(
+            devFeeRecipientBalanceX,
+            devFeeX,
+            new Nat(0),
+            new Nat(1),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            devFeeRecipientBalanceY,
+            devFeeY,
+            new Nat(0),
+            new Nat(1),
+          ),
+        );
+      }
+    });
+    it("Should allow Liquidity Providers earning fees from swaps", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const fees = genFees(4);
+      const swappers = [bobSigner, peterSigner];
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner, peterSigner],
+        0,
+        fees,
+        false,
+      );
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+
+        const prevEveBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          eve.pkh,
+        );
+        const prevEveBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          eve.pkh,
+        );
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        let xFees: BigNumber = new BigNumber(0);
+        let yFees: BigNumber = new BigNumber(0);
+
+        for (const swapper of swappers) {
+          const initialSt = await pool.getRawStorage();
+          const feeBps = initialSt.constants.fee_bps;
+
+          tezos.setSignerProvider(swapper);
+          const swapperAddr = await swapper.publicKeyHash();
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          await pool.swapYX(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+
+          const storage = await pool.getRawStorage();
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
+          xFees = xFees.plus(xFee);
+          yFees = yFees.plus(yFee);
+        }
+        tezos.setSignerProvider(aliceSigner);
+
+        await collectFees(pool, eve.pkh, [new Nat(0)]);
+
+        const eveBalanceX = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeX,
+            initialSt.constants.token_x,
+            eve.pkh,
+          )
+        ).minus(prevEveBalanceX);
+        const eveBalanceY = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeY,
+            initialSt.constants.token_y,
+            eve.pkh,
+          )
+        ).minus(prevEveBalanceY);
+
+        ok(isInRangeNat(eveBalanceX, xFees, new Nat(1), new Nat(0)));
+        ok(isInRangeNat(eveBalanceY, yFees, new Nat(1), new Nat(0)));
+        /**  Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable. */
+        expect(shiftRight(xFees, new BigNumber(128)).toNumber()).to.be.closeTo(
+          0,
+          1,
+        );
+        expect(shiftRight(yFees, new BigNumber(128)).toNumber()).to.be.closeTo(
+          0,
+          1,
+        );
+      }
+    });
+    it("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const fees = [
+        Math.floor(Math.random() * 1e4),
+        Math.floor(Math.random() * 1e4),
+        Math.floor(Math.random() * 1e4),
+        Math.floor(Math.random() * 1e4),
+      ];
+      const swappers = [bobSigner, peterSigner];
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner, peterSigner, eveSigner],
+        0,
+        fees,
+      );
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        tezos.setSignerProvider(aliceSigner);
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+        tezos.setSignerProvider(eveSigner);
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        tezos.setSignerProvider(aliceSigner);
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7 * 3),
+          validDeadline(),
+          new BigNumber(1e7 * 3),
+          new BigNumber(1e7 * 3),
+        );
+        const prevEveBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          eve.pkh,
+        );
+        const prevEveBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          eve.pkh,
+        );
+        const prevAliceBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          alice.pkh,
+        );
+        const prevAliceBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          alice.pkh,
+        );
+        let xFees: BigNumber = new BigNumber(0);
+        let yFees: BigNumber = new BigNumber(0);
+        for (const swapper of swappers) {
+          const initialSt = await pool.getRawStorage();
+          const feeBps = initialSt.constants.fee_bps;
+
+          tezos.setSignerProvider(swapper);
+          const swapperAddr = await swapper.publicKeyHash();
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          await pool.swapYX(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
+          xFees = xFees.plus(xFee);
+          yFees = yFees.plus(yFee);
+        }
+        const upperTi = new Int(10000);
+        const lowerTi = new Int(-10000);
+
+        await checkAllInvariants(
+          pool,
+          { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
+          [new Nat(0), new Nat(1), new Nat(2)],
+          [new Int(minTickIndex), new Int(maxTickIndex), lowerTi, upperTi],
+          genNatIds(50),
+        );
+
+        tezos.setSignerProvider(eveSigner);
+        await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
+        tezos.setSignerProvider(aliceSigner);
+        await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
+        const eveBalanceX = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeX,
+            initialSt.constants.token_x,
+            eve.pkh,
+          )
+        ).minus(prevEveBalanceX);
+        const eveBalanceY = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeY,
+            initialSt.constants.token_y,
+            eve.pkh,
+          )
+        ).minus(prevEveBalanceY);
+        const aliceBalanceX = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeX,
+            initialSt.constants.token_x,
+            alice.pkh,
+          )
+        ).minus(prevAliceBalanceX);
+        const aliceBalanceY = (
+          await getTypedBalance(
+            tezos,
+            tokenTypeY,
+            initialSt.constants.token_y,
+            alice.pkh,
+          )
+        ).minus(prevAliceBalanceY);
+        /**
+         *  -- Position 2 has triple the liquidity of Position 1,
+            -- so `feeReceiver1` should get 1/4 of all earned fees and `feeReceiver2` should get 3/4.
+            -- Note: Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable.
+        */
+        ok(
+          isInRangeNat(
+            eveBalanceX,
+            xFees.dividedBy(4),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+
+        ok(
+          isInRangeNat(
+            eveBalanceY,
+            yFees.dividedBy(4),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            aliceBalanceX,
+            xFees.multipliedBy(3).dividedBy(4),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            aliceBalanceY,
+            yFees.multipliedBy(3).dividedBy(4),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+      }
+    });
+    it("Liquidity Providers do not receive past fees", async () => {
+      const swapper = peterSigner;
+      const feeReceiver1 = carol.pkh;
+      const feeReceiver2 = sara.pkh;
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner, peterSigner],
+        0,
+        genFees(4),
+      );
+
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const transferAmountB = new BigNumber(Math.floor(Math.random() * 1e4));
+        const transferAmountA = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+        const feeBps = initialSt.constants.fee_bps;
+        const prevfeeReceiver1BalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          feeReceiver1,
+        );
+        const prevfeeReceiver1BalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          feeReceiver1,
+        );
+        const prevfeeReceiver2BalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          feeReceiver2,
+        );
+        const prevfeeReceiver2BalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          feeReceiver2,
+        );
+
+        tezos.setSignerProvider(aliceSigner);
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+
+        tezos.setSignerProvider(swapper);
+        const swapperAddr = await swapper.publicKeyHash();
+        await pool.swapXY(
+          transferAmountB,
+          validDeadline(),
+          new BigNumber(1),
+          swapperAddr,
+        );
+        await pool.swapYX(
+          transferAmountB,
+          validDeadline(),
+          new BigNumber(1),
+          swapperAddr,
+        );
+
+        const storage = await pool.getRawStorage();
+        const prevXBefore = calcSwapFee(feeBps, transferAmountB);
+        const prevYBefore = calcSwapFee(feeBps, transferAmountB);
+        tezos.setSignerProvider(bobSigner);
+
+        await pool.setPosition(
+          new BigNumber(-10000),
+          new BigNumber(10000),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        tezos.setSignerProvider(swapper);
+
+        await pool.swapXY(
+          transferAmountA,
+          validDeadline(),
+          new BigNumber(1),
+          swapperAddr,
+        );
+        await pool.swapYX(
+          transferAmountA,
+          validDeadline(),
+          new BigNumber(1),
+          swapperAddr,
+        );
+
+        const storage2 = await pool.getRawStorage();
+        const prevXAfter = calcSwapFee(feeBps, transferAmountA);
+        const prevYAfter = calcSwapFee(feeBps, transferAmountA);
+        await checkAllInvariants(
+          pool,
+          [],
+          genNatIds(2),
+          [
+            new Int(minTickIndex),
+            new Int(maxTickIndex),
+            new Int(-10000),
+            new Int(10000),
+          ],
+          genNatIds(50),
+        );
+        tezos.setSignerProvider(aliceSigner);
+        await collectFees(pool, feeReceiver1, [new BigNumber(0)]);
+        tezos.setSignerProvider(bobSigner);
+        await collectFees(pool, feeReceiver2, [new BigNumber(1)]);
+
+        const feeReceiver1BalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          feeReceiver1,
+        );
+        const feeReceiver1BalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          feeReceiver1,
+        );
+        const feeReceiver2BalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          feeReceiver2,
+        );
+        const feeReceiver2BalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          feeReceiver2,
+        );
+
+        ok(
+          isInRangeNat(
+            feeReceiver1BalanceX.minus(prevfeeReceiver1BalanceX),
+            prevXBefore.plus(prevXAfter.div(2)),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            feeReceiver1BalanceY.minus(prevfeeReceiver1BalanceY),
+            prevYBefore.plus(prevYAfter.div(2)),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            feeReceiver2BalanceX.minus(prevfeeReceiver2BalanceX),
+            prevXAfter.div(2),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            feeReceiver2BalanceY.minus(prevfeeReceiver2BalanceY),
+            prevYAfter.div(2),
+            new BigNumber(1),
+            new BigNumber(0),
+          ),
+        );
+        await checkAllInvariants(
+          pool,
+          [],
+          genNatIds(2),
+          [
+            new Int(minTickIndex),
+            new Int(maxTickIndex),
+            new Int(-10000),
+            new Int(10000),
+          ],
+          genNatIds(50),
+        );
+      }
+    });
+    it("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
+      tezos.setSignerProvider(aliceSigner);
+      const lowerTickIndex = -10000;
+      const upperTickIndex = 10000;
+      const swappers = [bobSigner, peterSigner];
+      const feeReceiver = sara.pkh;
+
+      const {
+        factory: _factory,
+        fa12TokenX: _fa12TokenX,
+        fa12TokenY: _fa12TokenY,
+        fa2TokenX: _fa2TokenX,
+        fa2TokenY: _fa2TokenY,
+        poolFa12: _poolFa12,
+        poolFa2: _poolFa2,
+        poolFa1_2: _poolFa1_2,
+        poolFa2_1: _poolFa2_1,
+      } = await poolsFixture(
+        tezos,
+        [aliceSigner, peterSigner, bobSigner],
+        0,
+        genFees(4, false),
+      );
+
+      factory = _factory;
+      fa12TokenX = _fa12TokenX;
+      fa12TokenY = _fa12TokenY;
+      fa2TokenX = _fa2TokenX;
+      fa2TokenY = _fa2TokenY;
+      poolFa12 = _poolFa12;
+      poolFa2 = _poolFa2;
+      poolFa1_2 = _poolFa1_2;
+      poolFa2_1 = _poolFa2_1;
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
+        const initialSt = await pool.getRawStorage();
+        const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
+        const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
+        tezos.setSignerProvider(aliceSigner);
+        await pool.setPosition(
+          new BigNumber(lowerTickIndex),
+          new BigNumber(upperTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        let xFees: BigNumber = new BigNumber(0);
+        let yFees: BigNumber = new BigNumber(0);
+        for (const swapper of swappers) {
+          const initialSt = await pool.getRawStorage();
+          const feeBps = initialSt.constants.fee_bps;
+          tezos.setSignerProvider(swapper);
+          const swapperAddr = await swapper.publicKeyHash();
+          await pool.swapXY(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          await pool.swapYX(
+            transferAmount,
+            validDeadline(),
+            new BigNumber(1),
+            swapperAddr,
+          );
+          const storage = await pool.getRawStorage();
+          const xFee = calcSwapFee(feeBps, transferAmount);
+          const yFee = calcSwapFee(feeBps, transferAmount);
+          xFees = xFees.plus(xFee);
+          yFees = yFees.plus(yFee);
+        }
+        tezos.setSignerProvider(aliceSigner);
+        const aliceBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          alice.pkh,
+        );
+        const aliceBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          alice.pkh,
+        );
+        await pool.updatePosition(
+          new BigNumber(0),
+          new BigNumber(1e7),
+          feeReceiver,
+          feeReceiver,
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        const storage = await pool.getRawStorage();
+        const finalAliceBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          alice.pkh,
+        );
+        const finalAliceBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          alice.pkh,
+        );
+        const feeReceiverBalanceX = await getTypedBalance(
+          tezos,
+          tokenTypeX,
+          initialSt.constants.token_x,
+          feeReceiver,
+        );
+        const feeReceiverBalanceY = await getTypedBalance(
+          tezos,
+          tokenTypeY,
+          initialSt.constants.token_y,
+          feeReceiver,
+        );
+        const liquidityDelta = liquidityDeltaToTokensDelta(
+          new Int(1e7),
+          new Int(lowerTickIndex),
+          new Int(upperTickIndex),
+          new Int(storage.cur_tick_index),
+          new Nat(storage.sqrt_price),
+        );
+        const xDelta = liquidityDelta.x;
+        const yDelta = liquidityDelta.y;
+        /**
+         * Note: Fees are rounded down when being distributed to LPs, so a margin of error of -1 is acceptable.
+         * Due to the floating-point math used in `liquidityDeltaToTokensDelta`, it's possible there
+         * will be an additional +/- 1 error.
+         */
+        ok(
+          isInRangeNat(
+            finalAliceBalanceX,
+            aliceBalanceX.plus(xFees).minus(xDelta),
+            new BigNumber(2),
+            new BigNumber(1),
+          ),
+        );
+        ok(
+          isInRangeNat(
+            finalAliceBalanceY,
+            aliceBalanceY.plus(yFees).minus(yDelta),
+            new BigNumber(2),
+            new BigNumber(1),
+          ),
+        );
+        /**
+         * `feeReceiver` should not receive any fees.
+         */
+        strictEqual(feeReceiverBalanceX.toFixed(), "0");
+        strictEqual(feeReceiverBalanceY.toFixed(), "0");
+      }
+    });
+    it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1667,17 +1796,12 @@ describe.skip("Position Tests", async () => {
       let ti2 = new Int(50);
       let ti3 = new Int(100);
       let ti4 = new Int(150);
-      const {
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+        0,
+        genFees(4),
+      );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(liquidityProvider);
@@ -1784,7 +1908,7 @@ describe.skip("Position Tests", async () => {
         );
       }
     });
-    it.skip("Should initializing correctly position", async () => {
+    it("Should initializing correctly position", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1794,17 +1918,12 @@ describe.skip("Position Tests", async () => {
         { length: createPositionData.length },
         () => genSwapDirection(),
       );
-      const {
-        factory,
-        fa12TokenX,
-        fa12TokenY,
-        fa2TokenX,
-        fa2TokenY,
-        poolFa12,
-        poolFa2,
-        poolFa1_2,
-        poolFa2_1,
-      } = await poolsFixture(tezos, [aliceSigner, bobSigner], genFees(4));
+      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+        tezos,
+        [aliceSigner, bobSigner],
+        0,
+        genFees(4),
+      );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await pool.increaseObservationCount(new BigNumber(1));

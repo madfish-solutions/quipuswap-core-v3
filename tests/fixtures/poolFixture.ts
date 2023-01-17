@@ -9,6 +9,7 @@ import { FA12 } from "./../helpers/FA12";
 import { confirmOperation } from "./../../scripts/confirmation";
 
 import { BigNumber } from "bignumber.js";
+import { migrate } from "../../scripts/helpers";
 
 const getTypedUpdateOperator = async (
   tezos: TezosToolkit,
@@ -112,8 +113,10 @@ const getTypedUpdateOperator = async (
 export async function poolsFixture(
   tezos,
   signers: any[],
+  extraSlots: number = 0,
   fees: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   dublicate: boolean = false,
+  devFee: number = 0,
   tickSpacing: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ) {
   const fa12TokenX = await FA12.originate(tezos, fa12Storage);
@@ -122,7 +125,7 @@ export async function poolsFixture(
   const fa2TokenX = await FA2.originate(tezos, fa2Storage);
   const fa2TokenY = await FA2.originate(tezos, fa2Storage);
 
-  const factory = await new DexFactory(tezos, "development").initialize();
+  const factory = await new DexFactory(tezos, "development").initialize(devFee);
   const paramsList: TransferParams[] = [];
   let poolList: any[] = [
     [fa12TokenX, fa12TokenY],
@@ -147,6 +150,7 @@ export async function poolsFixture(
       yTokenType,
       fees[paramsList.length],
       tickSpacing[0],
+      extraSlots,
       MichelsonMap.fromLiteral({}),
       0,
       0,
@@ -182,7 +186,13 @@ export async function poolsFixture(
       poolFa2_1Dublicate,
     ]);
   }
-
+  const deployedConsumer = await migrate(
+    tezos,
+    "consumer",
+    { snapshot_id: 0, snapshots: MichelsonMap.fromLiteral({}) },
+    "development",
+  );
+  const consumer = await tezos.contract.at(deployedConsumer!);
   // update operators
   for (let i = 0; i < signers.length; i++) {
     const approvesParamsList: TransferParams[] = [];
@@ -249,5 +259,6 @@ export async function poolsFixture(
     poolFa2Dublicate,
     poolFa1_2Dublicate,
     poolFa2_1Dublicate,
+    consumer,
   };
 }

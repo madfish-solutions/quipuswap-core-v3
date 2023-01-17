@@ -14,7 +14,9 @@ import {
   isInRange,
   entries,
   isMonotonic,
+  safeObserve,
 } from "@madfish/quipuswap-v3/dist/utils";
+import { Map } from "immutable";
 
 export async function checkAllInvariants(
   cfmm: QuipuswapV3,
@@ -61,17 +63,18 @@ export async function checkAccumulatorsInvariants(
     BigNumber.ROUND_CEIL,
   );
 
-  const {
-    tick_cumulative: cvTickCumulative,
-    seconds_per_liquidity_cumulative: cvSecondsPerLiquidityCumulative,
-  } = (await cfmm.observe([currentTime.toString()]))[0];
+  const { tickCumulative, secondsPerLiquidity } = await safeObserve(
+    cfmm,
+    currentTime,
+  );
 
   const globalAccumulators = {
     aSeconds: currentTime,
-    aTickCumulative: cvTickCumulative,
+    aTickCumulative: tickCumulative,
     aFeeGrowth: storage.feeGrowth.x.plus(storage.feeGrowth.y),
-    aSecondsPerLiquidity: cvSecondsPerLiquidityCumulative,
+    aSecondsPerLiquidity: secondsPerLiquidity,
   };
+
   equal(
     globalAccumulators.aSeconds.toFixed(),
     sumInsideAccumulators.aSeconds.toFixed(),
@@ -293,27 +296,83 @@ export async function checkCumulativesBufferInvariants(
   ok(isMonotonic(sums));
 }
 
+function merge<K, V>(
+  f: (key: K, val1: V, val2: V) => V,
+  map1: Map<K, V>,
+  map2: Map<K, V>,
+): Map<K, V> {
+  const result = Map<K, V>();
+  for (const [key, val1] of map1.entries()) {
+    if (map2.has(key)) {
+      result.set(key, f(key, val1, map2.get(key)!));
+    } else {
+      result.set(key, val1);
+    }
+  }
+  for (const [key, val2] of map2.entries()) {
+    if (!map1.has(key)) {
+      result.set(key, val2);
+    }
+  }
+  return result;
+}
+
 /**
  * -- | Invariants on storages separated in time.
+ * -- | Invariants on storages separated in time.
+--
+-- 1. Recorded values to not change.
+checkCumulativesBufferTimeInvariants
+  :: forall caps base m. (HasCallStack, MonadNettest caps base m)
+  => (Storage, Storage) -> m ()
+checkCumulativesBufferTimeInvariants storages = do
+  let mapBoth f (a, b) = (f a, f b)
+
+  let buffers = mapBoth sCumulativesBuffer storages
+  let bufferMaps = mapBoth cbEntries buffers
+
+  -- Invariant 1
+  let mergeEq k v1 v2 = assert (v1 == v2) $
+        "Value for key " +| k |+ " has changed:\n\
+        \  Was:\n    " +| v1 |+ "\n\
+        \  After:\n    " +| v2 |+ "\n"
+  _ <- uncurry
+    (Map.Merge.mergeA
+      Map.Merge.dropMissing
+      Map.Merge.dropMissing
+      (Map.Merge.zipWithAMatched mergeEq)
+    ) bufferMaps
+
+  pass
 
  */
 export async function checkCumulativesBufferTimeInvariants(
   cfmm: QuipuswapV3,
   storages: [quipuswapV3Types.Storage, quipuswapV3Types.Storage],
 ): Promise<void> {
-  const [storage1, storage2] = storages;
-  const buffer1 = storage1.cumulativesBuffer;
-  const buffer2 = storage2.cumulativesBuffer;
-  const bufferMap1 = buffer1.map.map;
-  const bufferMap2 = buffer2.map.map;
+  const mapBoth =
+    (f: (x: quipuswapV3Types.Storage) => any) =>
+    ([a, b]: [quipuswapV3Types.Storage, quipuswapV3Types.Storage]): [
+      any,
+      any,
+    ] =>
+      [f(a), f(b)];
+
+  const bufferMaps = mapBoth(cb => entries(cb))(storages);
 
   const mergeEq = (k: string, v1: any, v2: any) => {
     if (v1 !== v2) {
       throw new Error(
         `Value for key ${k} has changed:\n\
-        \  Was:\n    ${v1}\n\
-        \  After:\n    ${v2}\n`,
+        \  Was:\n    ${JSON.stringify(v1)}\n\
+        \  After:\n    ${JSON.stringify(v2)}\n`,
       );
     }
   };
+  merge(mergeEq, Map(bufferMaps[0]), Map(bufferMaps[1]));
+  /* Iterating over the first buffer map and comparing the values to the second buffer map. */
+  // Object.entries(bufferMaps[0]).forEach(([k, v1]) => {
+  //   const v2 = bufferMaps[1][k];
+  //   mergeEq(k, v1, v2);
+  // });
 }

@@ -10,10 +10,12 @@ export default class Factory {
   contract: Contract;
   constructor(private tezos: TezosToolkit, private network: string) {}
 
-  async initialize(factoryAddress?: string) {
+  async initialize(devFee: number = 0, factoryAddress?: string) {
     if (factoryAddress) {
       this.contract = await this.tezos.contract.at(factoryAddress);
     } else {
+      factoryStorage.dev_fee_bps = devFee;
+      factoryStorage.owner = await this.tezos.signer.publicKeyHash();
       const deployedAddress = await migrate(
         this.tezos,
         "factory",
@@ -31,6 +33,7 @@ export default class Factory {
     yTokenType: string,
     feeBPS: number,
     tickSpacing: number,
+    extraSlots: number,
     metadata: MichelsonMap<MichelsonMapKey, unknown>,
     xTokenId: number = 0,
     yTokenId: number = 0,
@@ -49,6 +52,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -62,6 +66,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -75,6 +80,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -87,6 +93,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .toTransferParams();
@@ -104,6 +111,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -117,6 +125,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -130,6 +139,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();
@@ -142,6 +152,7 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
+            extraSlots,
             metadata,
           )
           .send();

@@ -146,6 +146,10 @@
 (* Price became negative when crossing a tick *)
 [@inline] let internal_negative_price = 326n
 
+[@inline] let too_big_fee_bps_err = 402n
+
+[@inline] let pool_already_exists_err = 403
+
 [@inline] let not_owner_err = 420n
 
 
