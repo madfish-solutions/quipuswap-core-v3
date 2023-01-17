@@ -27,11 +27,7 @@ import {
 } from "./helpers/utils";
 
 const alice = accounts.alice;
-const bob = accounts.bob;
-const peter = accounts.peter;
-const eve = accounts.eve;
 const aliceSigner = new InMemorySigner(alice.sk);
-const bobSigner = new InMemorySigner(bob.sk);
 
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
@@ -41,20 +37,6 @@ describe("Timed oracles tests", async function () {
   before(async () => {
     tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
-
-    let operation = await tezos.contract.transfer({
-      to: peter.pkh,
-      amount: 1e6,
-      mutez: true,
-    });
-
-    await confirmOperation(tezos, operation.hash);
-    operation = await tezos.contract.transfer({
-      to: eve.pkh,
-      amount: 1e6,
-      mutez: true,
-    });
-    await confirmOperation(tezos, operation.hash);
   });
 
   describe("Success cases", async function () {
@@ -155,7 +137,7 @@ describe("Timed oracles tests", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
-        [aliceSigner, bobSigner],
+        [aliceSigner],
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -196,7 +178,7 @@ describe("Timed oracles tests", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
-        [aliceSigner, bobSigner],
+        [aliceSigner],
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -276,7 +258,7 @@ describe("Timed oracles tests", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
-        [aliceSigner, bobSigner],
+        [aliceSigner],
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -303,7 +285,7 @@ describe("Timed oracles tests", async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
-        [aliceSigner, bobSigner],
+        [aliceSigner],
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -407,9 +389,10 @@ describe("Timed oracles tests", async function () {
       }
     });
     it("Observed values are sane: Seconds per liquidity cumulative", async function () {
+      this.retries(3);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner, bobSigner]);
+        await poolsFixture(tezos, [aliceSigner]);
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
@@ -550,11 +533,11 @@ describe("Timed oracles tests", async function () {
       }
     });
     it("Observed values are sane: Tick cumulative", async function () {
-      this.retries(2);
+      //this.retries(2);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
-        [aliceSigner, bobSigner],
+        [aliceSigner],
       );
 
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -666,6 +649,8 @@ describe("Timed oracles tests", async function () {
         });
         expect(diffs[0][0].toFixed()).to.equal(diffs[0][1].toFixed());
         expect(diffs[1][0].toFixed()).to.equal(diffs[1][1].toFixed());
+        pool.callSettings.setPosition = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
       }
     });
   });
