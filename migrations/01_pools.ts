@@ -1,28 +1,30 @@
 import { TezosToolkit } from "@taquito/taquito";
 
 import { confirmOperation } from "../scripts/confirmation";
-const networks = require("../env").networks;
+import { BigNumber } from "bignumber.js";
+import env from "../env";
 
+const networks = env.networks;
 module.exports = async (tezos: TezosToolkit, network: string) => {
   const dexFactory: string = require("../build/factory.json").networks[network][
     "factory"
   ];
-
   const factory = (await tezos.contract.at(dexFactory)) as any;
 
   for (const pool of Object.values(networks[network].pools) as unknown as any) {
     pool as any;
+    const poolName = pool.name;
     const lastPoolId = await factory
       .storage()
       .then(storage => storage.pool_count);
 
     const operation = await factory.methodsObject
       .deploy_pool({
-        x_token_id: pool.tokenX.token_id,
-        x_token_address: pool.tokenX.token_address,
-        y_token_id: pool.tokenY.token_id,
-        y_token_address: pool.tokenY.token_address,
+        cur_tick_index: new BigNumber(pool.tickIndex),
+        token_x: pool.tokenX,
+        token_y: pool.tokenY,
         fee_bps: pool.feeBPS,
+        tick_spacing: "1",
         metadata: pool.metadata,
       })
       .send();
@@ -31,6 +33,6 @@ module.exports = async (tezos: TezosToolkit, network: string) => {
       .storage()
       .then(storage => storage.pools.get(lastPoolId));
 
-    console.log(`New pool deployed at: ${poolAddress}`);
+    console.log(`Pool ${poolName} deployed at: ${poolAddress}`);
   }
 };

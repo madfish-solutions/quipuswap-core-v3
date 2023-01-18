@@ -8,7 +8,7 @@ let init_pool_storage (p : create_dex_t) (dev_fee_bps : nat) : storage =
     tick_spacing = p.tick_spacing ;
   } in
 
-  ( default_storage (constants) (0n) (p.metadata) : storage)
+  ( default_storage (constants) (p.cur_tick_index) (0n) (p.metadata) : storage)
 
 let deploy_pool_func : deploy_pool_func_t =
 [%Michelson ( {| { UNPPAIIR ;
