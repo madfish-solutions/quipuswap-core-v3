@@ -385,7 +385,7 @@ describe("XtoY Tests", async function () {
       }
     });
     it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
-      this.retries(3);
+      //this.retries(3);
 
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
@@ -740,6 +740,7 @@ describe("XtoY Tests", async function () {
         expect(finalBalance).to.be.deep.eq(initialBalance);
       }
     });
+
     it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async function () {
       tezos.setSignerProvider(aliceSigner);
       this.retries(3);
@@ -861,6 +862,7 @@ describe("XtoY Tests", async function () {
         }
         let batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
+
         transferParams = [];
 
         await checkAllInvariants(
@@ -967,9 +969,9 @@ describe("XtoY Tests", async function () {
           genNatIds(50),
           [
             new Int(minTickIndex),
-            new Int(maxTickIndex),
             lowerTickIndex,
             upperTickIndex,
+            new Int(maxTickIndex),
           ],
           genNatIds(100),
         );
@@ -1076,7 +1078,6 @@ describe("XtoY Tests", async function () {
         tezos.setSignerProvider(aliceSigner);
         await collectFees(pool_1, feeReceiver1, genNatIds(10));
         await collectFees(pool_2, feeReceiver2, genNatIds(10));
-
         const feeReceiver1BalanceX = (
           await getTypedBalance(
             pool_1.tezos,
@@ -1192,7 +1193,7 @@ describe("XtoY Tests", async function () {
         const tokenTypeY = Object.keys(rawSt.constants.token_y)[0];
         let transferParams: any[] = [];
         pool.callSettings.setPosition = CallMode.returnParams;
-        //pool.callSettings.swapXY = CallMode.returnParams;
+        pool.callSettings.swapXY = CallMode.returnParams;
         transferParams.push(
           await pool.setPosition(
             new Int(-100),
@@ -1217,9 +1218,6 @@ describe("XtoY Tests", async function () {
             new BigNumber(3e4),
           ),
         );
-
-        let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
         transferParams.push(
           await pool.swapXY(
             new BigNumber(53),
@@ -1228,6 +1226,10 @@ describe("XtoY Tests", async function () {
             swapperAddr,
           ),
         );
+
+        let batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+
         tezos.setSignerProvider(swapper);
         /**
          * Explanation:
@@ -1394,6 +1396,9 @@ describe("XtoY Tests", async function () {
 
         expect(balanceFeeReceiverX_2.toFixed()).to.be.not.eq("0");
         expect(balanceFeeReceiverY_2.toFixed()).to.be.eq("0");
+        pool.callSettings.setPosition = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
       }
     });
   });

@@ -179,8 +179,10 @@ export const collectFees = async (
         new BigNumber(0),
       );
     } catch (e) {
-      console.log(e);
-      return;
+      if (e.message.includes("FA2_TOKEN_UNDEFINED")) {
+        return;
+      }
+      throw e;
     }
   }
 };

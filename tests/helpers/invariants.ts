@@ -59,9 +59,7 @@ export async function checkAccumulatorsInvariants(
       ),
     };
   });
-  const currentTime = new BigNumber(Date.now() / 1000).integerValue(
-    BigNumber.ROUND_CEIL,
-  );
+  const currentTime = sumInsideAccumulators.aSeconds;
 
   const { tickCumulative, secondsPerLiquidity } = await safeObserve(
     cfmm,
@@ -139,7 +137,8 @@ export async function checkStorageInvariants(
   const expectedCurTickWitness = Int.max(
     ...tickIndices.filter(t => t.lte(curTickIndex)),
   );
-  deepEqual(storage.curTickWitness, expectedCurTickWitness);
+
+  equal(storage.curTickWitness.toFixed(), expectedCurTickWitness.toFixed());
   // Invariant 2.1
   const liquiditiyAfterPriorTicks = tickIndices
     .filter(t => t.lte(curTickIndex))

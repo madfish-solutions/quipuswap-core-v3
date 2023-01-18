@@ -82,7 +82,6 @@ describe("Range oracles tests", async function () {
           new Nat(100000),
           new Nat(100000),
         );
-        console.log(pool.callSettings.setPosition);
 
         await sleep(3000);
         const op = await pool.contract.methodsObject
@@ -95,7 +94,7 @@ describe("Range oracles tests", async function () {
         await confirmOperation(tezos, op.hash);
 
         const st = await consumer.storage();
-        console.log("st");
+
         const lastSnapshot = await st.snapshots.get(
           (st.snapshot_id.toNumber() - 1).toString(),
         );

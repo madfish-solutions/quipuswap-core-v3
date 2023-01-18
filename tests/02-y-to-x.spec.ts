@@ -7,13 +7,14 @@ import { InMemorySigner } from "@taquito/signer";
 import { accounts } from "../sandbox/accounts";
 import { QuipuswapV3 } from "@madfish/quipuswap-v3";
 import { CallMode } from "@madfish/quipuswap-v3/dist/types";
-import DexFactory from "./helpers/factoryFacade";
 import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
 import { poolsFixture } from "./fixtures/poolFixture";
 import { confirmOperation } from "../scripts/confirmation";
-import { sendBatch, isInRangeNat } from "@madfish/quipuswap-v3/dist/utils";
+import {
+  sendBatch,
+  isInRangeNat,
+  isInRange,
+} from "@madfish/quipuswap-v3/dist/utils";
 import {
   adjustScale,
   calcSwapFee,
@@ -40,6 +41,7 @@ const bob = accounts.bob;
 const eve = accounts.eve;
 const sara = accounts.sara;
 const carol = accounts.carol;
+const peter = accounts.peter;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
 
@@ -258,7 +260,6 @@ describe("YtoX Tests", async () => {
             new Nat(swapAmt.minus(expectedFee)),
           );
           expect(
-
             adjustScale(finalSt.sqrtPrice, new Nat(80), new Nat(30)).toFixed(),
           ).to.be.equal(
             adjustScale(expectedNewPrice, new Nat(80), new Nat(30)).toFixed(),
@@ -367,7 +368,6 @@ describe("YtoX Tests", async () => {
     });
 
     it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
-      this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -417,7 +417,6 @@ describe("YtoX Tests", async () => {
         );
         transferParams.push(
           await pool_2.increaseObservationCount(new BigNumber(10)),
-
         );
         let batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
@@ -474,9 +473,6 @@ describe("YtoX Tests", async () => {
             "YtoX",
           )),
         );
-        batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
-
         batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
 
@@ -581,6 +577,7 @@ describe("YtoX Tests", async () => {
          * on every swap.
          * So the 2nd contract may hold up to 1000 more Y tokens than the 1st contract.
          */
+
         ok(
           isInRangeNat(
             cfmm2XBalance,
@@ -727,7 +724,7 @@ describe("YtoX Tests", async () => {
         expect(finalBalance).to.be.deep.eq(initialBalance);
       }
     });
-        it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
+    it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -806,15 +803,6 @@ describe("YtoX Tests", async () => {
         transferParams.push(
           await pool_2.increaseObservationCount(new BigNumber(10)),
         );
-        // let batchOp = await sendBatch(tezos, transferParams);
-        // await confirmOperation(tezos, batchOp.opHash);
-        /**
-
-      -- Place many small positions with the same liquidity
-      for_ [-1000, -900 .. 900] \lowerTickIndex' -> do
-        setPosition cfmm2 liquidity (lowerTickIndex', lowerTickIndex' + 100)
-       */
-        //transferParams = [];
 
         transferParams.push(
           await pool_1.setPosition(
@@ -854,8 +842,6 @@ describe("YtoX Tests", async () => {
         await confirmOperation(tezos, batchOp.opHash);
         transferParams = [];
 
-        // batchOp = await sendBatch(tezos, transferParams);
-        // await confirmOperation(tezos, batchOp.opHash);
         // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
 
         await checkAllInvariants(
@@ -1058,6 +1044,7 @@ describe("YtoX Tests", async () => {
         expect(delta1X.toFixed()).to.be.eq(delta2X.toFixed());
 
         //The 2nd contract may have given out fewer Y tokens (due to the potential increase in fees)
+
         ok(isInRange(delta2Y, delta1Y, new BigNumber(0), new BigNumber(10)));
 
         /**
@@ -1066,6 +1053,7 @@ describe("YtoX Tests", async () => {
          * However, when an LP collects fees for a position, the distribution of fees can be rounded down,
          * so we allow for a margin of error of +/-10 X tokens.
          */
+        tezos.setSignerProvider(aliceSigner);
         await collectFees(pool_1, feeReceiver1, genNatIds(10));
         await collectFees(pool_2, feeReceiver2, genNatIds(10));
 
@@ -1171,11 +1159,10 @@ describe("YtoX Tests", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
-        const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
-        const tokenTypeY = Object.keys(rawSt.constants.token_y)[0];
+
         let transferParams: any[] = [];
         pool.callSettings.setPosition = CallMode.returnParams;
-        //pool.callSettings.swapXY = CallMode.returnParams;
+
         transferParams.push(
           await pool.setPosition(
             new Int(-100),
@@ -1190,8 +1177,8 @@ describe("YtoX Tests", async () => {
         );
         transferParams.push(
           await pool.setPosition(
-            new Int(-200),
-            new Int(-100),
+            new Int(100),
+            new Int(200),
             minTickIndex,
             minTickIndex,
             new BigNumber(3e4),
@@ -1200,18 +1187,21 @@ describe("YtoX Tests", async () => {
             new BigNumber(3e4),
           ),
         );
+        pool.callSettings.swapYX = CallMode.returnParams;
 
-        let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        tezos.setSignerProvider(swapper);
         transferParams.push(
-          await pool.swapXY(
-            new BigNumber(51),
+          await pool.swapYX(
+            new BigNumber(53),
             validDeadline(),
             new BigNumber(1),
             swapperAddr,
           ),
         );
-        tezos.setSignerProvider(swapper);
+        tezos.setSignerProvider(aliceSigner);
+        let batchOp = await sendBatch(tezos, transferParams);
+        await confirmOperation(tezos, batchOp.opHash);
+
         /**
          * Explanation:
          * We have 2 positions: one currently in-range with boundaries at [-100, 100],
@@ -1235,21 +1225,24 @@ describe("YtoX Tests", async () => {
           ],
           genNatIds(50),
         );
-        expect(st.curTickIndex.toFixed()).to.be.eq("-101");
+        expect(st.curTickIndex.toFixed()).to.be.eq("101");
         await checkAllInvariants(
           pool,
           [],
           [new Nat(0), new Nat(1)],
           [
-            new Int(-100),
-            new Int(-101),
-            new Int(100),
-            new Int(-200),
             minTickIndex,
+            new Int(-100),
+            new Int(100),
+            new Int(200),
+
             maxTickIndex,
           ],
           genNatIds(10),
         );
+        pool.callSettings.setPosition = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
       }
     });
     it("Should assigning correctly fees to each position", async function () {
@@ -1378,8 +1371,10 @@ describe("YtoX Tests", async () => {
 
         expect(balanceFeeReceiverX_2.toFixed()).to.be.eq("0");
         expect(balanceFeeReceiverY_2.toFixed()).to.be.not.eq("0");
+        pool.callSettings.setPosition = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
+        pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
       }
     });
-  
   });
 });
