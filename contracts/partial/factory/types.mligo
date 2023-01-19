@@ -19,7 +19,8 @@ type deploy_pool_func_t = (key_hash option * tez * storage) -> (operation * addr
 
 type create_dex_t =
   [@layout:comb]
-  { token_x: asset_standard_t ;
+  { cur_tick_index: tick_index ;
+    token_x: asset_standard_t ;
     token_y: asset_standard_t ;
     fee_bps : nat ;
     tick_spacing : nat ;

@@ -80,6 +80,7 @@ let default_ladder : ladder = Big_map.literal
 
 let default_storage
     (constants : constants)
+    (cur_tick_index : tick_index)
     (init_cumulatives_buffer_extra_slots : nat)
     (metadata_map : metadata_map) : storage =
   let min_tick_state =
@@ -112,8 +113,8 @@ let default_storage
   ] in
 
   { liquidity = 0n
-  ; sqrt_price = half_bps_pow (0, default_ladder)
-  ; cur_tick_index = { i = 0 }
+  ; sqrt_price = half_bps_pow (cur_tick_index.i, default_ladder)
+  ; cur_tick_index = cur_tick_index
   ; cur_tick_witness  = { i = -const_max_tick }
   ; fee_growth = { x = { x128 = 0n }; y = { x128 = 0n } }
   ; dev_fee = { x = 0n ; y = 0n }
