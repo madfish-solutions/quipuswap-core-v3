@@ -38,12 +38,14 @@ export default class Factory {
     xTokenId: number = 0,
     yTokenId: number = 0,
     returnParams: boolean = false,
+    currentTick: string = "0",
   ) {
     let op;
     if (returnParams) {
       if (xTokenType === "fa2" && yTokenType === "fa2") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -59,6 +61,7 @@ export default class Factory {
       } else if (xTokenType === "fa2" && yTokenType === "fa12") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -73,6 +76,7 @@ export default class Factory {
       } else if (xTokenType === "fa12" && yTokenType === "fa2") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
@@ -87,6 +91,7 @@ export default class Factory {
       } else if (xTokenType === "fa12" && yTokenType === "fa12") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
@@ -103,6 +108,7 @@ export default class Factory {
       if (xTokenType === "fa2" && yTokenType === "fa2") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -118,6 +124,7 @@ export default class Factory {
       } else if (xTokenType === "fa2" && yTokenType === "fa12") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -132,6 +139,7 @@ export default class Factory {
       } else if (xTokenType === "fa12" && yTokenType === "fa2") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
@@ -146,6 +154,7 @@ export default class Factory {
       } else if (xTokenType === "fa12" && yTokenType === "fa12") {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
