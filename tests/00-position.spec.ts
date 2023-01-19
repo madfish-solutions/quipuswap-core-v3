@@ -101,7 +101,7 @@ describe("Position Tests", async () => {
     await confirmOperation(tezos, operation.hash);
     operation = await tezos.contract.transfer({
       to: eve.pkh,
-      amount: 1e6,
+      amount: 10e6,
       mutez: true,
     });
     await confirmOperation(tezos, operation.hash);
