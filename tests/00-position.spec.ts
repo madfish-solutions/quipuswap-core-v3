@@ -1262,6 +1262,7 @@ describe("Position Tests", async () => {
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
         tezos.setSignerProvider(eveSigner);
+        console.log("Eva Sets Position");
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1273,6 +1274,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         );
         tezos.setSignerProvider(aliceSigner);
+        console.log("Alice Sets Position");
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1315,6 +1317,7 @@ describe("Position Tests", async () => {
 
           tezos.setSignerProvider(swapper);
           const swapperAddr = await swapper.publicKeyHash();
+          console.log("Swapper", swapperAddr);
           await pool.swapXY(
             transferAmount,
             validDeadline(),
@@ -1334,7 +1337,7 @@ describe("Position Tests", async () => {
         }
         const upperTi = new Int(10000);
         const lowerTi = new Int(-10000);
-
+        console.log("Check Invariants");
         await checkAllInvariants(
           pool,
           { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
@@ -1344,8 +1347,10 @@ describe("Position Tests", async () => {
         );
 
         tezos.setSignerProvider(eveSigner);
+        console.log("Eve Collects Fees");
         await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
         tezos.setSignerProvider(aliceSigner);
+        console.log("Alice Collects Fees");
         await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
         const eveBalanceX = (
           await getTypedBalance(
