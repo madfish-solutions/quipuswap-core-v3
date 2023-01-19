@@ -1220,6 +1220,7 @@ describe("Position Tests", async () => {
       }
     });
     it("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
+      console.log("Start");
       tezos.setSignerProvider(aliceSigner);
       const fees = [
         Math.floor(Math.random() * 1e4),
@@ -1253,6 +1254,7 @@ describe("Position Tests", async () => {
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
       poolFa2_1 = _poolFa2_1;
+      console.log("PoolLoop");
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
