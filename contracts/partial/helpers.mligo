@@ -110,6 +110,13 @@ let check_deadline (deadline : timestamp) : unit =
         else unit
 
 [@inline]
+let check_position_owner (owner : address) : unit =
+    if owner <> (Tezos.get_sender ())
+        then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
+            (not_owner_err : nat) : unit)
+        else unit
+
+[@inline]
 let get_registered_cumulatives_unsafe (buffer : timed_cumulatives_buffer) (i : nat) : timed_cumulatives =
     match Big_map.find_opt i buffer.map with
     | None -> failwith internal_bad_access_to_observation_buffer
@@ -316,7 +323,7 @@ let update_balances_after_position_change
             (high_tokens_err, (maximum_tokens_contributed.y, delta.y)) : unit)
         else unit in
 
-    let op_x = if delta.x > 0 then
+    let op_x = if delta.x >= 0 then
         wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x
     else
 #if DEBUG
@@ -324,7 +331,7 @@ let update_balances_after_position_change
 #endif
         wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x in
 
-    let op_y = if delta.y > 0 then
+    let op_y = if delta.y >= 0 then
         wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y
     else
 #if DEBUG

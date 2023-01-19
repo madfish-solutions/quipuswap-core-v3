@@ -4,7 +4,7 @@
   "license": "MIT",
   "description": "Quipuswap Core V3",
   "scripts": {
-    "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20220510 jakartabox start",
+    "start-sandbox": "docker run --rm --name my-sandbox -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20221123 kathmandubox start",
     "clean": "rm -rf ./build",
     "compile": "yarn clean && ts-node scripts/cli.ts compile -f text && ts-node scripts/cli.ts compile -f json",
     "migrate": "ts-node scripts/cli.ts migrate -n development",
@@ -19,13 +19,13 @@
   },
   "dependencies": {
     "@madfish/quipuswap-v3": "git+https://github.com/madfish-solutions/quipuswap-v3-interface.git",
-    "@taquito/http-utils": "^13.0.0",
-    "@taquito/local-forging": "^13.0.0",
-    "@taquito/michel-codec": "^13.0.0",
-    "@taquito/michelson-encoder": "^13.0.0",
-    "@taquito/rpc": "^13.0.0",
-    "@taquito/signer": "^13.0.0",
-    "@taquito/taquito": "^13.0.0",
+    "@taquito/http-utils": "^15.0.1",
+    "@taquito/local-forging": "^15.0.1",
+    "@taquito/michel-codec": "^15.0.1",
+    "@taquito/michelson-encoder": "^15.0.1",
+    "@taquito/rpc": "^15.0.1",
+    "@taquito/signer": "^15.0.1",
+    "@taquito/taquito": "^15.0.1",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.0.0",
     "assert": "^2.0.0",
@@ -33,14 +33,16 @@
     "chai": "^4.3.4",
     "chai-bignumber": "^3.0.0",
     "child_process": "^1.0.2",
+    "dotenv": "^10.0.0",
     "fs": "^0.0.1-security",
     "karma-chai": "^0.1.0",
     "mocha": "^9.1.2",
+    "node-fetch": "^3.3.0",
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3",
     "yargs": "^17.2.1",
-    "dotenv": "^10.0.0"
+    "immutable": "^4.2.1"
   },
   "bugs": {
     "url": "https://github.com/madfish-solutions/quipuswap-core-v3/issues"
@@ -50,5 +52,9 @@
     "tezos",
     "ligo",
     "blockchain"
-  ]
+  ],
+  "devDependencies": {
+    "@types/chai": "^4.3.4",
+    "it-each": "^0.3.0"
+  }
 }

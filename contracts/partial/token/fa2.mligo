@@ -34,8 +34,8 @@ let change_position_owner (
     positions,
     position_ids: address * transfer_destination * position_map * position_ids_map):
       position_map * position_ids_map =
-  if tx.amount = 0n then
-    (positions, position_ids) // We allow 0 transfer
+  if tx.amount = 0n or tx.to_ = from_ then
+    (positions, position_ids) // We allow 0 transfer, and do not update position if transfer is to itself
   else
     let position = get_position(tx.token_id, positions) in
 

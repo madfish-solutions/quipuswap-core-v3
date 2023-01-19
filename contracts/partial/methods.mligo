@@ -1,5 +1,5 @@
 let claim_dev_fee (s : storage) (recipient : address) : result =
-    let owner = unwrap (Tezos.call_view "%get_owner" unit s.constants.factory_address : address option ) "not_owner" in
+    let owner = unwrap (Tezos.call_view "get_owner" unit s.constants.factory_address : address option ) "not_get_owner" in
     let _: unit = if Tezos.get_sender () <> owner
         then ([%Michelson ({| { FAILWITH } |} : nat -> unit)]
             (not_owner_err : nat) : unit)
@@ -216,6 +216,11 @@ let update_position (s : storage) (p : update_position_param) : result =
 
     (* Grab the existing position *)
     let position = get_position (p.position_id, s.positions) in
+
+    (* Checking that the sender is the owner of the position. *)
+    let _check_owner: unit = check_position_owner position.owner in
+
+    (* Check that the position is not empty. *)
     (* Get accumulated fees for this position. *)
     let s, fees, position = collect_fees s p.position_id position in
 

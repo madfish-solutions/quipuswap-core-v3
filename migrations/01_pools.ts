@@ -1,14 +1,13 @@
 import { TezosToolkit } from "@taquito/taquito";
 
-import { confirmOperation } from "../scripts/confirmation";
-import { BigNumber } from "bignumber.js";
-import env from "../env";
+import { confirmOperation } from "./../scripts/confirmation";
+const networks = require("./../env").networks;
 
-const networks = env.networks;
 module.exports = async (tezos: TezosToolkit, network: string) => {
-  const dexFactory: string = require("../build/factory.json").networks[network][
-    "factory"
-  ];
+  const dexFactory: string = require("./../build/factory.json").networks[
+    network
+  ]["factory"];
+
   const factory = (await tezos.contract.at(dexFactory)) as any;
 
   for (const pool of Object.values(networks[network].pools) as unknown as any) {
