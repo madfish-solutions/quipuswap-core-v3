@@ -1,15 +1,15 @@
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { sendBatch } from "@madfish/quipuswap-v3/dist/utils";
-import DexFactory from "./../helpers/factoryFacade";
-import { fa12Storage } from "./../../storage/test/FA12";
-import { fa2Storage } from "./../../storage/test/FA2";
-import { FA2 } from "./../helpers/FA2";
-import { FA12 } from "./../helpers/FA12";
-import { confirmOperation } from "./../../scripts/confirmation";
+import { MichelsonMap, TezosToolkit, TransferParams } from '@taquito/taquito';
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
+import { sendBatch } from '@madfish/quipuswap-v3/dist/utils';
+import DexFactory from './../helpers/factoryFacade';
+import { fa12Storage } from './../../storage/test/FA12';
+import { fa2Storage } from './../../storage/test/FA2';
+import { FA2 } from './../helpers/FA2';
+import { FA12 } from './../helpers/FA12';
+import { confirmOperation } from './../../scripts/confirmation';
 
-import { BigNumber } from "bignumber.js";
-import { migrate } from "../../scripts/helpers";
+import { BigNumber } from 'bignumber.js';
+import { migrate } from '../../scripts/helpers';
 
 const getTypedUpdateOperator = async (
   tezos: TezosToolkit,
@@ -19,8 +19,8 @@ const getTypedUpdateOperator = async (
   amount: BigNumber = new BigNumber(0),
   returnTransferParams: boolean = false,
 ) => {
-  const tokenType = token instanceof FA12 ? "fa12" : "fa2";
-  if (tokenType === "fa12") {
+  const tokenType = token instanceof FA12 ? 'fa12' : 'fa2';
+  if (tokenType === 'fa12') {
     if (returnTransferParams) {
       return token.approve(operator, new BigNumber(amount), true);
     }
@@ -60,6 +60,7 @@ export async function poolsFixture(
   dublicate: boolean = false,
   devFee: number = 0,
   tickSpacing: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  curTickIndexies: number[] = [0, 0, 0, 0],
 ) {
   const fa12TokenX = await FA12.originate(tezos, fa12Storage);
 
@@ -67,7 +68,7 @@ export async function poolsFixture(
   const fa2TokenX = await FA2.originate(tezos, fa2Storage);
   const fa2TokenY = await FA2.originate(tezos, fa2Storage);
 
-  const factory = await new DexFactory(tezos, "development").initialize(devFee);
+  const factory = await new DexFactory(tezos, 'development').initialize(devFee);
   let factory2;
   let poolList: any[] = [
     [fa12TokenX, fa12TokenY],
@@ -76,13 +77,13 @@ export async function poolsFixture(
     [fa2TokenX, fa12TokenY],
   ];
   if (dublicate) {
-    factory2 = await new DexFactory(tezos, "development").initialize(devFee);
+    factory2 = await new DexFactory(tezos, 'development').initialize(devFee);
     const paramsList: TransferParams[] = [];
     for (const pair of poolList) {
       const xToken = pair[0];
       const yToken = pair[1];
-      const xTokenType = xToken instanceof FA12 ? "fa12" : "fa2";
-      const yTokenType = yToken instanceof FA12 ? "fa12" : "fa2";
+      const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
+      const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
 
       const transferParams: TransferParams = await factory2.deployPool(
         xToken.contract.address,
@@ -96,6 +97,7 @@ export async function poolsFixture(
         0,
         0,
         true,
+        curTickIndexies[paramsList.length].toString(),
       );
       paramsList.push(transferParams);
     }
@@ -107,8 +109,8 @@ export async function poolsFixture(
   for (const pair of poolList) {
     const xToken = pair[0];
     const yToken = pair[1];
-    const xTokenType = xToken instanceof FA12 ? "fa12" : "fa2";
-    const yTokenType = yToken instanceof FA12 ? "fa12" : "fa2";
+    const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
+    const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
 
     const transferParams: TransferParams = await factory.deployPool(
       xToken.contract.address,
@@ -122,6 +124,7 @@ export async function poolsFixture(
       0,
       0,
       true,
+      curTickIndexies[paramsList.length].toString(),
     );
     paramsList.push(transferParams);
   }
@@ -156,9 +159,9 @@ export async function poolsFixture(
   }
   const deployedConsumer = await migrate(
     tezos,
-    "consumer",
+    'consumer',
     { snapshot_id: 0, snapshots: MichelsonMap.fromLiteral({}) },
-    "development",
+    'development',
   );
   const consumer = await tezos.contract.at(deployedConsumer!);
   // update operators
@@ -171,8 +174,8 @@ export async function poolsFixture(
 
       const tokenXType = Object.keys(poolStorage.constants.token_x)[0];
       const tokenYType = Object.keys(poolStorage.constants.token_y)[0];
-      const xToken = tokenXType === "fa12" ? fa12TokenX : fa2TokenX;
-      const yToken = tokenYType === "fa12" ? fa12TokenY : fa2TokenY;
+      const xToken = tokenXType === 'fa12' ? fa12TokenX : fa2TokenX;
+      const yToken = tokenYType === 'fa12' ? fa12TokenY : fa2TokenY;
 
       approvesParamsList.push(
         await getTypedUpdateOperator(
