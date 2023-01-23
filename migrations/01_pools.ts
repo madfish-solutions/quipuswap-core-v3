@@ -1,7 +1,8 @@
 import { TezosToolkit } from "@taquito/taquito";
 
 import { confirmOperation } from "./../scripts/confirmation";
-const networks = require("./../env").networks;
+const env = require("./../env");
+const networks = env.default.networks;
 
 module.exports = async (tezos: TezosToolkit, network: string) => {
   const dexFactory: string = require("./../build/factory.json").networks[
@@ -19,11 +20,12 @@ module.exports = async (tezos: TezosToolkit, network: string) => {
 
     const operation = await factory.methodsObject
       .deploy_pool({
-        cur_tick_index: new BigNumber(pool.tickIndex),
+        cur_tick_index: pool.tickIndex,
         token_x: pool.tokenX,
         token_y: pool.tokenY,
         fee_bps: pool.feeBPS,
         tick_spacing: "1",
+        extra_slots: pool.extraSlots,
         metadata: pool.metadata,
       })
       .send();
