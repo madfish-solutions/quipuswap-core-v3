@@ -725,6 +725,7 @@ describe("YtoX Tests", async () => {
       }
     });
     it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
+      console.log("1");
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -750,7 +751,7 @@ describe("YtoX Tests", async () => {
         [200, 200, 200, 200, 200, 200, 200, 200],
         true,
       );
-
+        console.log('1');
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
@@ -1141,6 +1142,7 @@ describe("YtoX Tests", async () => {
       }
     });
     it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async () => {
+      console.log('3');
       const liquidity = new BigNumber(1e4);
       const lowerTickIndex = new Int(-100);
       const upperTickIndex = new Int(100);
@@ -1155,7 +1157,7 @@ describe("YtoX Tests", async () => {
         0,
         genFees(4, true),
       );
-
+      console.log('4');
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
