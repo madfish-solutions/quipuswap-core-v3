@@ -1,19 +1,19 @@
-import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { deepEqual, equal, ok, rejects, strictEqual } from 'assert';
+import { expect } from 'chai';
+import { BigNumber } from 'bignumber.js';
 
-import { MichelsonMap, TezosToolkit, TransferParams } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallSettings, CallMode } from "@madfish/quipuswap-v3/dist/types";
-import DexFactory from "./helpers/factoryFacade";
-import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
-import { poolsFixture } from "./fixtures/poolFixture";
-import { confirmOperation } from "../scripts/confirmation";
-import { sendBatch, isInRangeNat } from "@madfish/quipuswap-v3/dist/utils";
+import { MichelsonMap, TezosToolkit, TransferParams } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
+import { accounts } from '../sandbox/accounts';
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
+import { CallSettings, CallMode } from '@madfish/quipuswap-v3/dist/types';
+import DexFactory from './helpers/factoryFacade';
+import env from '../env';
+import { FA2 } from './helpers/FA2';
+import { FA12 } from './helpers/FA12';
+import { poolsFixture } from './fixtures/poolFixture';
+import { confirmOperation } from '../scripts/confirmation';
+import { sendBatch, isInRangeNat } from '@madfish/quipuswap-v3/dist/utils';
 import {
   adjustScale,
   liquidityDeltaToTokensDelta,
@@ -22,10 +22,10 @@ import {
   tickAccumulatorsInside,
   shiftRight,
   calcSwapFee,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
+} from '@madfish/quipuswap-v3/dist/helpers/math';
 
-import { checkAllInvariants } from "./helpers/invariants";
-import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
+import { checkAllInvariants } from './helpers/invariants';
+import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
 import {
   advanceSecs,
   collectFees,
@@ -38,8 +38,9 @@ import {
   getTypedBalance,
   inRange,
   safeSwap,
+  sleep,
   validDeadline,
-} from "./helpers/utils";
+} from './helpers/utils';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -56,7 +57,7 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
-describe("Position Tests", async () => {
+describe('Position Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -106,7 +107,7 @@ describe("Position Tests", async () => {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  describe("Failed cases", async () => {
+  describe('Failed cases', async () => {
     it("Shouldn't setting position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
@@ -120,7 +121,7 @@ describe("Position Tests", async () => {
           new BigNumber(100),
         ),
         (err: Error) => {
-          equal(err.message.includes("110"), true);
+          equal(err.message.includes('110'), true);
           return true;
         },
       );
@@ -138,7 +139,7 @@ describe("Position Tests", async () => {
           new BigNumber(100),
         ),
         (err: Error) => {
-          equal(err.message.includes("110"), true);
+          equal(err.message.includes('110'), true);
           return true;
         },
       );
@@ -171,7 +172,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("105"), true);
+          equal(err.message.includes('105'), true);
           return true;
         },
       );
@@ -187,7 +188,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("105"), true);
+          equal(err.message.includes('105'), true);
           return true;
         },
       );
@@ -203,7 +204,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("100"), true);
+          equal(err.message.includes('100'), true);
           return true;
         },
       );
@@ -219,7 +220,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("100"), true);
+          equal(err.message.includes('100'), true);
           return true;
         },
       );
@@ -232,12 +233,12 @@ describe("Position Tests", async () => {
           new BigNumber(minTickIndex),
           new BigNumber(minTickIndex),
           new BigNumber(1e7),
-          new Date("2020-01-01").toString(),
+          new Date('2020-01-01').toString(),
           new BigNumber(1e7),
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("103"), true);
+          equal(err.message.includes('103'), true);
           return true;
         },
       );
@@ -258,12 +259,12 @@ describe("Position Tests", async () => {
           new BigNumber(-1e7),
           alice.pkh,
           alice.pkh,
-          new Date("2021-01-01").toString(),
+          new Date('2021-01-01').toString(),
           new BigNumber(1e7),
           new BigNumber(1e7),
         ),
         (err: Error) => {
-          equal(err.message.includes("103"), true);
+          equal(err.message.includes('103'), true);
           return true;
         },
       );
@@ -280,9 +281,9 @@ describe("Position Tests", async () => {
     it("Shouldn't setting a position if a tick index is not a multiple of 'tick_spacing'", async () => {
       const poolAddress = await factory.deployPool(
         fa12TokenX.contract.address,
-        "fa12",
+        'fa12',
         fa12TokenY.contract.address,
-        "fa12",
+        'fa12',
         10,
         10,
         0,
@@ -301,7 +302,7 @@ describe("Position Tests", async () => {
       ),
         (err: Error) => {
           console.log(err.message);
-          equal(err.message.includes("112"), true);
+          equal(err.message.includes('112'), true);
           return true;
         };
       wrongPool.setPosition(
@@ -316,7 +317,7 @@ describe("Position Tests", async () => {
       ),
         (err: Error) => {
           console.log(err.message);
-          equal(err.message.includes("112"), true);
+          equal(err.message.includes('112'), true);
           return true;
         };
     });
@@ -334,7 +335,7 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
           ),
           (err: Error) => {
-            equal(err.message.includes("105"), true);
+            equal(err.message.includes('105'), true);
             return true;
           },
         );
@@ -350,7 +351,7 @@ describe("Position Tests", async () => {
             new BigNumber(1e7),
           ),
           (err: Error) => {
-            equal(err.message.includes("105"), true);
+            equal(err.message.includes('105'), true);
             return true;
           },
         );
@@ -371,7 +372,7 @@ describe("Position Tests", async () => {
             new BigNumber(1),
           ),
           (err: Error) => {
-            equal(err.message.includes("106"), true);
+            equal(err.message.includes('106'), true);
             return true;
           },
         );
@@ -399,7 +400,7 @@ describe("Position Tests", async () => {
             new BigNumber(1),
           ),
           (err: Error) => {
-            equal(err.message.includes("106"), true);
+            equal(err.message.includes('106'), true);
             return true;
           },
         );
@@ -443,7 +444,7 @@ describe("Position Tests", async () => {
             new BigNumber(liquidityDelta),
           ),
           (err: Error) => {
-            equal(err.message.includes("111"), true);
+            equal(err.message.includes('111'), true);
             return true;
           },
         );
@@ -462,7 +463,7 @@ describe("Position Tests", async () => {
             new BigNumber(0),
           ),
           (err: Error) => {
-            equal(err.message.includes("FA2_TOKEN_UNDEFINED"), true);
+            equal(err.message.includes('FA2_TOKEN_UNDEFINED'), true);
             return true;
           },
         );
@@ -481,7 +482,7 @@ describe("Position Tests", async () => {
             new BigNumber(0),
           ),
           (err: Error) => {
-            equal(err.message.includes("FA2_TOKEN_UNDEFINED"), true);
+            equal(err.message.includes('FA2_TOKEN_UNDEFINED'), true);
             return true;
           },
         );
@@ -514,15 +515,15 @@ describe("Position Tests", async () => {
             new BigNumber(0),
           ),
           (err: Error) => {
-            equal(err.message.includes("420"), true);
+            equal(err.message.includes('420'), true);
             return true;
           },
         );
       }
     });
   });
-  describe("Success cases", async () => {
-    it("Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once", async () => {
+  describe('Success cases', async () => {
+    it('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
@@ -558,9 +559,9 @@ describe("Position Tests", async () => {
       poolFa1_2 = _poolFa1_2;
       poolFa2_1 = _poolFa2_1;
       const swapData = [
-        { swapDirection: "XToY", swapAmt: new BigNumber(1000) },
-        { swapDirection: "YToX", swapAmt: new BigNumber(3000) },
-        { swapDirection: "XToY", swapAmt: new BigNumber(400) },
+        { swapDirection: 'XToY', swapAmt: new BigNumber(1000) },
+        { swapDirection: 'YToX', swapAmt: new BigNumber(3000) },
+        { swapDirection: 'XToY', swapAmt: new BigNumber(400) },
       ];
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const initialSt = await pool.getRawStorage();
@@ -603,7 +604,7 @@ describe("Position Tests", async () => {
         let transferParams: any = [];
         for (const { swapDirection, swapAmt } of swapData) {
           switch (swapDirection) {
-            case "XToY":
+            case 'XToY':
               transferParams.push(
                 await pool.swapXY(
                   swapAmt,
@@ -708,7 +709,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should depositing and withdrawing the same amount of liquidity+", async () => {
+    it('Should depositing and withdrawing the same amount of liquidity+', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -767,7 +768,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should adding liquidity twice is the same as adding it oncе", async () => {
+    it('Should adding liquidity twice is the same as adding it oncе', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -892,7 +893,7 @@ describe("Position Tests", async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it("Should be lowest and highest ticks cannot be garbage collected", async () => {
+    it('Should be lowest and highest ticks cannot be garbage collected', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -964,7 +965,7 @@ describe("Position Tests", async () => {
         compareStorages(initialSt, poolStorage);
       }
     });
-    it("Should allow admins earning dev fees from swaps", async () => {
+    it('Should allow admins earning dev fees from swaps', async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = [5000, 5000, 5000, 5000];
 
@@ -1098,7 +1099,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should allow Liquidity Providers earning fees from swaps", async () => {
+    it('Should allow Liquidity Providers earning fees from swaps', async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = genFees(4);
       const swappers = [bobSigner, peterSigner];
@@ -1219,8 +1220,8 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should allow Liquidity Providers earning fees proportional to their liquidity", async () => {
-      console.log("Start");
+    it('Should allow Liquidity Providers earning fees proportional to their liquidity', async () => {
+      console.log('Start');
       tezos.setSignerProvider(aliceSigner);
       const fees = [
         Math.floor(Math.random() * 1e4),
@@ -1254,7 +1255,7 @@ describe("Position Tests", async () => {
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
       poolFa2_1 = _poolFa2_1;
-      console.log("PoolLoop");
+      console.log('PoolLoop');
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
@@ -1262,7 +1263,7 @@ describe("Position Tests", async () => {
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
         tezos.setSignerProvider(eveSigner);
-        console.log("Eva Sets Position");
+        console.log('Eva Sets Position');
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1274,7 +1275,7 @@ describe("Position Tests", async () => {
           new BigNumber(1e7),
         );
         tezos.setSignerProvider(aliceSigner);
-        console.log("Alice Sets Position");
+        console.log('Alice Sets Position');
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1317,7 +1318,7 @@ describe("Position Tests", async () => {
 
           tezos.setSignerProvider(swapper);
           const swapperAddr = await swapper.publicKeyHash();
-          console.log("Swapper", swapperAddr);
+          console.log('Swapper', swapperAddr);
           await pool.swapXY(
             transferAmount,
             validDeadline(),
@@ -1337,7 +1338,7 @@ describe("Position Tests", async () => {
         }
         const upperTi = new Int(10000);
         const lowerTi = new Int(-10000);
-        console.log("Check Invariants");
+        console.log('Check Invariants');
         await checkAllInvariants(
           pool,
           { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
@@ -1347,10 +1348,10 @@ describe("Position Tests", async () => {
         );
 
         tezos.setSignerProvider(eveSigner);
-        console.log("Eve Collects Fees");
+        console.log('Eve Collects Fees');
         await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
         tezos.setSignerProvider(aliceSigner);
-        console.log("Alice Collects Fees");
+        console.log('Alice Collects Fees');
         await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
         const eveBalanceX = (
           await getTypedBalance(
@@ -1424,7 +1425,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Liquidity Providers do not receive past fees", async () => {
+    it('Liquidity Providers do not receive past fees', async () => {
       const swapper = peterSigner;
       const feeReceiver1 = carol.pkh;
       const feeReceiver2 = sara.pkh;
@@ -1634,7 +1635,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should allow accrued fees are discounted when adding liquidity to an existing position", async () => {
+    it('Should allow accrued fees are discounted when adding liquidity to an existing position', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
@@ -1788,8 +1789,8 @@ describe("Position Tests", async () => {
         /**
          * `feeReceiver` should not receive any fees.
          */
-        strictEqual(feeReceiverBalanceX.toFixed(), "0");
-        strictEqual(feeReceiverBalanceY.toFixed(), "0");
+        strictEqual(feeReceiverBalanceX.toFixed(), '0');
+        strictEqual(feeReceiverBalanceY.toFixed(), '0');
       }
     });
     it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
@@ -1915,7 +1916,7 @@ describe("Position Tests", async () => {
         );
       }
     });
-    it("Should initializing correctly position", async () => {
+    it('Should initializing correctly position', async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
@@ -1944,7 +1945,7 @@ describe("Position Tests", async () => {
         ];
         for (const [cpd, swapDirection] of createPositionData.map((cpd, i) => [
           cpd,
-          swapDirections[i] === 0 ? "XtoY" : "YtoX",
+          swapDirections[i] === 0 ? 'XtoY' : 'YtoX',
         ])) {
           const lowerTickIndex = new Int(cpd.lowerTickIndex);
           const upperTickIndex = new Int(cpd.upperTickIndex);
@@ -1969,7 +1970,7 @@ describe("Position Tests", async () => {
 
           tezos.setSignerProvider(swapper);
           switch (swapDirection) {
-            case "XtoY":
+            case 'XtoY':
               const amt = initialBalanceX
                 .div(2)
                 .integerValue(BigNumber.ROUND_FLOOR);
@@ -2245,6 +2246,7 @@ describe("Position Tests", async () => {
           );
         }
       }
+      await sleep(1000);
     });
   });
 });
