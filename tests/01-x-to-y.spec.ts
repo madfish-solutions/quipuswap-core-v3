@@ -397,7 +397,7 @@ describe('XtoY Tests', async function () {
       const swapReceiver = sara.pkh;
       const swapCount = 200;
       const swapAmt = new BigNumber(10);
-      console.log('swapCount', swapCount);
+
       const {
         poolFa12,
         poolFa2,
@@ -746,9 +746,9 @@ describe('XtoY Tests', async function () {
     });
 
     it('Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent', async function () {
-      await sleep(1000);
       tezos.setSignerProvider(aliceSigner);
       this.retries(3);
+      await sleep(1000);
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -1177,6 +1177,7 @@ describe('XtoY Tests', async function () {
     });
     it('Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness', async function () {
       this.retries(3);
+      await sleep(1000);
       const lowerTickIndex = new Int(-100);
       const upperTickIndex = new Int(100);
       const liquidityProvider = aliceSigner;
@@ -1277,6 +1278,7 @@ describe('XtoY Tests', async function () {
     });
     it('Should assigning correctly fees to each position', async function () {
       this.retries(3);
+      await sleep(1000);
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
@@ -1289,7 +1291,7 @@ describe('XtoY Tests', async function () {
         0,
         [5000, 5000, 5000, 5000],
       );
-
+      await sleep(1000);
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
