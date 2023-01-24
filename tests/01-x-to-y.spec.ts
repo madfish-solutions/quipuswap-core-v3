@@ -387,6 +387,9 @@ describe('XtoY Tests', async function () {
       }
     });
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
+      console.log(
+        'Should placing many small swaps is (mostly) equivalent to placing 1 big swap',
+      );
       await sleep(1000);
       this.retries(3);
 
@@ -397,7 +400,7 @@ describe('XtoY Tests', async function () {
       const swapReceiver = sara.pkh;
       const swapCount = 200;
       const swapAmt = new BigNumber(10);
-
+      console.log('swapCount', swapCount);
       const {
         poolFa12,
         poolFa2,
@@ -414,6 +417,8 @@ describe('XtoY Tests', async function () {
         genFees(8, true),
         true,
       );
+
+      console.log('poolFa12', poolFa12);
 
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
