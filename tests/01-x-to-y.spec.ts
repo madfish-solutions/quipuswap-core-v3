@@ -388,7 +388,7 @@ describe('XtoY Tests', async function () {
     });
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
       this.retries(3);
-      await sleep(1000);
+      await sleep(5000);
 
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
