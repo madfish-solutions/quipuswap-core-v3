@@ -387,11 +387,8 @@ describe('XtoY Tests', async function () {
       }
     });
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
-      console.log(
-        'Should placing many small swaps is (mostly) equivalent to placing 1 big swap',
-      );
-      await sleep(1000);
       this.retries(3);
+      await sleep(1000);
 
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
@@ -417,8 +414,6 @@ describe('XtoY Tests', async function () {
         genFees(8, true),
         true,
       );
-
-      console.log('poolFa12', poolFa12);
 
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
