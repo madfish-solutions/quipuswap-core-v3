@@ -1,30 +1,30 @@
-import { equal, ok, rejects } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { equal, ok, rejects } from 'assert';
+import { expect } from 'chai';
+import { BigNumber } from 'bignumber.js';
 
-import { TezosToolkit } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { CallMode } from "@madfish/quipuswap-v3/dist/types";
-import env from "../env";
-import { poolsFixture } from "./fixtures/poolFixture";
-import { confirmOperation } from "../scripts/confirmation";
+import { TezosToolkit } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
+import { accounts } from '../sandbox/accounts';
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
+import { CallMode } from '@madfish/quipuswap-v3/dist/types';
+import env from '../env';
+import { poolsFixture } from './fixtures/poolFixture';
+import { confirmOperation } from '../scripts/confirmation';
 import {
   sendBatch,
   isInRangeNat,
   isInRange,
-} from "@madfish/quipuswap-v3/dist/utils";
+} from '@madfish/quipuswap-v3/dist/utils';
 import {
   adjustScale,
   calcSwapFee,
   shiftLeft,
   calcNewPriceY,
   calcReceivedX,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
+} from '@madfish/quipuswap-v3/dist/helpers/math';
 
-import { checkAllInvariants } from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import { checkAllInvariants } from './helpers/invariants';
+import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
 import {
   advanceSecs,
   collectFees,
@@ -33,8 +33,9 @@ import {
   genNatIds,
   getTypedBalance,
   moreBatchSwaps,
+  sleep,
   validDeadline,
-} from "./helpers/utils";
+} from './helpers/utils';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -48,7 +49,7 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-describe("YtoX Tests", async () => {
+describe('YtoX Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -74,7 +75,7 @@ describe("YtoX Tests", async () => {
     poolFa1_2 = _poolFa1_2;
     poolFa2_1 = _poolFa2_1;
   });
-  describe("Failed cases", async () => {
+  describe('Failed cases', async () => {
     it("Shouldn't swap if it's past the deadline", async () => {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
@@ -105,7 +106,7 @@ describe("YtoX Tests", async () => {
             eve.pkh,
           ),
           (err: Error) => {
-            equal(err.message.includes("103"), true);
+            equal(err.message.includes('103'), true);
             return true;
           },
         );
@@ -141,15 +142,15 @@ describe("YtoX Tests", async () => {
             eve.pkh,
           ),
           (err: Error) => {
-            equal(err.message.includes("104"), true);
+            equal(err.message.includes('104'), true);
             return true;
           },
         );
       }
     });
   });
-  describe("Success cases", async () => {
-    it("Should swapping within a single tick range", async function () {
+  describe('Success cases', async () => {
+    it('Should swapping within a single tick range', async function () {
       this.retries(3);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
@@ -363,11 +364,12 @@ describe("YtoX Tests", async () => {
             new Nat(0),
           ),
         );
-        expect(finalBalanceFeeReceiverX.toFixed()).to.be.equal("0");
+        expect(finalBalanceFeeReceiverX.toFixed()).to.be.equal('0');
       }
     });
 
-    it("Should placing many small swaps is (mostly) equivalent to placing 1 big swap", async function () {
+    it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
+      await sleep(1000);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -470,7 +472,7 @@ describe("YtoX Tests", async () => {
             swapAmt,
             new BigNumber(1),
             await swapper.publicKeyHash(),
-            "YtoX",
+            'YtoX',
           )),
         );
         batchOp = await sendBatch(tezos, transferParams);
@@ -589,7 +591,7 @@ describe("YtoX Tests", async () => {
         expect(cfmm1YBalance.toFixed()).to.be.equal(cfmm2YBalance.toFixed());
       }
     });
-    it("Should swaps are no-ops, after crossing into a 0-liquidity range", async function () {
+    it('Should swaps are no-ops, after crossing into a 0-liquidity range', async function () {
       this.retries(3);
       const liquidity = new BigNumber(1e4);
       const lowerTickIndex = new Int(-100);
@@ -724,8 +726,8 @@ describe("YtoX Tests", async () => {
         expect(finalBalance).to.be.deep.eq(initialBalance);
       }
     });
-    it("Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent", async () => {
-      console.log("1");
+    it('Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent', async () => {
+      console.log('1');
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -751,7 +753,7 @@ describe("YtoX Tests", async () => {
         [200, 200, 200, 200, 200, 200, 200, 200],
         true,
       );
-        console.log('1');
+      console.log('1');
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
@@ -996,8 +998,8 @@ describe("YtoX Tests", async () => {
         const feeGrowthY1 = st1.feeGrowth.y;
         const feeGrowthY2 = st2.feeGrowth.y;
 
-        expect(feeGrowthY1.toFixed()).to.be.eq("0");
-        expect(feeGrowthY2.toFixed()).to.be.eq("0");
+        expect(feeGrowthY1.toFixed()).to.be.eq('0');
+        expect(feeGrowthY2.toFixed()).to.be.eq('0');
 
         const marginOfError = new BigNumber(10)
           .multipliedBy(2 ** 128)
@@ -1091,8 +1093,8 @@ describe("YtoX Tests", async () => {
           )
         ).minus(initialBalanceFeeReceiverY2);
 
-        expect(feeReceiver1BalanceY.toFixed()).to.be.eq("0");
-        expect(feeReceiver2BalanceY.toFixed()).to.be.eq("0");
+        expect(feeReceiver1BalanceY.toFixed()).to.be.eq('0');
+        expect(feeReceiver2BalanceY.toFixed()).to.be.eq('0');
         ok(
           isInRangeNat(
             feeReceiver2BalanceX,
@@ -1136,12 +1138,12 @@ describe("YtoX Tests", async () => {
           // expect(ts.tickCumulativeOutside.toFixed()).to.be.eq(
           //   lowerTickIndex.multipliedBy(waitTime).toFixed(),
           // );
-          expect(ts.feeGrowthOutside.x.toFixed()).to.be.not.eq("0");
+          expect(ts.feeGrowthOutside.x.toFixed()).to.be.not.eq('0');
           //expect(ts.feeGrowthOutside.y.toFixed()).to.be.not.eq("0");
         }
       }
     });
-    it("Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness", async () => {
+    it('Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness', async () => {
       console.log('3');
       const liquidity = new BigNumber(1e4);
       const lowerTickIndex = new Int(-100);
@@ -1227,7 +1229,7 @@ describe("YtoX Tests", async () => {
           ],
           genNatIds(50),
         );
-        expect(st.curTickIndex.toFixed()).to.be.eq("101");
+        expect(st.curTickIndex.toFixed()).to.be.eq('101');
         await checkAllInvariants(
           pool,
           [],
@@ -1247,7 +1249,7 @@ describe("YtoX Tests", async () => {
         pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
       }
     });
-    it("Should assigning correctly fees to each position", async function () {
+    it('Should assigning correctly fees to each position', async function () {
       this.retries(3);
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
@@ -1353,8 +1355,8 @@ describe("YtoX Tests", async () => {
           feeReceiver1,
         );
 
-        expect(balanceFeeReceiverX_1.toFixed()).to.be.not.eq("0");
-        expect(balanceFeeReceiverY_1.toFixed()).to.be.not.eq("0");
+        expect(balanceFeeReceiverX_1.toFixed()).to.be.not.eq('0');
+        expect(balanceFeeReceiverY_1.toFixed()).to.be.not.eq('0');
 
         // position2 should have earned X fees only.
         await collectFees(pool, feeReceiver2, [new Nat(1)]);
@@ -1371,8 +1373,8 @@ describe("YtoX Tests", async () => {
           feeReceiver2,
         );
 
-        expect(balanceFeeReceiverX_2.toFixed()).to.be.eq("0");
-        expect(balanceFeeReceiverY_2.toFixed()).to.be.not.eq("0");
+        expect(balanceFeeReceiverX_2.toFixed()).to.be.eq('0');
+        expect(balanceFeeReceiverY_2.toFixed()).to.be.not.eq('0');
         pool.callSettings.setPosition = CallMode.returnConfirmatedOperation;
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
         pool.callSettings.swapYX = CallMode.returnConfirmatedOperation;
