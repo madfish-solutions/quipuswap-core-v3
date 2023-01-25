@@ -1,13 +1,16 @@
 let deploy_pool (s, p : factory_storage_t * create_dex_t) : return_t =
-    let _checkFee = if p.fee_bps >= 10000n
+    let _check_fee = if p.fee_bps >= 10000n
         then failwith too_big_fee_bps_err in
+
+    let _check_tick_spacing = if p.tick_spacing = 0n || p.tick_spacing > const_max_tick
+        then failwith incorrect_tick_spacing_err in
 
     let pool_key = {
         fee_bps = p.fee_bps ;
         token_x = p.token_x ;
         token_y = p.token_y ;
     } in
-    let _checkPool = if Big_map.mem pool_key s.pool_ids
+    let _check_pool = if Big_map.mem pool_key s.pool_ids
         then failwith pool_already_exists_err in
 
     let pool_storage = init_pool_storage p s.dev_fee_bps in

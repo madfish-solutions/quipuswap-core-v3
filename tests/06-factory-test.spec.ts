@@ -19,7 +19,7 @@ const alice = accounts.alice;
 const bob = accounts.bob;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
-
+const maxTickIndex = new Int(1048575);
 describe('Factory Tests', async function () {
   let tezos: TezosToolkit;
   let factory: DexFactory;
@@ -46,6 +46,42 @@ describe('Factory Tests', async function () {
         ),
         (err: Error) => {
           equal(err.message.includes('402'), true);
+          return true;
+        },
+      );
+    });
+    it("Shouldn't creating pool with incorrect tick spacing", async function () {
+      await rejects(
+        factory.deployPool(
+          alice.pkh,
+          'fa12',
+          alice.pkh,
+          'fa12',
+          1000,
+          0,
+          0,
+          0,
+          0,
+        ),
+        (err: Error) => {
+          equal(err.message.includes('112'), true);
+          return true;
+        },
+      );
+      await rejects(
+        factory.deployPool(
+          alice.pkh,
+          'fa12',
+          alice.pkh,
+          'fa12',
+          1000,
+          0,
+          0,
+          0,
+          maxTickIndex.plus(1).toNumber(),
+        ),
+        (err: Error) => {
+          equal(err.message.includes('112'), true);
           return true;
         },
       );
