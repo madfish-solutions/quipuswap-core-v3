@@ -6,5 +6,5 @@ export default {
   pool_count: 0,
   pools: MichelsonMap.fromLiteral({}),
   pool_ids: MichelsonMap.fromLiteral({}),
-  dev_fee_bps: 0,
+  dev_fee_bps: 1337,
 };

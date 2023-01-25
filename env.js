@@ -1,4 +1,3 @@
-import { MichelsonMap } from "@taquito/michelson-encoder";
 import { accounts } from "./sandbox/accounts";
 
 export default {
@@ -28,16 +27,6 @@ export default {
           },
           feeBPS: 100,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("KUSD/KUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool", "ascii").toString("hex"),
-            symbol: Buffer.from("KUSD/KUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
         1: {
           name: "KUSD/Tea",
@@ -52,16 +41,6 @@ export default {
           },
           feeBPS: 50,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("KUSD/Tea", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool 2", "ascii").toString("hex"),
-            symbol: Buffer.from("KUSD/Tea", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
         2: {
           name: "QUIPU/KUSD",
@@ -78,16 +57,6 @@ export default {
           },
           feeBPS: 10,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("QUIPU/KUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool 2", "ascii").toString("hex"),
-            symbol: Buffer.from("QUIPU/KUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
         3: {
           name: "Grape/uUSD",
@@ -107,16 +76,6 @@ export default {
           },
           feeBPS: 500,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("Grape/uUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool 4", "ascii").toString("hex"),
-            symbol: Buffer.from("Grape/uUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
       },
     },
@@ -141,16 +100,6 @@ export default {
           },
           feeBPS: 100,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("kUSD/uUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool", "ascii").toString("hex"),
-            symbol: Buffer.from("kUSD/uUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
         1: {
           name: "tzBTC/kUSD",
@@ -164,16 +113,6 @@ export default {
           },
           feeBPS: 50,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("tzBTC/kUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool 2", "ascii").toString("hex"),
-            symbol: Buffer.from("tzBTC/kUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
         2: {
           name: "USDtz/uUSD",
@@ -190,45 +129,7 @@ export default {
           },
           feeBPS: 10,
           extraSlots: 41,
-          metadata: MichelsonMap.fromLiteral({
-            name: Buffer.from("USDtz/uUSD", "ascii").toString("hex"),
-            description: Buffer.from("Test Pool 2", "ascii").toString("hex"),
-            symbol: Buffer.from("USDtz/uUSD", "ascii").toString("hex"),
-            shouldPreferSymbol: Buffer.from("true", "ascii").toString("hex"),
-            thumbnailUri: Buffer.from(
-              "https://i.imgur.com/1J8Hr3B.png",
-              "ascii",
-            ).toString("hex"),
-          }),
         },
-        // 3: {
-        //   name: 'Grape/uUSD',
-        //   tickIndex: 152025,
-        //   tokenX: {
-        //     fa2: {
-        //       token_id: 0,
-        //       token_address: 'KT18uv7PtGedfudtG7QwFTrDBRjdLe5qj2my',
-        //     },
-        //   },
-
-        //   tokenY: {
-        //     fa2: {
-        //       token_id: 0,
-        //       token_address: 'KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc',
-        //     },
-        //   },
-        //   feeBPS: 500,
-        //   metadata: MichelsonMap.fromLiteral({
-        //     name: Buffer.from('Grape/uUSD', 'ascii').toString('hex'),
-        //     description: Buffer.from('Test Pool 4', 'ascii').toString('hex'),
-        //     symbol: Buffer.from('Grape/uUSD', 'ascii').toString('hex'),
-        //     shouldPreferSymbol: Buffer.from('true', 'ascii').toString('hex'),
-        //     thumbnailUri: Buffer.from(
-        //       'https://i.imgur.com/1J8Hr3B.png',
-        //       'ascii',
-        //     ).toString('hex'),
-        //   }),
-        // },
       },
     },
     // mainnet: {
