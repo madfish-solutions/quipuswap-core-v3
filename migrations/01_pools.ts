@@ -25,8 +25,7 @@ module.exports = async (tezos: TezosToolkit, network: string) => {
         token_y: pool.tokenY,
         fee_bps: pool.feeBPS,
         tick_spacing: "1",
-        extra_slots: pool.extraSlots,
-        metadata: pool.metadata,
+        extra_slots: pool.extraSlots
       })
       .send();
     await confirmOperation(tezos, operation.hash);
