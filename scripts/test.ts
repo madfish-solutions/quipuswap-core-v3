@@ -37,7 +37,22 @@ getContractsList('tests').forEach(async (file: string) => {
   const PORT = getPort(file);
   //const through2 = require("through2");
   console.log(file);
+  await spawn('docker', [
+    'run',
+    '--rm',
+    '--name',
+    `my-sandbox-${file}`,
+    '-e',
+    'block_time=1',
+    '--detach',
+    '-p',
+    `${PORT}:20000`,
+    'oxheadalpha/flextesa:20221123',
+    'kathmandubox',
+    'start',
+  ]);
   await checkAndKill(file, spawn);
+
   await sleep(3000);
   const startSandbox = spawn('docker', [
     'run',
