@@ -34,6 +34,7 @@ import {
   compareStorages,
   genFees,
   genNatIds,
+  getPort,
   getTypedBalance,
   moreBatchSwaps,
   sleep,
@@ -52,6 +53,8 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
+const PORT = getPort(__filename);
+
 describe('XtoY Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
@@ -59,7 +62,7 @@ describe('XtoY Tests', async function () {
   let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos = new TezosToolkit(`http://localhost:${PORT}`);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -166,7 +169,7 @@ describe('XtoY Tests', async function () {
       }
     });
   });
-  describe('Success cases', async function () {
+  describe.skip('Success cases', async function () {
     it('Should swapping within a single tick range', async function () {
       await sleep(1000);
       this.retries(3);

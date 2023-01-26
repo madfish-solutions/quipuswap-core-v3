@@ -1,30 +1,31 @@
-import { equal, rejects } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { equal, rejects } from 'assert';
+import { expect } from 'chai';
+import { BigNumber } from 'bignumber.js';
 
-import { TezosToolkit } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../sandbox/accounts";
-import { CallMode } from "@madfish/quipuswap-v3/dist/types";
-import env from "../env";
-import { poolsFixture } from "./fixtures/poolFixture";
-import { confirmOperation } from "../scripts/confirmation";
+import { TezosToolkit } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
+import { accounts } from '../sandbox/accounts';
+import { CallMode } from '@madfish/quipuswap-v3/dist/types';
+import env from '../env';
+import { poolsFixture } from './fixtures/poolFixture';
+import { confirmOperation } from '../scripts/confirmation';
 import {
   sendBatch,
   initTimedCumulativesBuffer,
   entries,
-} from "@madfish/quipuswap-v3/dist/utils";
-import { adjustScale } from "@madfish/quipuswap-v3/dist/helpers/math";
+} from '@madfish/quipuswap-v3/dist/utils';
+import { adjustScale } from '@madfish/quipuswap-v3/dist/helpers/math';
 
-import { checkCumulativesBufferInvariants } from "./helpers/invariants";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import { checkCumulativesBufferInvariants } from './helpers/invariants';
+import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
 import {
   evalSecondsPerLiquidityX128,
   genNatIds,
+  getPort,
   groupAdjacent,
   sleep,
   validDeadline,
-} from "./helpers/utils";
+} from './helpers/utils';
 
 const alice = accounts.alice;
 const aliceSigner = new InMemorySigner(alice.sk);
@@ -32,15 +33,17 @@ const aliceSigner = new InMemorySigner(alice.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-describe("Timed oracles tests", async function () {
+const PORT = getPort(__filename);
+
+describe('Timed oracles tests', async function () {
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos = new TezosToolkit(`http://localhost:${PORT}`);
     tezos.setSignerProvider(aliceSigner);
   });
 
-  describe("Success cases", async function () {
-    it("Setting large initial buffer works properly", async function () {
+  describe('Success cases', async function () {
+    it('Setting large initial buffer works properly', async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -127,7 +130,7 @@ describe("Timed oracles tests", async function () {
 
         if (vals.every(v => vals[0] === v)) {
           throw new Error(
-            "All values in the buffer were eventually equal, the test is not significant\n" +
+            'All values in the buffer were eventually equal, the test is not significant\n' +
               JSON.stringify(vals),
           );
         }
@@ -163,18 +166,18 @@ describe("Timed oracles tests", async function () {
           new Nat(10),
         );
 
-        expect(initCumulativeBuffer10.first.toFixed()).to.equal("0");
-        expect(initCumulativeBuffer10.last.toFixed()).to.equal("0");
-        expect(initCumulativeBuffer10.reservedLength.toFixed()).to.equal("11");
+        expect(initCumulativeBuffer10.first.toFixed()).to.equal('0');
+        expect(initCumulativeBuffer10.last.toFixed()).to.equal('0');
+        expect(initCumulativeBuffer10.reservedLength.toFixed()).to.equal('11');
 
         for (const [k, v] of Object.entries(initCumulativeBuffer10.map.map)) {
-          expect(v.spl.blockStartLiquidityValue.toFixed()).to.equal("0");
-          expect(v.spl.sum.toFixed()).to.equal("0");
-          expect(v.time.toFixed()).to.equal("0");
+          expect(v.spl.blockStartLiquidityValue.toFixed()).to.equal('0');
+          expect(v.spl.sum.toFixed()).to.equal('0');
+          expect(v.time.toFixed()).to.equal('0');
         }
       }
     });
-    it("Returned cumulative values continuously grow over time", async function () {
+    it('Returned cumulative values continuously grow over time', async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -254,7 +257,7 @@ describe("Timed oracles tests", async function () {
         expect(groups.length).to.equal(1);
       }
     });
-    it("Observing time out of bounds", async function () {
+    it('Observing time out of bounds', async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -270,18 +273,18 @@ describe("Timed oracles tests", async function () {
         const requested = now - 100000;
 
         await rejects(pool.observe([requested.toFixed()]), (e: Error) => {
-          equal(e.message.includes("108"), true);
+          equal(e.message.includes('108'), true);
           return true;
         });
 
         const requested2 = now + 1000;
         await rejects(pool.observe([requested2.toFixed()]), (e: Error) => {
-          equal(e.message.includes("109"), true);
+          equal(e.message.includes('109'), true);
           return true;
         });
       }
     });
-    it("Increasing observation count works as expected", async function () {
+    it('Increasing observation count works as expected', async function () {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
         tezos,
@@ -382,13 +385,13 @@ describe("Timed oracles tests", async function () {
 
         if (vals.every(v => vals[0] === v)) {
           throw new Error(
-            "All values in the buffer were eventually equal, the test is not significant\n" +
+            'All values in the buffer were eventually equal, the test is not significant\n' +
               JSON.stringify(vals),
           );
         }
       }
     });
-    it("Observed values are sane: Seconds per liquidity cumulative", async function () {
+    it('Observed values are sane: Seconds per liquidity cumulative', async function () {
       this.retries(3);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
@@ -527,12 +530,12 @@ describe("Timed oracles tests", async function () {
           ];
         });
 
-        expect(diffs[0][0].toFixed()).to.equal("0");
+        expect(diffs[0][0].toFixed()).to.equal('0');
         expect(diffs[1][0].toFixed()).to.equal(diffs[1][1].toFixed());
         expect(diffs[2][0].toFixed()).to.equal(diffs[2][1].toFixed());
       }
     });
-    it("Observed values are sane: Tick cumulative", async function () {
+    it('Observed values are sane: Tick cumulative', async function () {
       //this.retries(2);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(

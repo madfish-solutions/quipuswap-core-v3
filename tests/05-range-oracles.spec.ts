@@ -1,38 +1,41 @@
-import { equal, rejects } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { equal, rejects } from 'assert';
+import { expect } from 'chai';
+import { BigNumber } from 'bignumber.js';
 
-import { TezosToolkit } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../sandbox/accounts";
-import env from "../env";
-import { poolsFixture } from "./fixtures/poolFixture";
-import { confirmOperation } from "../scripts/confirmation";
+import { TezosToolkit } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
+import { accounts } from '../sandbox/accounts';
+import env from '../env';
+import { poolsFixture } from './fixtures/poolFixture';
+import { confirmOperation } from '../scripts/confirmation';
 
-import { adjustScale } from "@madfish/quipuswap-v3/dist/helpers/math";
+import { adjustScale } from '@madfish/quipuswap-v3/dist/helpers/math';
 
-import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
+import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
 import {
   evalSecondsPerLiquidityX128,
   getCumulativesInsideDiff,
+  getPort,
   sleep,
   validDeadline,
-} from "./helpers/utils";
+} from './helpers/utils';
 
 const alice = accounts.alice;
 const aliceSigner = new InMemorySigner(alice.sk);
 
 const minTickIndex = new Int(-1048575);
 
-describe("Range oracles tests", async function () {
+const PORT = getPort(__filename);
+
+describe('Range oracles tests', async function () {
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos = new TezosToolkit(`http://localhost:${PORT}`);
     tezos.setSignerProvider(aliceSigner);
   });
 
-  describe("Failed cases", async function () {
-    it("Asking at uninitialized tick causes an error", async () => {
+  describe('Failed cases', async function () {
+    it('Asking at uninitialized tick causes an error', async () => {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
         await poolsFixture(tezos, [aliceSigner]);
@@ -51,19 +54,19 @@ describe("Range oracles tests", async function () {
         await rejects(
           pool.contract.methodsObject
             .snapshot_cumulatives_inside({
-              lower_tick_index: "-10",
-              upper_tick_index: "100",
+              lower_tick_index: '-10',
+              upper_tick_index: '100',
               callback: consumer.address,
             })
             .send(),
           (err: Error) => {
-            equal(err.message.includes("105"), true);
+            equal(err.message.includes('105'), true);
             return true;
           },
         );
       }
     });
-    it("Asking at empty range returns zeros", async function () {
+    it('Asking at empty range returns zeros', async function () {
       this.retries(3);
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
@@ -86,8 +89,8 @@ describe("Range oracles tests", async function () {
         await sleep(3000);
         const op = await pool.contract.methodsObject
           .snapshot_cumulatives_inside({
-            lower_tick_index: "0",
-            upper_tick_index: "0",
+            lower_tick_index: '0',
+            upper_tick_index: '0',
             callback: consumer.address,
           })
           .send();
@@ -99,12 +102,12 @@ describe("Range oracles tests", async function () {
           (st.snapshot_id.toNumber() - 1).toString(),
         );
 
-        equal(lastSnapshot.seconds_inside.toFixed(), "0");
-        equal(lastSnapshot.seconds_per_liquidity_inside.toFixed(), "0");
-        equal(lastSnapshot.seconds_inside.toFixed(), "0");
+        equal(lastSnapshot.seconds_inside.toFixed(), '0');
+        equal(lastSnapshot.seconds_per_liquidity_inside.toFixed(), '0');
+        equal(lastSnapshot.seconds_inside.toFixed(), '0');
       }
     });
-    it("Asking at reversed range causes an error", async () => {
+    it('Asking at reversed range causes an error', async () => {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
         await poolsFixture(tezos, [aliceSigner]);
@@ -123,21 +126,21 @@ describe("Range oracles tests", async function () {
         await rejects(
           pool.contract.methodsObject
             .snapshot_cumulatives_inside({
-              lower_tick_index: "10",
-              upper_tick_index: "0",
+              lower_tick_index: '10',
+              upper_tick_index: '0',
               callback: consumer.address,
             })
             .send(),
           (err: Error) => {
-            equal(err.message.includes("110"), true);
+            equal(err.message.includes('110'), true);
             return true;
           },
         );
       }
     });
   });
-  describe("Success cases", async () => {
-    it("One position, jumping right", async () => {
+  describe('Success cases', async () => {
+    it('One position, jumping right', async () => {
       tezos.setSignerProvider(aliceSigner);
       const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
         await poolsFixture(tezos, [aliceSigner]);

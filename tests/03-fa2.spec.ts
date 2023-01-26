@@ -1,20 +1,20 @@
-import { equal, notEqual, ok, rejects } from "assert";
+import { equal, notEqual, ok, rejects } from 'assert';
 
-import { BigNumber } from "bignumber.js";
+import { BigNumber } from 'bignumber.js';
 
-import { TezosToolkit, TransferParams } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../sandbox/accounts";
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { TezosToolkit, TransferParams } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
+import { accounts } from '../sandbox/accounts';
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 
-import DexFactory from "./helpers/factoryFacade";
-import env from "../env";
-import { FA2 } from "./helpers/FA2";
-import { FA12 } from "./helpers/FA12";
-import { poolsFixture } from "./fixtures/poolFixture";
-import { confirmOperation } from "../scripts/confirmation";
-import { Int, Nat } from "@madfish/quipuswap-v3/dist/types";
-import { validDeadline } from "./helpers/utils";
+import DexFactory from './helpers/factoryFacade';
+import env from '../env';
+import { FA2 } from './helpers/FA2';
+import { FA12 } from './helpers/FA12';
+import { poolsFixture } from './fixtures/poolFixture';
+import { confirmOperation } from '../scripts/confirmation';
+import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
+import { getPort, validDeadline } from './helpers/utils';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -28,7 +28,9 @@ const eveSigner = new InMemorySigner(eve.sk);
 
 const minTickIndex = new Int(-1048575);
 
-describe("FA2 Tests", async function () {
+const PORT = getPort(__filename);
+
+describe('FA2 Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -40,7 +42,7 @@ describe("FA2 Tests", async function () {
   let fa2TokenX: FA2;
   let fa2TokenY: FA2;
   before(async () => {
-    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos = new TezosToolkit(`http://localhost:${PORT}`);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -108,7 +110,7 @@ describe("FA2 Tests", async function () {
       await confirmOperation(tezos, operation.hash);
     }
   });
-  describe("Failed cases", async () => {
+  describe('Failed cases', async () => {
     it("Shouldn't allow transfer positions if sender not operator", async function () {
       tezos.setSignerProvider(bobSigner);
       await rejects(
@@ -125,7 +127,7 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_NOT_OPERATOR"), true);
+          equal(err.message.includes('FA2_NOT_OPERATOR'), true);
           return true;
         },
       );
@@ -143,7 +145,7 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_NOT_OWNER"), true);
+          equal(err.message.includes('FA2_NOT_OWNER'), true);
           return true;
         },
       );
@@ -164,7 +166,7 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_NOT_OPERATOR"), true);
+          equal(err.message.includes('FA2_NOT_OPERATOR'), true);
           return true;
         },
       );
@@ -185,7 +187,7 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
+          equal(err.message.includes('FA2_INSUFFICIENT_BALANCE'), true);
           return true;
         },
       );
@@ -203,7 +205,7 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
+          equal(err.message.includes('FA2_INSUFFICIENT_BALANCE'), true);
           return true;
         },
       );
@@ -221,23 +223,23 @@ describe("FA2 Tests", async function () {
           },
         ]),
         (err: Error) => {
-          equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
+          equal(err.message.includes('FA2_INSUFFICIENT_BALANCE'), true);
           return true;
         },
       );
     });
   });
-  describe("Success cases", async () => {
-    it("Should allow get balance of", async function () {
+  describe('Success cases', async () => {
+    it('Should allow get balance of', async function () {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         const balance = await pool.contract.views
-          .balance_of([{ owner: alice.pkh, token_id: "0" }])
+          .balance_of([{ owner: alice.pkh, token_id: '0' }])
           .read();
         equal(balance[0].balance.toNumber() > 0, true);
       }
     });
-    it("Should allow selt-to-self transfer", async () => {
+    it('Should allow selt-to-self transfer', async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.transfer([
@@ -258,7 +260,7 @@ describe("FA2 Tests", async function () {
         equal(transferedPosition.owner, alice.pkh);
       }
     });
-    it("Should allow transfer position", async function () {
+    it('Should allow transfer position', async function () {
       tezos.setSignerProvider(aliceSigner);
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await pool.transfer([
@@ -292,13 +294,13 @@ describe("FA2 Tests", async function () {
             },
           ]),
           (err: Error) => {
-            equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
+            equal(err.message.includes('FA2_INSUFFICIENT_BALANCE'), true);
             return true;
           },
         );
       }
     });
-    it("Should allow update operator", async function () {
+    it('Should allow update operator', async function () {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.updateOperators([
@@ -314,7 +316,7 @@ describe("FA2 Tests", async function () {
         let newOperator = await st.operators.get({
           owner: alice.pkh,
           operator: bob.pkh,
-          token_id: "1",
+          token_id: '1',
         });
         notEqual(newOperator, undefined);
         tezos.setSignerProvider(bobSigner);
@@ -331,7 +333,7 @@ describe("FA2 Tests", async function () {
           },
         ]);
 
-        let updatedPosition = await st.positions.get("1");
+        let updatedPosition = await st.positions.get('1');
 
         equal(updatedPosition.owner, eve.pkh);
 
@@ -350,7 +352,7 @@ describe("FA2 Tests", async function () {
             },
           ]),
           (err: Error) => {
-            equal(err.message.includes("FA2_INSUFFICIENT_BALANCE"), true);
+            equal(err.message.includes('FA2_INSUFFICIENT_BALANCE'), true);
             return true;
           },
         );
@@ -368,12 +370,12 @@ describe("FA2 Tests", async function () {
             ],
           },
         ]);
-        updatedPosition = await st.positions.get("1");
+        updatedPosition = await st.positions.get('1');
 
         equal(updatedPosition.owner, alice.pkh);
       }
     });
-    it("Should allow remove operator", async function () {
+    it('Should allow remove operator', async function () {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.updateOperators([
@@ -389,7 +391,7 @@ describe("FA2 Tests", async function () {
         let newOperator = await st.operators.get({
           owner: alice.pkh,
           operator: bob.pkh,
-          token_id: "1",
+          token_id: '1',
         });
         equal(newOperator, undefined);
         tezos.setSignerProvider(bobSigner);
@@ -407,7 +409,7 @@ describe("FA2 Tests", async function () {
             },
           ]),
           (err: Error) => {
-            equal(err.message.includes("FA2_NOT_OPERATOR"), true);
+            equal(err.message.includes('FA2_NOT_OPERATOR'), true);
             return true;
           },
         );

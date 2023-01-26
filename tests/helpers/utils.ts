@@ -418,3 +418,9 @@ export const evalSecondsPerLiquidityX128 = (
             }
  */
 //export const getExpectedSPL
+
+export const getPort = absolutePath => {
+  const testFile = absolutePath.split("/").pop();
+  const fileId = testFile.split("-")[0];
+  return 8732 + Number(fileId);
+};

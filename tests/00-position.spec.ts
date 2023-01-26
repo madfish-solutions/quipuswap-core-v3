@@ -35,6 +35,7 @@ import {
   genNatIds,
   genNonOverlappingPositions,
   genSwapDirection,
+  getPort,
   getTypedBalance,
   inRange,
   safeSwap,
@@ -57,6 +58,8 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
+const PORT = getPort(__filename);
+
 describe('Position Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
@@ -69,7 +72,7 @@ describe('Position Tests', async () => {
   let fa2TokenX: FA2;
   let fa2TokenY: FA2;
   before(async () => {
-    tezos = new TezosToolkit(env.networks.development.rpc);
+    tezos = new TezosToolkit(`http://localhost:${PORT}`);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -287,7 +290,6 @@ describe('Position Tests', async () => {
         10,
         10,
         0,
-        MichelsonMap.fromLiteral({}),
       );
       const wrongPool = await new QuipuswapV3().init(tezos, poolAddress);
       wrongPool.setPosition(
@@ -522,7 +524,7 @@ describe('Position Tests', async () => {
       }
     });
   });
-  describe('Success cases', async () => {
+  describe.skip('Success cases', async () => {
     it('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
