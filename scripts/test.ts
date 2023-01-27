@@ -34,7 +34,7 @@ const createCache = () => {
 };
 
 const async = require('async');
-const MAX_RETRIES = 1;
+const MAX_RETRIES = 3;
 let passing = 0;
 let pending = 0;
 let testsCompleted = 0;
