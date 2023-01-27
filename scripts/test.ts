@@ -42,7 +42,7 @@ const faliedTests = createCache();
 
 const testQueue = async.queue(async (file, callback) => {
   const PORT = getPort(file);
-
+  console.log(file);
   await checkAndKill(file, spawn);
 
   await sleep(3000);
@@ -102,8 +102,9 @@ const testQueue = async.queue(async (file, callback) => {
             throw err;
           } else {
             fails.failCount += 1;
-            console.log(`Test failed: ${err.message}`);
             testQueue.push(file);
+            console.log(`Test failed: ${err.message}`);
+            callback();
           }
         });
     })
