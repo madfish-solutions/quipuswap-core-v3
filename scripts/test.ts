@@ -2,15 +2,7 @@ import { getPort, sleep } from '../tests/helpers/utils';
 import fs from 'fs';
 import path from 'path';
 
-const { TezosToolkit } = require('@taquito/taquito');
 const { spawn } = require('child-process-promise');
-
-// const testFiles = [
-//   '06-factory-test.spec.ts',
-//   '00-position.spec.ts',
-//   //'01-x-to-y.spec.ts',
-//   '02-y-to-x.spec.ts',
-// ];
 
 const getContractsList = (testDir: string) => {
   let tests: string[] = [];
@@ -33,24 +25,24 @@ async function checkAndKill(file: string, proc) {
   });
 }
 
-getContractsList('tests').forEach(async (file: string) => {
+const createCache = () => {
+  const cache = {};
+  getContractsList('tests').forEach(file => {
+    cache[file] = { failed: [], failCount: 0 };
+  });
+  return cache;
+};
+
+const async = require('async');
+const MAX_RETRIES = 1;
+let passing = 0;
+let pending = 0;
+let testsCompleted = 0;
+const faliedTests = createCache();
+
+const testQueue = async.queue(async (file, callback) => {
   const PORT = getPort(file);
-  //const through2 = require("through2");
-  console.log(file);
-  await spawn('docker', [
-    'run',
-    '--rm',
-    '--name',
-    `my-sandbox-${file}`,
-    '-e',
-    'block_time=1',
-    '--detach',
-    '-p',
-    `${PORT}:20000`,
-    'oxheadalpha/flextesa:20221123',
-    'kathmandubox',
-    'start',
-  ]);
+
   await checkAndKill(file, spawn);
 
   await sleep(3000);
@@ -70,29 +62,62 @@ getContractsList('tests').forEach(async (file: string) => {
   ]);
   await startSandbox
     .then(async () => {
-      console.log('Sandbox started');
       await sleep(10000);
-      console.log('Starting tests');
-      const testProcess = spawn('ts-mocha', ['--bail', `tests/${file}`], {
-        stdio: 'inherit',
-      });
-      //testProcess.childProcess.stdout.write("fsdfsdfsd");
+
       let log = '';
+      const testProcess = spawn('ts-mocha', ['--bail', `tests/${file}`], {
+        stdio: 'pipe',
+      });
+
       testProcess.childProcess.stdout.on('data', data => {
-        log += colorText(data.toString());
+        const row = data.toString();
+
+        log += colorText(row);
+        if (row.includes('passing')) {
+          const passingTests = Number(row.split('passing')[0]);
+          passing += passingTests;
+        }
+        if (row.includes('pending')) {
+          const pendingTests = Number(row.split('pending')[0]);
+          pending += pendingTests;
+        }
       });
-      await new Promise((resolve, reject) => {
-        testProcess.childProcess.on('exit', resolve);
-        testProcess.childProcess.on('error', reject);
-      });
-      const through2 = require('through2');
-      console.log(log);
+
+      testProcess
+        .then(async data => {
+          // success
+          testsCompleted++;
+          console.log(log);
+          if (testsCompleted === getContractsList('tests').length) {
+            console.log('All tests are completed!\n');
+            console.log(colorText(`${passing} passing`));
+            console.log(colorText(`${pending} pending\n`));
+          }
+          await checkAndKill(file, spawn);
+          callback();
+        })
+        .catch(async err => {
+          const fails = faliedTests[file];
+          if (fails.failCount >= MAX_RETRIES) {
+            throw err;
+          } else {
+            fails.failCount += 1;
+            console.log(`Test failed: ${err.message}`);
+            testQueue.push(file);
+          }
+        });
     })
     .catch(err => {
       console.log(`Sandbox start failed: ${err.message}`);
+      callback();
     });
-  //await checkAndKill(file, spawn);
+}, 2); // set the concurrency to 2
+
+getContractsList('tests').forEach(file => {
+  testQueue.push(file);
 });
+
+testQueue.drain(() => {});
 
 function colorText(text: string): string {
   let coloredText = text;
@@ -130,10 +155,18 @@ function colorText(text: string): string {
     }
   }
   if (text.includes('passing')) {
-    coloredText = coloredText.replace('passing', '\x1b[32mpassing\x1b[0m');
+    const count = Number(text.split('passing')[0]);
+    coloredText = coloredText.replace(
+      `${count} passing`,
+      `\x1b[32m${count} passing\x1b[0m`,
+    );
   }
   if (text.includes('pending')) {
-    coloredText = `\x1b[34m${text}\x1b[0m`;
+    const count = Number(text.split('pending')[0]);
+    coloredText = coloredText.replace(
+      `${count} pending`,
+      `\x1b[34m${text}\x1b[0m`,
+    );
   }
 
   return coloredText;

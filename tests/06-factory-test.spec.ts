@@ -131,7 +131,7 @@ describe('Factory Tests', async function () {
     });
   });
   describe('Success cases', async () => {
-    it.skip('Should setting dev fee', async function () {
+    it('Should setting dev fee', async function () {
       tezos.setSignerProvider(aliceSigner);
       const op = await factory.contract.methods.set_dev_fee(1).send();
       await confirmOperation(tezos, op.hash);
