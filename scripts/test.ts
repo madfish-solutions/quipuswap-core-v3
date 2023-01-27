@@ -112,7 +112,7 @@ const testQueue = async.queue(async (file, callback) => {
       console.log(`Sandbox start failed: ${err.message}`);
       callback();
     });
-}, 2); // set the concurrency to 2
+}, 1); // set the concurrency to 2
 
 getContractsList('tests').forEach(file => {
   testQueue.push(file);
