@@ -169,7 +169,7 @@ describe('XtoY Tests', async function () {
       }
     });
   });
-  describe.skip('Success cases', async function () {
+  describe('Success cases', async function () {
     it('Should swapping within a single tick range', async function () {
       await sleep(1000);
       this.retries(3);
