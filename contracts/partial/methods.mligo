@@ -207,7 +207,7 @@ let set_position (s : storage) (p : set_position_param) : result =
 
     update_balances_after_position_change
         s p.lower_tick_index p.upper_tick_index
-        p.maximum_tokens_contributed
+        {x = int(p.maximum_tokens_contributed.x) ; y = int(p.maximum_tokens_contributed.y)}
         (Tezos.get_self_address ()) (Tezos.get_self_address ()) // Shouldn't be used
         (int p.liquidity) {x = 0n; y = 0n}
 

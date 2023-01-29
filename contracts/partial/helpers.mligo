@@ -278,7 +278,7 @@ let collect_fees (s : storage) (key : position_id) (position : position_state) :
 let update_balances_after_position_change
         (s : storage)
         (lower_tick_index : tick_index) (upper_tick_index : tick_index)
-        (maximum_tokens_contributed : balance_nat)
+        (maximum_tokens_contributed : balance_int)
         (to_x : address) (to_y : address)
         (liquidity_delta : int) (fees : balance_nat) : result =
     (* Compute how much should be deposited / withdrawn to change liquidity by liquidity_net *)
@@ -314,12 +314,12 @@ let update_balances_after_position_change
     let delta = {x = delta.x - fees.x ; y = delta.y - fees.y} in
 
     (* Check delta doesn't exceed maximum_tokens_contributed. *)
-    let _: unit = if delta.x > int(maximum_tokens_contributed.x) then
-        ([%Michelson ({| { FAILWITH } |} : nat * (nat * int) -> unit)]
+    let _: unit = if delta.x > maximum_tokens_contributed.x then
+        ([%Michelson ({| { FAILWITH } |} : nat * (int * int) -> unit)]
             (high_tokens_err, (maximum_tokens_contributed.x, delta.x)) : unit)
         else unit in
-    let _: unit = if delta.y > int(maximum_tokens_contributed.y) then
-        ([%Michelson ({| { FAILWITH } |} : nat * (nat * int) -> unit)]
+    let _: unit = if delta.y > maximum_tokens_contributed.y then
+        ([%Michelson ({| { FAILWITH } |} : nat * (int * int) -> unit)]
             (high_tokens_err, (maximum_tokens_contributed.y, delta.y)) : unit)
         else unit in
 

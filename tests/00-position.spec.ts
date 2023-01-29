@@ -406,6 +406,21 @@ describe('Position Tests', async () => {
             return true;
           },
         );
+        await rejects(
+          pool.updatePosition(
+            storage.new_position_id,
+            new BigNumber(-1e7),
+            alice.pkh,
+            alice.pkh,
+            validDeadline(),
+            new BigNumber(-1e8),
+            new BigNumber(-1e8),
+          ),
+          (err: Error) => {
+            equal(err.message.includes('106'), true);
+            return true;
+          },
+        );
       }
     });
     it("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {

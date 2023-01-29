@@ -85,6 +85,7 @@ type fa2_parameter =
 type balance_nat = {x : nat ; y : nat}
 type balance_nat_x128 = {x : x128n ; y : x128n}
 type balance_int_x128 = {x : x128 ; y : x128}
+type balance_int = {x : int ; y : int}
 
 (* Information stored for every initialized tick. *)
 type tick_state = {
@@ -401,7 +402,7 @@ type update_position_param =
     (* The maximum number of tokens to contribute.
         If a higher amount is required, the entrypoint fails.
     *)
-    maximum_tokens_contributed : balance_nat;
+    maximum_tokens_contributed : balance_int;
     referral_code : nat option ;
 }
 
