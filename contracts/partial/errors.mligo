@@ -68,8 +68,6 @@
 (* The `x_token_address` or `y_token_address` has no `approve` entrypoint. *)
 [@inline] let asset_approve_invalid_entrypoints_err = 202n
 
-
-
 // ---------------------------------------------------------------------------
 // -- Internal error codes
 // ---------------------------------------------------------------------------
@@ -152,6 +150,7 @@
 
 [@inline] let not_owner_err = 420n
 
+[@inline] let paused_etp_err = 600n
 
 
 #endif

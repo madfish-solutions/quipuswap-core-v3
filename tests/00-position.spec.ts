@@ -2,13 +2,12 @@ import { deepEqual, equal, ok, rejects, strictEqual } from 'assert';
 import { expect } from 'chai';
 import { BigNumber } from 'bignumber.js';
 
-import { MichelsonMap, TezosToolkit, TransferParams } from '@taquito/taquito';
+import { TezosToolkit, TransferParams } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 import { CallSettings, CallMode } from '@madfish/quipuswap-v3/dist/types';
 import DexFactory from './helpers/factoryFacade';
-import env from '../env';
 import { FA2 } from './helpers/FA2';
 import { FA12 } from './helpers/FA12';
 import { poolsFixture } from './fixtures/poolFixture';
@@ -111,7 +110,7 @@ describe('Position Tests', async () => {
     await confirmOperation(tezos, operation.hash);
   });
   describe('Failed cases', async () => {
-    it("Shouldn't setting position with lower_tick=upper_tick", async () => {
+    it("Shouldn't setting a position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
           new BigNumber(100),
@@ -359,7 +358,6 @@ describe('Position Tests', async () => {
         );
       }
     });
-
     it("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         await rejects(
@@ -535,6 +533,69 @@ describe('Position Tests', async () => {
             equal(err.message.includes('420'), true);
             return true;
           },
+        );
+      }
+    });
+    it("Shouldn't setting and updating position, if paused", async () => {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        const storage = await pool.getRawStorage();
+        tezos.setSignerProvider(aliceSigner);
+        await factory.setPause([
+          { set_position_pause: null },
+          { update_position_pause: null },
+        ]);
+        await rejects(
+          pool.setPosition(
+            new BigNumber(-10),
+            new BigNumber(10),
+            new BigNumber(minTickIndex),
+            new BigNumber(minTickIndex),
+            new BigNumber(1e7),
+            validDeadline(),
+            new BigNumber(1e7),
+            new BigNumber(1e7),
+          ),
+          (err: Error) => {
+            equal(err.message.includes('600'), true);
+            return true;
+          },
+        );
+
+        await rejects(
+          pool.updatePosition(
+            storage.new_position_id,
+            new BigNumber(1e7),
+            bob.pkh,
+            bob.pkh,
+            validDeadline(),
+            new BigNumber(0),
+            new BigNumber(0),
+          ),
+          (err: Error) => {
+            equal(err.message.includes('600'), true);
+            return true;
+          },
+        );
+
+        await factory.setPause([]);
+        await pool.setPosition(
+          new BigNumber(-10),
+          new BigNumber(10),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        await pool.updatePosition(
+          storage.new_position_id,
+          new BigNumber(1e4),
+          bob.pkh,
+          bob.pkh,
+          validDeadline(),
+          new BigNumber(1e4),
+          new BigNumber(1e4),
         );
       }
     });

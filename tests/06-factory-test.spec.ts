@@ -1,11 +1,10 @@
-import { equal, rejects } from 'assert';
+import { equal, notEqual, rejects } from 'assert';
 
-import { MichelsonMap, TezosToolkit } from '@taquito/taquito';
+import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 
 import DexFactory from './helpers/factoryFacade';
-import env from '../env';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
@@ -29,7 +28,7 @@ describe('Factory Tests', async function () {
 
   let devFee: number = 0;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
     factory = await new DexFactory(tezos, 'development').initialize(devFee);
   });
@@ -125,6 +124,16 @@ describe('Factory Tests', async function () {
         ),
         (err: Error) => {
           equal(err.message.includes('403'), true);
+          return true;
+        },
+      );
+    });
+    it("Shouldn't pause/unpause if not owner", async function () {
+      tezos.setSignerProvider(bobSigner);
+      await rejects(
+        factory.setPause([{ update_position_pause: null }]),
+        (err: Error) => {
+          equal(err.message.includes('420'), true);
           return true;
         },
       );
@@ -308,6 +317,23 @@ describe('Factory Tests', async function () {
       equal(poolFa2Storage.constants.tickSpacing.toNumber(), 42);
       equal(poolFa1_2Storage.constants.tickSpacing.toNumber(), 42);
       equal(poolFa2_1Storage.constants.tickSpacing.toNumber(), 42);
+    });
+    it('Should pause/unpause pools', async function () {
+      tezos.setSignerProvider(aliceSigner);
+      await factory.setPause([
+        { set_position_pause: null },
+        { update_position_pause: null },
+        { x_to_y_pause: null },
+        { y_to_x_pause: null },
+      ]);
+      const storage: any = await factory.contract.storage();
+      notEqual(storage.pause_state[0]['set_position_pause'], undefined);
+      notEqual(storage.pause_state[1]['update_position_pause'], undefined);
+      notEqual(storage.pause_state[2]['x_to_y_pause'], undefined);
+      notEqual(storage.pause_state[3]['y_to_x_pause'], undefined);
+      await factory.setPause([]);
+      const storage2: any = await factory.contract.storage();
+      equal(storage2.pause_state.length, 0);
     });
   });
 });

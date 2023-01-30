@@ -5,12 +5,9 @@ import { BigNumber } from 'bignumber.js';
 import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
-import env from '../env';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
-
 import { adjustScale } from '@madfish/quipuswap-v3/dist/helpers/math';
-
 import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
 import {
   evalSecondsPerLiquidityX128,
@@ -30,7 +27,7 @@ const PORT = getPort(__filename);
 describe('Range oracles tests', async function () {
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
   });
 

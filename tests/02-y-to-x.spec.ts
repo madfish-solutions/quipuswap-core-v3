@@ -7,7 +7,6 @@ import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
-import env from '../env';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import {
@@ -58,8 +57,9 @@ describe('YtoX Tests', async () => {
   let poolFa1_2: QuipuswapV3;
   let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
+  let factory: any;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -77,6 +77,7 @@ describe('YtoX Tests', async () => {
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
     poolFa2_1 = _poolFa2_1;
+    factory = _factory;
   });
   describe('Failed cases', async () => {
     it("Shouldn't swap if it's past the deadline", async () => {
@@ -148,6 +149,32 @@ describe('YtoX Tests', async () => {
             equal(err.message.includes('104'), true);
             return true;
           },
+        );
+      }
+    });
+    it("Shouldn't swap if swap is paused", async function () {
+      tezos.setSignerProvider(aliceSigner);
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        await factory.setPause([{ y_to_x_pause: null }]);
+        await rejects(
+          pool.swapYX(
+            new BigNumber(0),
+            validDeadline(),
+            new BigNumber(0),
+            alice.pkh,
+          ),
+          (err: Error) => {
+            equal(err.message.includes('600'), true);
+            return true;
+          },
+        );
+        await factory.setPause([]);
+        await pool.swapYX(
+          new BigNumber(0),
+          validDeadline(),
+          new BigNumber(0),
+          alice.pkh,
         );
       }
     });

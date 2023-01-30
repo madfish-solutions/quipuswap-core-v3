@@ -1,5 +1,5 @@
-import { MichelsonMap } from "@taquito/michelson-encoder";
-import { accounts } from "../sandbox/accounts";
+import { MichelsonMap } from '@taquito/michelson-encoder';
+import { accounts } from '../sandbox/accounts';
 
 export default {
   owner: accounts.alice.pkh,
@@ -7,4 +7,5 @@ export default {
   pools: MichelsonMap.fromLiteral({}),
   pool_ids: MichelsonMap.fromLiteral({}),
   dev_fee_bps: 1337,
+  pause_state: [],
 };

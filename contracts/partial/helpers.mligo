@@ -466,3 +466,13 @@ let update_timed_cumulatives (s : storage) : storage =
             reserved_length = buffer.reserved_length ;
         }
         in {s with cumulatives_buffer = new_buffer}
+
+let check_pause (etp, factory_address: pause_etp * address) : unit =
+    let paused = unwrap
+        (Tezos.call_view "check_pause" etp factory_address : bool option )
+        "not check pause etp" in
+
+    if paused
+    then ([%Michelson ({| { FAILWITH } |} : nat * pause_etp -> unit)]
+         (paused_etp_err, etp) : unit)
+    else unit

@@ -1,22 +1,20 @@
-import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { deepEqual, equal, ok } from 'assert';
+import { BigNumber } from 'bignumber.js';
 
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 
 import {
   adjustScale,
   sqrtPriceForTick,
   tickAccumulatorsInside,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+} from '@madfish/quipuswap-v3/dist/helpers/math';
+import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
 import {
-  isInRange,
   entries,
   isMonotonic,
   safeObserve,
-} from "@madfish/quipuswap-v3/dist/utils";
-import { Map } from "immutable";
+} from '@madfish/quipuswap-v3/dist/utils';
+import { Map } from 'immutable';
 
 export async function checkAllInvariants(
   cfmm: QuipuswapV3,
@@ -31,8 +29,6 @@ export async function checkAllInvariants(
   await checkStorageInvariants(cfmm, st, tickIndices);
   await checkAccumulatorsInvariants(cfmm, st, tickIndices);
   await checkCumulativesBufferInvariants(cfmm, st);
-
-  //await checkBalanceInvariants(cfmm, storage, positionIds, signers);
 }
 
 export async function checkAccumulatorsInvariants(
@@ -110,7 +106,7 @@ async function checkBalanceInvariants(
       position.liquidity.negated(),
       liquidityProvider.toString(),
       liquidityProvider.toString(),
-      new Date("2025-01-01").toString(),
+      new Date('2025-01-01').toString(),
       new BigNumber(0),
       new BigNumber(0),
     );
@@ -200,7 +196,7 @@ export async function checkTickInvariants(
     tickLiquidities
       .reduce((acc, cur) => acc.plus(cur), new BigNumber(0))
       .toFixed(),
-    "0",
+    '0',
   );
   // Invariant 2
   tickLiquidities
@@ -318,32 +314,6 @@ function merge<K, V>(
 
 /**
  * -- | Invariants on storages separated in time.
- * -- | Invariants on storages separated in time.
---
--- 1. Recorded values to not change.
-checkCumulativesBufferTimeInvariants
-  :: forall caps base m. (HasCallStack, MonadNettest caps base m)
-  => (Storage, Storage) -> m ()
-checkCumulativesBufferTimeInvariants storages = do
-  let mapBoth f (a, b) = (f a, f b)
-
-  let buffers = mapBoth sCumulativesBuffer storages
-  let bufferMaps = mapBoth cbEntries buffers
-
-  -- Invariant 1
-  let mergeEq k v1 v2 = assert (v1 == v2) $
-        "Value for key " +| k |+ " has changed:\n\
-        \  Was:\n    " +| v1 |+ "\n\
-        \  After:\n    " +| v2 |+ "\n"
-  _ <- uncurry
-    (Map.Merge.mergeA
-      Map.Merge.dropMissing
-      Map.Merge.dropMissing
-      (Map.Merge.zipWithAMatched mergeEq)
-    ) bufferMaps
-
-  pass
-
  */
 export async function checkCumulativesBufferTimeInvariants(
   cfmm: QuipuswapV3,
@@ -369,9 +339,4 @@ export async function checkCumulativesBufferTimeInvariants(
     }
   };
   merge(mergeEq, Map(bufferMaps[0]), Map(bufferMaps[1]));
-  /* Iterating over the first buffer map and comparing the values to the second buffer map. */
-  // Object.entries(bufferMaps[0]).forEach(([k, v1]) => {
-  //   const v2 = bufferMaps[1][k];
-  //   mergeEq(k, v1, v2);
-  // });
 }

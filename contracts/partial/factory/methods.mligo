@@ -31,3 +31,9 @@ let set_dev_fee (s, p : factory_storage_t * nat) : return_t =
         then failwith too_big_fee_bps_err in
 
     ([], { s with dev_fee_bps = p })
+
+let set_pause (s, p : factory_storage_t * pause_etp set) : return_t =
+    let _checkOwner = if s.owner <> (Tezos.get_sender ())
+        then failwith not_owner_err in
+
+    ([], { s with pause_state = p })

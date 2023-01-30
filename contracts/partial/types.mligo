@@ -473,6 +473,11 @@ type get_position_info_param =
 
 type result = (operation list) * storage
 
+type pause_etp =
+  | Set_position_pause of unit
+  | Update_position_pause of unit
+  | X_to_y_pause of unit
+  | Y_to_x_pause of unit
 
 (* Entrypoints *)
 

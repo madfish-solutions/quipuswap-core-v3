@@ -1,14 +1,13 @@
-import { equal, notEqual, ok, rejects } from 'assert';
+import { equal, notEqual, rejects } from 'assert';
 
 import { BigNumber } from 'bignumber.js';
 
-import { TezosToolkit, TransferParams } from '@taquito/taquito';
+import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 
 import DexFactory from './helpers/factoryFacade';
-import env from '../env';
 import { FA2 } from './helpers/FA2';
 import { FA12 } from './helpers/FA12';
 import { poolsFixture } from './fixtures/poolFixture';
@@ -20,7 +19,6 @@ const alice = accounts.alice;
 const bob = accounts.bob;
 const peter = accounts.peter;
 const eve = accounts.eve;
-const sara = accounts.sara;
 const carol = accounts.carol;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
@@ -42,7 +40,7 @@ describe('FA2 Tests', async function () {
   let fa2TokenX: FA2;
   let fa2TokenY: FA2;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
 
     const {

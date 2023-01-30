@@ -6,7 +6,6 @@ import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
-import env from '../env';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import {
@@ -38,7 +37,7 @@ const PORT = getPort(__filename);
 describe('Timed oracles tests', async function () {
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
   });
 

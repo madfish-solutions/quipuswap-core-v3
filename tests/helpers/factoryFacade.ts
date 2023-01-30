@@ -176,4 +176,8 @@ export default class Factory {
     );
     return pools;
   }
+  async setPause(etps: Object[]) {
+    const op = await this.contract.methods.set_pause(etps).send();
+    await confirmOperation(this.tezos, op.hash);
+  }
 }

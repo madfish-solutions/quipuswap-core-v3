@@ -14,6 +14,7 @@ let main (action, s : parameter_t * factory_storage_t) : return_t =
  (match action with
   | Deploy_pool (n) -> deploy_pool (s, n)
   | Set_dev_fee (n) -> set_dev_fee (s, n)
+  | Set_pause (n) -> set_pause (s, n)
  )
 
 

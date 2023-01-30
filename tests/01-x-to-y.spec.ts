@@ -8,9 +8,6 @@ import { accounts } from '../sandbox/accounts';
 import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
 import DexFactory from './helpers/factoryFacade';
-import env from '../env';
-import { FA2 } from './helpers/FA2';
-import { FA12 } from './helpers/FA12';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import {
@@ -61,8 +58,9 @@ describe('XtoY Tests', async function () {
   let poolFa1_2: QuipuswapV3;
   let poolFa2_1: QuipuswapV3;
   let tezos: TezosToolkit;
+  let factory: DexFactory;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(`http://localhost:8732`);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -80,6 +78,7 @@ describe('XtoY Tests', async function () {
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
     poolFa2_1 = _poolFa2_1;
+    factory = _factory;
 
     let operation = await tezos.contract.transfer({
       to: peter.pkh,
@@ -165,6 +164,32 @@ describe('XtoY Tests', async function () {
             equal(err.message.includes('104'), true);
             return true;
           },
+        );
+      }
+    });
+    it("Shouldn't swap if swap is paused", async function () {
+      tezos.setSignerProvider(aliceSigner);
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+        await factory.setPause([{ x_to_y_pause: null }]);
+        await rejects(
+          pool.swapXY(
+            new BigNumber(0),
+            validDeadline(),
+            new BigNumber(0),
+            alice.pkh,
+          ),
+          (err: Error) => {
+            equal(err.message.includes('600'), true);
+            return true;
+          },
+        );
+        await factory.setPause([]);
+        await pool.swapXY(
+          new BigNumber(0),
+          validDeadline(),
+          new BigNumber(0),
+          alice.pkh,
         );
       }
     });

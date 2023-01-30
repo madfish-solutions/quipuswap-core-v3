@@ -11,6 +11,7 @@ type factory_storage_t = {
   pools: (nat, address) big_map;
   pool_ids: (pool_key_t, nat) big_map;
   dev_fee_bps : nat;
+  pause_state: pause_etp set;
 }
 
 type return_t = (operation list * factory_storage_t)
@@ -30,3 +31,5 @@ type create_dex_t =
 type parameter_t =
 | Deploy_pool of create_dex_t
 | Set_dev_fee of nat
+| Set_pause of pause_etp set
+

@@ -113,6 +113,7 @@ let snapshot_cumulatives_inside (s, p : storage * snapshot_cumulatives_inside_pa
     in ([Tezos.transaction res 0mutez p.callback], s)
 
 let set_position (s : storage) (p : set_position_param) : result =
+    let _: unit = check_pause (Set_position_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let allowed_tick_spacing = s.constants.tick_spacing in
     let _: unit = check_multiple_of_tick_spacing (p.lower_tick_index, allowed_tick_spacing) in
@@ -212,6 +213,7 @@ let set_position (s : storage) (p : set_position_param) : result =
         (int p.liquidity) {x = 0n; y = 0n}
 
 let update_position (s : storage) (p : update_position_param) : result =
+    let _: unit = check_pause (Update_position_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
 
     (* Grab the existing position *)

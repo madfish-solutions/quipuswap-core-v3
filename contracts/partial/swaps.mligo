@@ -250,7 +250,7 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
                 sqrt_price = sqrt_price_new ;
                 cur_tick_index = cur_tick_index_new ;
                 fee_growth = {p.s.fee_growth with y = {x128 = p.s.fee_growth.y.x128 + Bitwise.shift_left fee 128n / p.s.liquidity}} ;
-                 dev_fee = {p.s.dev_fee with y = p.s.dev_fee.y + dev_fee}} in
+                dev_fee = {p.s.dev_fee with y = p.s.dev_fee.y + dev_fee}} in
             {p with s = s_new ; dy = 0n ; dx = p.dx + dx}
         else
             (* We did cross the tick. *)
@@ -335,6 +335,7 @@ let update_storage_x_to_y (s : storage) (dx : nat) : (nat * nat * storage) =
 
 (* Trade up to a quantity dx of asset x, receives dy *)
 let x_to_y (s : storage) (p : x_to_y_param) : result =
+    let _: unit = check_pause (X_to_y_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let (dx_spent, dy_received, s_new) = update_storage_x_to_y s p.dx in
     if dy_received < p.min_dy then
@@ -348,6 +349,7 @@ let x_to_y (s : storage) (p : x_to_y_param) : result =
 
 (* Trade up to a quantity dy of asset y, receives dx *)
 let y_to_x (s : storage) (p : y_to_x_param) : result =
+    let _: unit = check_pause (Y_to_x_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let r = y_to_x_rec {s = s ; dy = p.dy ; dx = 0n} in
     let dy_spent = assert_nat (p.dy - r.dy, internal_309) in
