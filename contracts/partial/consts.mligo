@@ -31,6 +31,3 @@
 [@inline] let one_minus_fee_bps (c : constants) : nat =
   abs(10000n - c.fee_bps)
 
-[@inline] let one_minus_dev_fee_bps (c : constants) : nat =
-  abs(10000n - c.dev_fee_bps)
-
