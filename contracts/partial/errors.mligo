@@ -150,6 +150,10 @@
 
 [@inline] let not_owner_err = 420n
 
+[@inline] let no_pending_owner_err = 421n
+
+[@inline] let not_pending_owner_err = 422n
+
 [@inline] let paused_etp_err = 600n
 
 

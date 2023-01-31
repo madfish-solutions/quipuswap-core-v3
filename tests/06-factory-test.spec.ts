@@ -16,6 +16,7 @@ import {
 
 const alice = accounts.alice;
 const bob = accounts.bob;
+const eve = accounts.eve;
 const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
 const maxTickIndex = new Int(1048575);
@@ -134,6 +135,39 @@ describe('Factory Tests', async function () {
         factory.setPause([{ update_position_pause: null }]),
         (err: Error) => {
           equal(err.message.includes('420'), true);
+          return true;
+        },
+      );
+    });
+    it("Shouldn't set owner if not owner", async function () {
+      tezos.setSignerProvider(bobSigner);
+      await rejects(
+        factory.contract.methods.set_owner(bob.pkh).send(),
+        (err: Error) => {
+          equal(err.message.includes('420'), true);
+          return true;
+        },
+      );
+    });
+    it("Shouldn't confirm owner if no pending owner", async function () {
+      tezos.setSignerProvider(bobSigner);
+      await rejects(
+        factory.contract.methods.confirm_owner().send(),
+        (err: Error) => {
+          equal(err.message.includes('421'), true);
+          return true;
+        },
+      );
+    });
+    it("Shouldn't confirm owner if not pending owner", async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const tx = await factory.contract.methods.set_owner(eve.pkh).send();
+      await confirmOperation(tezos, tx.hash);
+      tezos.setSignerProvider(bobSigner);
+      await rejects(
+        factory.contract.methods.confirm_owner().send(),
+        (err: Error) => {
+          equal(err.message.includes('422'), true);
           return true;
         },
       );
@@ -334,6 +368,21 @@ describe('Factory Tests', async function () {
       await factory.setPause([]);
       const storage2: any = await factory.contract.storage();
       equal(storage2.pause_state.length, 0);
+    });
+    it('Should set owner', async function () {
+      tezos.setSignerProvider(aliceSigner);
+      const tx = await factory.contract.methods.set_owner(bob.pkh).send();
+      await confirmOperation(tezos, tx.hash);
+      const storage: any = await factory.contract.storage();
+      equal(storage.pending_owner, bob.pkh);
+    });
+    it('Should confirm owner', async function () {
+      tezos.setSignerProvider(bobSigner);
+      const tx = await factory.contract.methods.confirm_owner().send();
+      await confirmOperation(tezos, tx.hash);
+      const storage: any = await factory.contract.storage();
+      equal(storage.pending_owner, null);
+      equal(storage.owner, bob.pkh);
     });
   });
 });

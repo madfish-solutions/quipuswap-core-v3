@@ -37,3 +37,18 @@ let set_pause (s, p : factory_storage_t * pause_etp set) : return_t =
         then failwith not_owner_err in
 
     ([], { s with pause_state = p })
+
+let set_owner (s, p : factory_storage_t * address) : return_t =
+    let _checkOwner = if s.owner <> (Tezos.get_sender ())
+        then failwith not_owner_err in
+
+    ([], { s with pending_owner = Some p})
+
+let confirm_owner (s : factory_storage_t) : return_t =
+    match s.pending_owner with
+    | None -> failwith no_pending_owner_err
+    | Some pending_owner ->
+        let _checkOwner = if pending_owner <> (Tezos.get_sender ())
+            then failwith not_pending_owner_err in
+
+        ([], { s with owner = Tezos.get_sender () ; pending_owner = None })

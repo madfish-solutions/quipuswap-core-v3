@@ -7,6 +7,7 @@ type pool_key_t =
 
 type factory_storage_t = {
   owner: address;
+  pending_owner: address option;
   pool_count: nat;
   pools: (nat, address) big_map;
   pool_ids: (pool_key_t, nat) big_map;
@@ -32,4 +33,6 @@ type parameter_t =
 | Deploy_pool of create_dex_t
 | Set_dev_fee of nat
 | Set_pause of pause_etp set
+| Set_owner of address
+| Confirm_owner of unit
 
