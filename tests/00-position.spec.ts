@@ -291,36 +291,38 @@ describe('Position Tests', async () => {
         0,
       );
       const wrongPool = await new QuipuswapV3().init(tezos, poolAddress);
-      wrongPool.setPosition(
-        new BigNumber(-9),
-        new BigNumber(20),
-        new BigNumber(minTickIndex),
-        new BigNumber(minTickIndex),
-        new BigNumber(1e7),
-        validDeadline(),
-        new BigNumber(1e7),
-        new BigNumber(1e7),
-      ),
+      await rejects(
+        wrongPool.setPosition(
+          new BigNumber(-9),
+          new BigNumber(20),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        ),
         (err: Error) => {
-          console.log(err.message);
           equal(err.message.includes('112'), true);
           return true;
-        };
-      wrongPool.setPosition(
-        new BigNumber(20),
-        new BigNumber(-9),
-        new BigNumber(minTickIndex),
-        new BigNumber(minTickIndex),
-        new BigNumber(1e7),
-        validDeadline(),
-        new BigNumber(1e7),
-        new BigNumber(1e7),
-      ),
+        },
+      );
+      await rejects(
+        wrongPool.setPosition(
+          new BigNumber(20),
+          new BigNumber(-9),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        ),
         (err: Error) => {
-          console.log(err.message);
           equal(err.message.includes('112'), true);
           return true;
-        };
+        },
+      );
     });
     it("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
@@ -1154,8 +1156,8 @@ describe('Position Tests', async () => {
             devFeeRecipient,
           )
         ).minus(prevDevFeeRecipientBalanceY);
-
-        const devFeeBPS = initialSt.constants.dev_fee_bps;
+        const factoryStorage = (await factory.contract.storage()) as any;
+        const devFeeBPS = factoryStorage.dev_fee_bps;
         const devFeeX = xFees.multipliedBy(devFeeBPS).dividedBy(10000);
         const devFeeY = yFees.multipliedBy(devFeeBPS).dividedBy(10000);
 
@@ -1299,7 +1301,6 @@ describe('Position Tests', async () => {
       }
     });
     it('Should allow Liquidity Providers earning fees proportional to their liquidity', async () => {
-      console.log('Start');
       tezos.setSignerProvider(aliceSigner);
       const fees = [
         Math.floor(Math.random() * 1e4),
@@ -1333,7 +1334,7 @@ describe('Position Tests', async () => {
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
       poolFa2_1 = _poolFa2_1;
-      console.log('PoolLoop');
+
       for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
         tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
@@ -1341,7 +1342,7 @@ describe('Position Tests', async () => {
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
         tezos.setSignerProvider(eveSigner);
-        console.log('Eva Sets Position');
+
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1353,7 +1354,7 @@ describe('Position Tests', async () => {
           new BigNumber(1e7),
         );
         tezos.setSignerProvider(aliceSigner);
-        console.log('Alice Sets Position');
+
         await pool.setPosition(
           new BigNumber(-10000),
           new BigNumber(10000),
@@ -1396,7 +1397,7 @@ describe('Position Tests', async () => {
 
           tezos.setSignerProvider(swapper);
           const swapperAddr = await swapper.publicKeyHash();
-          console.log('Swapper', swapperAddr);
+
           await pool.swapXY(
             transferAmount,
             validDeadline(),
@@ -1416,7 +1417,7 @@ describe('Position Tests', async () => {
         }
         const upperTi = new Int(10000);
         const lowerTi = new Int(-10000);
-        console.log('Check Invariants');
+
         await checkAllInvariants(
           pool,
           { [alice.pkh]: aliceSigner, [eve.pkh]: eveSigner },
@@ -1426,10 +1427,10 @@ describe('Position Tests', async () => {
         );
 
         tezos.setSignerProvider(eveSigner);
-        console.log('Eve Collects Fees');
+
         await collectFees(pool, eve.pkh, [initialSt.new_position_id]);
         tezos.setSignerProvider(aliceSigner);
-        console.log('Alice Collects Fees');
+
         await collectFees(pool, alice.pkh, [initialSt.new_position_id.plus(1)]);
         const eveBalanceX = (
           await getTypedBalance(

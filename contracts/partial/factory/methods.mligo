@@ -13,7 +13,7 @@ let deploy_pool (s, p : factory_storage_t * create_dex_t) : return_t =
     let _check_pool = if Big_map.mem pool_key s.pool_ids
         then failwith pool_already_exists_err in
 
-    let pool_storage = init_pool_storage p s.dev_fee_bps in
+    let pool_storage = init_pool_storage p in
     let create_op, addr = deploy_pool_func ((None: key_hash option), Tezos.get_amount (), pool_storage) in
 
     let s = { s with

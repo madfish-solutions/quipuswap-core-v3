@@ -467,7 +467,7 @@ let update_timed_cumulatives (s : storage) : storage =
         }
         in {s with cumulatives_buffer = new_buffer}
 
-let check_pause (etp, factory_address: pause_etp * address) : unit =
+[@inline]let check_pause (etp, factory_address: pause_etp * address) : unit =
     let paused = unwrap
         (Tezos.call_view "check_pause" etp factory_address : bool option )
         "not check pause etp" in
@@ -476,3 +476,6 @@ let check_pause (etp, factory_address: pause_etp * address) : unit =
     then ([%Michelson ({| { FAILWITH } |} : nat * pause_etp -> unit)]
          (paused_etp_err, etp) : unit)
     else unit
+
+[@inline]let get_dev_fee (factory_address : address) : nat =
+    unwrap (Tezos.call_view "get_dev_fee" unit factory_address : nat option ) "not_get_dev_fee"

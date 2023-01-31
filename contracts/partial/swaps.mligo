@@ -125,10 +125,12 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
     if p.s.liquidity = 0n then
         p
     else
+        let constants = p.s.constants in
+        let dev_fee_bps = get_dev_fee(constants.factory_address) in
         (* The fee that would be extracted from selling dx. *)
-        let total_fee = ceildiv (p.dx * p.s.constants.fee_bps) 10000n in
-        let dev_fee = if p.s.constants.dev_fee_bps > 0n
-          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+        let total_fee = ceildiv (p.dx * constants.fee_bps) 10000n in
+        let dev_fee = if dev_fee_bps > 0n
+          then ceildiv (total_fee * dev_fee_bps) 10000n
           else 0n in
         let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
@@ -171,8 +173,8 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
             (* Deduct the fee we will actually be paying. *)
             let total_fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
 
-            let dev_fee = if p.s.constants.dev_fee_bps > 0n
-              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+            let dev_fee = if dev_fee_bps > 0n
+              then ceildiv (total_fee * dev_fee_bps) 10000n
               else 0n in
             let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
@@ -223,10 +225,12 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
     if p.s.liquidity = 0n then
         p
     else
+        let constants = p.s.constants in
+        let dev_fee_bps = get_dev_fee(constants.factory_address) in
         (* The fee that would be extracted from selling dy. *)
-        let total_fee = ceildiv (p.dy * p.s.constants.fee_bps) 10000n in
-        let dev_fee = if p.s.constants.dev_fee_bps > 0n
-          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+        let total_fee = ceildiv (p.dy * constants.fee_bps) 10000n in
+        let dev_fee = if dev_fee_bps > 0n
+          then ceildiv (total_fee * dev_fee_bps) 10000n
           else 0n in
         let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
@@ -280,8 +284,8 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
             (* Deduct the fee we will actually be paying. *)
             let total_fee = assert_nat (dy_consumed - dy_for_dx, internal_impossible_err) in
 
-            let dev_fee = if p.s.constants.dev_fee_bps > 0n
-              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+            let dev_fee = if dev_fee_bps > 0n
+              then ceildiv (total_fee * dev_fee_bps) 10000n
               else 0n in
 
             let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
