@@ -101,7 +101,7 @@ export default {
               token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
             },
           },
-          feeBPS: 3000,
+          feeBPS: 300,
           extraSlots: 100,
           tickSpacing: 60
         },
@@ -117,7 +117,7 @@ export default {
           tokenY: {
             fa12: "KT1LJ4YjQkDkiPhazyV7PizE1t59K5wNGxLA",
           },
-          feeBPS: 3000,
+          feeBPS: 300,
           extraSlots: 100,
           tickSpacing: 60
         },
@@ -134,7 +134,7 @@ export default {
               token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
             },
           },
-          feeBPS: 3000,
+          feeBPS: 300,
           extraSlots: 100,
           tickSpacing: 60
         },
@@ -151,7 +151,7 @@ export default {
               token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
             },
           },
-          feeBPS: 3000,
+          feeBPS: 300,
           extraSlots: 100,
           tickSpacing: 60
         },
