@@ -35,7 +35,7 @@
 let sqrt_price_move_x (liquidity : nat) (sqrt_price_old : x80n) (dx : nat) : x80n =
     (* floordiv because we want to overstate how much this trade lowers the price *)
     let sqrt_price_new =
-        {x80 = floordiv
+        {x80 = ceildiv
             (Bitwise.shift_left (liquidity * sqrt_price_old.x80) 80n)
             ((Bitwise.shift_left liquidity 80n) + dx * sqrt_price_old.x80)
         } in
@@ -78,7 +78,7 @@ let sqrt_price_move_y (liquidity : nat) (sqrt_price_old : x80n) (dy : nat) : x80
     (* ceildiv because we want to overstate how much this trade increases the price *)
     let sqrt_price_new =
         { x80 =
-            ceildiv (Bitwise.shift_left dy 80n) liquidity + sqrt_price_old.x80
+            floordiv (Bitwise.shift_left dy 80n) liquidity + sqrt_price_old.x80
         } in
 #if DEBUG
     let _ : unit =
