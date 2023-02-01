@@ -24,7 +24,7 @@ module.exports = async (tezos: TezosToolkit, network: string) => {
         token_x: pool.tokenX,
         token_y: pool.tokenY,
         fee_bps: pool.feeBPS,
-        tick_spacing: "1",
+        tick_spacing: pool.tickSpacing,
         extra_slots: pool.extraSlots
       })
       .send();

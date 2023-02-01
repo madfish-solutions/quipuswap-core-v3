@@ -86,49 +86,74 @@ export default {
       secretKey: accounts.dev.sk,
       pools: {
         0: {
-          name: "kUSD/uUSD",
-          tickIndex: 0,
+          name: "USDt/wTEZ",
+          tickIndex: 485,
           tokenX: {
-            fa12: "KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1",
+            fa2: {
+              token_id: 0,
+              token_address: "KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o",
+            }
           },
 
           tokenY: {
             fa2: {
               token_id: 0,
-              token_address: "KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc",
+              token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
             },
           },
-          feeBPS: 100,
-          extraSlots: 41,
+          feeBPS: 3000,
+          extraSlots: 100,
+          tickSpacing: 60
         },
         1: {
-          name: "tzBTC/kUSD",
-          tickIndex: 100437,
+          name: "USDt/tzBTC",
+          tickIndex: -100455,
+          tokenX:  {
+            fa2: {
+              token_id: 0,
+              token_address: "KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o",
+            },
+          },
+          tokenY: {
+            fa12: "KT1LJ4YjQkDkiPhazyV7PizE1t59K5wNGxLA",
+          },
+          feeBPS: 3000,
+          extraSlots: 100,
+          tickSpacing: 60
+        },
+        2: {
+          name: "tzBTC/wTEZ",
+          tickIndex: -99873,
           tokenX: {
             fa12: "KT1LJ4YjQkDkiPhazyV7PizE1t59K5wNGxLA",
           },
 
           tokenY: {
-            fa12: "KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1",
+            fa2: {
+              token_id: 0,
+              token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
+            },
           },
-          feeBPS: 50,
-          extraSlots: 41,
+          feeBPS: 3000,
+          extraSlots: 100,
+          tickSpacing: 60
         },
-        2: {
-          name: "USDtz/uUSD",
-          tickIndex: 0,
+        3: {
+          name: "QUIPU/wTEZ",
+          tickIndex: -11712,
           tokenX: {
-            fa12: "KT1QzmrMs1xUXZJ8TPAoDEFaKC6w56RfdLWo",
+            fa12: "KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1",
           },
 
           tokenY: {
             fa2: {
               token_id: 0,
-              token_address: "KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc",
+              token_address: "KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK",
             },
           },
-          feeBPS: 10,
-          extraSlots: 41,
+          feeBPS: 3000,
+          extraSlots: 100,
+          tickSpacing: 60
         },
       },
     },
