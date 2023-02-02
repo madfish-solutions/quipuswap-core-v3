@@ -106,12 +106,12 @@ let failed = 0;
 
 const safeTest = async (file: string) => {
   await killSandbox();
-  await sleep(1000);
+  await sleep(2000);
 
   const startSandbox = spawn('yarn', ['start-sandbox']);
   await startSandbox
     .then(async () => {
-      await sleep(7000);
+      await sleep(8000);
       const testProcess = spawn('ts-mocha', ['--bail', `tests/${file}`], {
         stdio: 'inherit',
       });
