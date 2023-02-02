@@ -13,7 +13,8 @@ import { FA12 } from './helpers/FA12';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
-import { getPort, validDeadline } from './helpers/utils';
+import { validDeadline } from './helpers/utils';
+import env from '../env';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -25,8 +26,6 @@ const bobSigner = new InMemorySigner(bob.sk);
 const eveSigner = new InMemorySigner(eve.sk);
 
 const minTickIndex = new Int(-1048575);
-
-const PORT = getPort(__filename);
 
 describe('FA2 Tests', async function () {
   let poolFa12: QuipuswapV3;
@@ -40,7 +39,7 @@ describe('FA2 Tests', async function () {
   let fa2TokenX: FA2;
   let fa2TokenY: FA2;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:8732`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
 
     const {

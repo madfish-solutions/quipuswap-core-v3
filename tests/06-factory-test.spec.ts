@@ -8,11 +8,12 @@ import DexFactory from './helpers/factoryFacade';
 import { poolsFixture } from './fixtures/poolFixture';
 import { confirmOperation } from '../scripts/confirmation';
 import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
-import { genFees, genNatIds, getPort } from './helpers/utils';
+import { genFees, genNatIds } from './helpers/utils';
 import {
   adjustScale,
   sqrtPriceForTick,
 } from '@madfish/quipuswap-v3/dist/helpers/math';
+import env from '../env';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -21,15 +22,13 @@ const aliceSigner = new InMemorySigner(alice.sk);
 const bobSigner = new InMemorySigner(bob.sk);
 const maxTickIndex = new Int(1048575);
 
-const PORT = getPort(__filename);
-
 describe('Factory Tests', async function () {
   let tezos: TezosToolkit;
   let factory: DexFactory;
 
   let devFee: number = 0;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:8732`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
     factory = await new DexFactory(tezos, 'development').initialize(devFee);
   });

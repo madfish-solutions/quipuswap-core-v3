@@ -34,13 +34,13 @@ import {
   genNatIds,
   genNonOverlappingPositions,
   genSwapDirection,
-  getPort,
   getTypedBalance,
   inRange,
   safeSwap,
   sleep,
   validDeadline,
 } from './helpers/utils';
+import env from '../env';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -57,8 +57,6 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
-const PORT = getPort(__filename);
-
 describe('Position Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
@@ -71,7 +69,7 @@ describe('Position Tests', async () => {
   let fa2TokenX: FA2;
   let fa2TokenY: FA2;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:${PORT}`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
 
     const {

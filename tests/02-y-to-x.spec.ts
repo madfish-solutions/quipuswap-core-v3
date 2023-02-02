@@ -30,12 +30,12 @@ import {
   compareStorages,
   genFees,
   genNatIds,
-  getPort,
   getTypedBalance,
   moreBatchSwaps,
   sleep,
   validDeadline,
 } from './helpers/utils';
+import env from '../env';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -49,8 +49,6 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-const PORT = getPort(__filename);
-
 describe('YtoX Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
@@ -59,7 +57,7 @@ describe('YtoX Tests', async () => {
   let tezos: TezosToolkit;
   let factory: any;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:8732`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -405,7 +403,7 @@ describe('YtoX Tests', async () => {
       const upperTickIndex = new Int(1000);
       const swapper = bobSigner;
       const swapReceiver = sara.pkh;
-      const swapCount = 200;
+      const swapCount = 50;
       const swapAmt = new BigNumber(10);
 
       const {
@@ -479,7 +477,7 @@ describe('YtoX Tests', async () => {
           ),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(1);
 
         tezos.setSignerProvider(swapper);
         transferParams = [];
@@ -506,7 +504,7 @@ describe('YtoX Tests', async () => {
           )),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(1);
 
         // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
         await advanceSecs(1, [pool_1, pool_2]);

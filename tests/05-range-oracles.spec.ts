@@ -12,22 +12,20 @@ import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
 import {
   evalSecondsPerLiquidityX128,
   getCumulativesInsideDiff,
-  getPort,
   sleep,
   validDeadline,
 } from './helpers/utils';
+import env from '../env';
 
 const alice = accounts.alice;
 const aliceSigner = new InMemorySigner(alice.sk);
 
 const minTickIndex = new Int(-1048575);
 
-const PORT = getPort(__filename);
-
 describe('Range oracles tests', async function () {
   let tezos: TezosToolkit;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:8732`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
   });
 

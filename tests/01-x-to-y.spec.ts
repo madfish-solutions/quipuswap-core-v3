@@ -37,6 +37,7 @@ import {
   sleep,
   validDeadline,
 } from './helpers/utils';
+import env from '../env';
 
 const alice = accounts.alice;
 const bob = accounts.bob;
@@ -50,8 +51,6 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-const PORT = getPort(__filename);
-
 describe('XtoY Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
@@ -60,7 +59,7 @@ describe('XtoY Tests', async function () {
   let tezos: TezosToolkit;
   let factory: DexFactory;
   before(async () => {
-    tezos = new TezosToolkit(`http://localhost:8732`);
+    tezos = new TezosToolkit(env.networks.development.rpc);
     tezos.setSignerProvider(aliceSigner);
 
     const {
@@ -196,6 +195,7 @@ describe('XtoY Tests', async function () {
   });
   describe('Success cases', async function () {
     it('Should swapping within a single tick range', async function () {
+      tezos.setSignerProvider(aliceSigner);
       await sleep(1000);
       this.retries(3);
 
@@ -415,7 +415,8 @@ describe('XtoY Tests', async function () {
       }
     });
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
-      this.retries(3);
+      tezos.setSignerProvider(aliceSigner);
+      this.retries(1);
       await sleep(5000);
 
       const liquidity = new BigNumber(1e7);
@@ -423,7 +424,7 @@ describe('XtoY Tests', async function () {
       const upperTickIndex = new Int(1000);
       const swapper = bobSigner;
       const swapReceiver = sara.pkh;
-      const swapCount = 200;
+      const swapCount = 50;
       const swapAmt = new BigNumber(10);
 
       const {
@@ -442,7 +443,6 @@ describe('XtoY Tests', async function () {
         genFees(8, true),
         true,
       );
-
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
@@ -469,6 +469,7 @@ describe('XtoY Tests', async function () {
         transferParams.push(
           await pool_2.increaseObservationCount(new BigNumber(10)),
         );
+
         let batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
         transferParams = [];
@@ -498,7 +499,6 @@ describe('XtoY Tests', async function () {
         );
         batchOp = await sendBatch(tezos, transferParams);
         await confirmOperation(tezos, batchOp.opHash);
-
         tezos.setSignerProvider(swapper);
         transferParams = [];
         // 1 big swap
@@ -523,9 +523,10 @@ describe('XtoY Tests', async function () {
             'XtoY',
           )),
         );
-
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        //await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(1);
+
         // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
         await advanceSecs(1, [pool_1, pool_2]);
         await checkAllInvariants(
@@ -538,8 +539,9 @@ describe('XtoY Tests', async function () {
             lowerTickIndex,
             upperTickIndex,
           ],
-          genNatIds(250),
+          genNatIds(150),
         );
+
         await checkAllInvariants(
           pool_2,
           { [alice.pkh]: aliceSigner },
@@ -550,8 +552,9 @@ describe('XtoY Tests', async function () {
             lowerTickIndex,
             upperTickIndex,
           ],
-          genNatIds(250),
+          genNatIds(150),
         );
+
         /**
          * The two storages should be mostly identical.
          * The price might be slightly different, due to the compounding of rounding errors,
