@@ -601,6 +601,9 @@ describe('Position Tests', async () => {
     });
   });
   describe('Success cases', async () => {
+    beforeEach(async () => {
+      await sleep(5000);
+    });
     it('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
