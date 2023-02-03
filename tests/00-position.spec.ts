@@ -604,7 +604,7 @@ describe('Position Tests', async () => {
     beforeEach(async () => {
       await sleep(5000);
     });
-    it.skip('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
+    it('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
@@ -790,7 +790,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Should depositing and withdrawing the same amount of liquidity+', async () => {
+    it('Should depositing and withdrawing the same amount of liquidity+', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -849,7 +849,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Should adding liquidity twice is the same as adding it oncе', async () => {
+    it('Should adding liquidity twice is the same as adding it oncе', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -974,7 +974,7 @@ describe('Position Tests', async () => {
         expect(yBalance2.toNumber()).to.be.closeTo(yBalance2.toNumber(), 1);
       }
     });
-    it.skip('Should be lowest and highest ticks cannot be garbage collected', async () => {
+    it('Should be lowest and highest ticks cannot be garbage collected', async () => {
       tezos.setSignerProvider(aliceSigner);
       const {
         factory: _factory,
@@ -1046,7 +1046,7 @@ describe('Position Tests', async () => {
         compareStorages(initialSt, poolStorage);
       }
     });
-    it.skip('Should allow admins earning dev fees from swaps', async () => {
+    it('Should allow admins earning dev fees from swaps', async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = [5000, 5000, 5000, 5000];
 
@@ -1180,7 +1180,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Should allow Liquidity Providers earning fees from swaps', async () => {
+    it('Should allow Liquidity Providers earning fees from swaps', async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = genFees(4);
       const swappers = [bobSigner, peterSigner];
@@ -1301,7 +1301,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Should allow Liquidity Providers earning fees proportional to their liquidity', async () => {
+    it('Should allow Liquidity Providers earning fees proportional to their liquidity', async () => {
       tezos.setSignerProvider(aliceSigner);
       const fees = [
         Math.floor(Math.random() * 1e4),
@@ -1505,7 +1505,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Liquidity Providers do not receive past fees', async function () {
+    it('Liquidity Providers do not receive past fees', async function () {
       //this.retries(2);
       const swapper = peterSigner;
       const feeReceiver1 = carol.pkh;
@@ -1716,7 +1716,7 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it.skip('Should allow accrued fees are discounted when adding liquidity to an existing position', async () => {
+    it('Should allow accrued fees are discounted when adding liquidity to an existing position', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
       const upperTickIndex = 10000;
@@ -1874,7 +1874,7 @@ describe('Position Tests', async () => {
         strictEqual(feeReceiverBalanceY.toFixed(), '0');
       }
     });
-    it.skip("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
+    it("Should Ticks' states are updating correctly when an overlapping position is created", async () => {
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;
