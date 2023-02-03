@@ -2077,7 +2077,7 @@ describe('Position Tests', async () => {
 
           // -- Advance the time a few secs to make sure the buffer is updated to reflect the swaps.
           await advanceSecs(waitTime, [pool]);
-          checkAllInvariants(
+          await checkAllInvariants(
             pool,
             [liquidityProvider, swapper],
             genNatIds(50),
