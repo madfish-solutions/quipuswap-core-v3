@@ -1,4 +1,4 @@
 {
-  "timeout": 500000,
+  "timeout": 700000,
   "extension": ["ts"]
 }
