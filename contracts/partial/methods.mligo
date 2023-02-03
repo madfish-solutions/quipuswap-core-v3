@@ -5,23 +5,22 @@ let claim_dev_fee (s : storage) (recipient : address) : result =
             (not_owner_err : nat) : unit)
         else unit in
 
-    if s.dev_fee.x = 0n && s.dev_fee.y = 0n
-    then ([], s)
-    else if s.dev_fee.x = 0n
-    then
-        let op_withdraw_y = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
-        let updated_s = { s with dev_fee = { x = 0n; y = 0n } }
-        in ([op_withdraw_y], updated_s)
-    else if s.dev_fee.y = 0n
-    then
-        let op_withdraw_x = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
-        let updated_s = { s with dev_fee = { x = 0n; y = 0n } }
-        in ([op_withdraw_x], updated_s)
+    let ops = [] in
+    let ops = if s.dev_fee.x > 0n then 
+        let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
+        op :: ops
     else
-        let op_withdraw_x = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
-        let op_withdraw_y = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
-        let updated_s = { s with dev_fee = { x = 0n; y = 0n } }
-        in ([op_withdraw_x; op_withdraw_y], updated_s)
+        ops
+    in
+    
+    let ops = if s.dev_fee.y > 0n then 
+        let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
+        op :: ops
+    else
+        ops
+    in
+
+    (ops, {s with dev_fee = { x = 0n; y = 0n }})
 
 // Increase the number of stored accumulators.
 let increase_observation_count (s, p : storage * increase_observation_count_param) : result =

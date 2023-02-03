@@ -339,14 +339,10 @@ let update_balances_after_position_change
 #endif
         wrap_transfer (Tezos.get_self_address () ) to_y (abs delta.y) s.constants.token_y in
 
-    if delta.x = 0 && delta.y = 0 then
-        ([], s)
-    else if delta.x = 0 then
-        ([op_y], s)
-    else if delta.y = 0 then
-        ([op_x], s)
-    else
-        ([op_x ; op_y], s )
+    let ops = [] in
+    let ops = if s.dev_fee.x > 0n then op_x :: ops else ops in
+    let ops = if s.dev_fee.y > 0n then op_y :: ops else ops in
+    (ops, s)
 
 (*  Checks if a new tick sits between `cur_tick_witness` and `cur_tick_index`.
     If it does, we need to move `cur_tick_witness` forward to maintain its invariant:
