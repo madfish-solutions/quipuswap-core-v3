@@ -88,32 +88,6 @@ export async function checkAccumulatorsInvariants(
 }
 
 /**
- * Invariant:
- * The contract always has enough balance to liquidite all positions (and pay any fees due).
- */
-async function checkBalanceInvariants(
-  cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
-  positionIds: Nat[],
-  signers: Object,
-): Promise<void> {
-  for (const positionId of positionIds) {
-    const position = await storage.positions.get(positionId);
-    const liquidityProvider = position.owner.toString();
-    cfmm.tezos.setSignerProvider(signers[liquidityProvider]);
-    await cfmm.updatePosition(
-      positionId,
-      position.liquidity.negated(),
-      liquidityProvider.toString(),
-      liquidityProvider.toString(),
-      new Date('2025-01-01').toString(),
-      new BigNumber(0),
-      new BigNumber(0),
-    );
-  }
-}
-
-/**
  * Invariants:
  * 1. @cur_tick_witness@ is the highest initialized tick lower than or equal to @cur_tick_index@.
  * 2.1. Current liquidity is equal to the sum of all the tick's @liquidity_net@
