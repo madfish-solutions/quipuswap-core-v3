@@ -107,7 +107,7 @@ describe('Position Tests', async () => {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  describe.skip('Failed cases', async () => {
+  describe('Failed cases', async () => {
     it("Shouldn't setting a position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
