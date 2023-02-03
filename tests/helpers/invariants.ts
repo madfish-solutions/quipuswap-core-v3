@@ -24,10 +24,14 @@ export async function checkAllInvariants(
   bufferMapIndices: Nat[],
 ): Promise<void> {
   const st = await cfmm.getStorage(positionIds, tickIndices, bufferMapIndices);
+  const sortedTickIndices = tickIndices
+    .sort((a, b) => a.minus(b).toNumber())
+    .map(i => new Int(i));
+
   await checkTickMapInvariants(cfmm, st);
   await checkTickInvariants(cfmm, st);
-  await checkStorageInvariants(cfmm, st, tickIndices);
-  await checkAccumulatorsInvariants(cfmm, st, tickIndices);
+  await checkStorageInvariants(cfmm, st, sortedTickIndices);
+  await checkAccumulatorsInvariants(cfmm, st, sortedTickIndices);
   await checkCumulativesBufferInvariants(cfmm, st);
 }
 
