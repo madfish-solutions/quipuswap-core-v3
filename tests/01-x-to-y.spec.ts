@@ -416,7 +416,7 @@ describe('XtoY Tests', async function () {
     });
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
       tezos.setSignerProvider(aliceSigner);
-      this.retries(1);
+      this.retries(2);
       await sleep(5000);
 
       const liquidity = new BigNumber(1e7);

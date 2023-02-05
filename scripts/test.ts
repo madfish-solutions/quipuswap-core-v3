@@ -31,10 +31,11 @@ const safeTest = async (file: string) => {
   try {
     await spawn('yarn', ['start-sandbox']);
   } catch (e) {
-    safeTest(file);
+    await sleep(1000);
+    await safeTest(file);
   }
 
-  await sleep(7000);
+  await sleep(8000);
   const testProcess = spawn('ts-mocha', ['--bail', `tests/${file}`], {
     stdio: 'inherit',
   });

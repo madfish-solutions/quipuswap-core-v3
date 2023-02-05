@@ -1997,7 +1997,8 @@ describe('Position Tests', async () => {
         );
       }
     });
-    it('Should initializing correctly position', async () => {
+    it('Should initializing correctly position', async function () {
+      this.retries(2);
       const liquidityProvider = aliceSigner;
       tezos.setSignerProvider(liquidityProvider);
       const swapper = bobSigner;

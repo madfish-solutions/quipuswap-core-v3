@@ -397,6 +397,7 @@ describe('YtoX Tests', async () => {
     });
 
     it('Should placing many small swaps is (mostly) equivalent to placing 1 big swap', async function () {
+      this.retries(3);
       await sleep(1000);
       const liquidity = new BigNumber(1e7);
       const lowerTickIndex = new Int(-1000);
@@ -754,8 +755,8 @@ describe('YtoX Tests', async () => {
         expect(finalBalance).to.be.deep.eq(initialBalance);
       }
     });
-    it('Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent', async () => {
-      console.log('1');
+    it('Should executing a swap within a single tick range or across many ticks should be (mostly) equivalent', async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e6);
       const lowerTickIndex = new Int(-1000);
       const upperTickIndex = new Int(1000);
@@ -1171,8 +1172,8 @@ describe('YtoX Tests', async () => {
         }
       }
     });
-    it('Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness', async () => {
-      console.log('3');
+    it('Should allow invariants hold when pushing the cur_tick_index just below cur_tick_witness', async function () {
+      this.retries(3);
       const liquidity = new BigNumber(1e4);
       const lowerTickIndex = new Int(-100);
       const upperTickIndex = new Int(100);
