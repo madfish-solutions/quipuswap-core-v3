@@ -871,7 +871,7 @@ describe('YtoX Tests', async () => {
           );
         }
         let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
         transferParams = [];
 
         // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
@@ -945,7 +945,7 @@ describe('YtoX Tests', async () => {
           ),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
         await advanceSecs(waitTime, [pool_1, pool_2]);
 
         transferParams = [];
@@ -968,7 +968,7 @@ describe('YtoX Tests', async () => {
         );
 
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
 
         //Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
         await advanceSecs(waitTime, [pool_1, pool_2]);
@@ -1233,7 +1233,7 @@ describe('YtoX Tests', async () => {
         );
         tezos.setSignerProvider(aliceSigner);
         let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
 
         /**
          * Explanation:
@@ -1323,7 +1323,7 @@ describe('YtoX Tests', async () => {
           ),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
         transferParams = [];
         tezos.setSignerProvider(swapper);
         //Place a small x-to-y swap.
@@ -1352,7 +1352,7 @@ describe('YtoX Tests', async () => {
           ),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
         await checkAllInvariants(
           pool,
