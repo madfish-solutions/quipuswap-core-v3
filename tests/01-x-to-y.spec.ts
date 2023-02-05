@@ -897,7 +897,7 @@ describe('XtoY Tests', async function () {
           );
         }
         let batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
 
         transferParams = [];
 
@@ -971,7 +971,7 @@ describe('XtoY Tests', async function () {
           ),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
         await advanceSecs(waitTime, [pool_1, pool_2]);
 
         transferParams = [];
@@ -994,7 +994,7 @@ describe('XtoY Tests', async function () {
         );
 
         batchOp = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, batchOp.opHash);
+        await batchOp.confirmation(5);
 
         //Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
         await advanceSecs(1, [pool_1, pool_2]);
