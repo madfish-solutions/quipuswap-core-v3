@@ -1029,7 +1029,7 @@ describe('Position Tests', async () => {
         );
 
         const ops = await sendBatch(tezos, transferParams);
-        await ops.confirmation(5);
+        await ops.confirmation();
 
         const poolStorage = await pool.getStorage(
           [new Nat(0)],
