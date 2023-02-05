@@ -11,7 +11,7 @@ import DexFactory from './helpers/factoryFacade';
 import { FA2 } from './helpers/FA2';
 import { FA12 } from './helpers/FA12';
 import { poolsFixture } from './fixtures/poolFixture';
-import { confirmOperation } from '../scripts/confirmation';
+
 import { Int, Nat } from '@madfish/quipuswap-v3/dist/types';
 import { validDeadline } from './helpers/utils';
 import env from '../env';
@@ -69,13 +69,13 @@ describe('FA2 Tests', async function () {
       mutez: true,
     });
 
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(5);
     operation = await tezos.contract.transfer({
       to: eve.pkh,
       amount: 1e6,
       mutez: true,
     });
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(5);
     tezos.setSignerProvider(aliceSigner);
     for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
       await pool.setPosition(
@@ -104,7 +104,7 @@ describe('FA2 Tests', async function () {
         amount: 1e6,
         mutez: true,
       });
-      await confirmOperation(tezos, operation.hash);
+      await operation.confirmation(5);
     }
   });
   describe('Failed cases', async () => {

@@ -57,7 +57,7 @@ const eveSigner = new InMemorySigner(eve.sk);
 const minTickIndex = -1048575;
 const maxTickIndex = 1048575;
 
-describe.skip('Position Tests', async () => {
+describe('Position Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -99,13 +99,13 @@ describe.skip('Position Tests', async () => {
       mutez: true,
     });
 
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(5);
     operation = await tezos.contract.transfer({
       to: eve.pkh,
       amount: 10e6,
       mutez: true,
     });
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(5);
   });
   describe('Failed cases', async () => {
     it("Shouldn't setting a position with lower_tick=upper_tick", async () => {
@@ -708,7 +708,7 @@ describe.skip('Position Tests', async () => {
         }
 
         const swapOps = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, swapOps.opHash);
+        await swapOps.confirmation(5);
         // -- Liquidate the position all at once
         //withSender liquidityProvider1 $ updatePosition cfmm receiver1 (- toInteger liquidityDelta) 0
         tezos.setSignerProvider(liquidityProvider1);
@@ -744,7 +744,7 @@ describe.skip('Position Tests', async () => {
           }
         }
         const updatePositionOps = await sendBatch(tezos, updatePositionParams);
-        await confirmOperation(tezos, updatePositionOps.opHash);
+        await updatePositionOps.confirmation(5);
         // -- Check that the balances are the same
         const balanceReceiver1X = await getTypedBalance(
           tezos,
@@ -922,7 +922,7 @@ describe.skip('Position Tests', async () => {
           ),
         ];
         const ops = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, ops.opHash);
+        await ops.confirmation(5);
         const poolStorage1 = await pool1.getStorage(
           [new Nat(0)],
           [
@@ -1029,7 +1029,7 @@ describe.skip('Position Tests', async () => {
         );
 
         const ops = await sendBatch(tezos, transferParams);
-        await confirmOperation(tezos, ops.opHash);
+        await ops.confirmation(5);
 
         const poolStorage = await pool.getStorage(
           [new Nat(0)],
@@ -1922,7 +1922,7 @@ describe.skip('Position Tests', async () => {
           tezos,
           setPositionParams as TransferParams[],
         );
-        await confirmOperation(tezos, setPositionOps.opHash);
+        await setPositionOps.confirmation(5);
 
         //  -- Place a small swap to move the tick a little bit
         // -- and make sure `tick_cumulative` is not 0.
