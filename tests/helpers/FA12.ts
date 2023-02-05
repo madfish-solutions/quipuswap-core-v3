@@ -46,7 +46,7 @@ export class FA12 {
         return null;
       });
 
-    await operation.confirmation(5);
+    await confirmOperation(tezos, operation.hash);
 
     return new FA12(await tezos.contract.at(operation.contractAddress), tezos);
   }

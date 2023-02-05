@@ -174,7 +174,7 @@ export const migrate = async (
         return null;
       });
 
-    await operation.confirmation(5);
+    await confirmOperation(tezos, operation.hash);
 
     artifacts.networks[network] = { [contract]: operation.contractAddress };
 
