@@ -161,7 +161,7 @@ describe('Factory Tests', async function () {
     it("Shouldn't confirm owner if not pending owner", async function () {
       tezos.setSignerProvider(aliceSigner);
       const tx = await factory.contract.methods.set_owner(eve.pkh).send();
-      await tx.confirmation(5);
+      await confirmOperation(tezos, tx.hash);
       tezos.setSignerProvider(bobSigner);
       await rejects(
         factory.contract.methods.confirm_owner().send(),
@@ -176,7 +176,7 @@ describe('Factory Tests', async function () {
     it('Should setting dev fee', async function () {
       tezos.setSignerProvider(aliceSigner);
       const op = await factory.contract.methods.set_dev_fee(1).send();
-      await op.confirmation(5);
+      await confirmOperation(tezos, op.hash);
       const storage: any = await factory.contract.storage();
       equal(storage.dev_fee_bps.toNumber(), 1);
     });
@@ -371,14 +371,14 @@ describe('Factory Tests', async function () {
     it('Should set owner', async function () {
       tezos.setSignerProvider(aliceSigner);
       const tx = await factory.contract.methods.set_owner(bob.pkh).send();
-      await tx.confirmation(5);
+      await confirmOperation(tezos, tx.hash);
       const storage: any = await factory.contract.storage();
       equal(storage.pending_owner, bob.pkh);
     });
     it('Should confirm owner', async function () {
       tezos.setSignerProvider(bobSigner);
       const tx = await factory.contract.methods.confirm_owner().send();
-      await tx.confirmation(5);
+      await confirmOperation(tezos, tx.hash);
       const storage: any = await factory.contract.storage();
       equal(storage.pending_owner, null);
       equal(storage.owner, bob.pkh);

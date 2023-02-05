@@ -3,15 +3,15 @@ import {
   TransactionOperation,
   TezosToolkit,
   Contract,
-} from '@taquito/taquito';
+} from "@taquito/taquito";
 
-import fs from 'fs';
+import fs from "fs";
 
-import { BigNumber } from 'bignumber.js';
+import { BigNumber } from "bignumber.js";
 
-import { confirmOperation } from './../../scripts/confirmation';
+import { confirmOperation } from "./../../scripts/confirmation";
 
-import { fa2Types } from '@madfish/quipuswap-v3/dist/types';
+import { fa2Types } from "@madfish/quipuswap-v3/dist/types";
 
 export class FA2 {
   storage: fa2Types.FA2Storage;
@@ -80,7 +80,7 @@ export class FA2 {
       .transfer(params)
       .send();
 
-    await operation.confirmation(5);
+    await confirmOperation(this.tezos, operation.hash);
 
     return operation;
   }
@@ -98,7 +98,7 @@ export class FA2 {
         .update_operators(updateOperatorsParams)
         .send();
 
-      await operation.confirmation(5);
+      await confirmOperation(this.tezos, operation.hash);
 
       return operation;
     }

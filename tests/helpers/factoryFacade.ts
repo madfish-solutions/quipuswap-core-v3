@@ -155,7 +155,7 @@ export default class Factory {
           )
           .send();
       }
-      await op.confirmation(5);
+      await confirmOperation(this.tezos, op.hash);
       const storage = (await this.contract.storage()) as any;
       return await storage.pools.get(
         (storage.pool_count.toString() - 1).toString(),
@@ -178,6 +178,6 @@ export default class Factory {
   }
   async setPause(etps: Object[]) {
     const op = await this.contract.methods.set_pause(etps).send();
-    await op.confirmation(5);
+    await confirmOperation(this.tezos, op.hash);
   }
 }

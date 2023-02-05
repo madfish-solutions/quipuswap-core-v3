@@ -89,7 +89,7 @@ describe('Range oracles tests', async function () {
             callback: consumer.address,
           })
           .send();
-        await op.confirmation(5);
+        await confirmOperation(tezos, op.hash);
 
         const st = await consumer.storage();
 

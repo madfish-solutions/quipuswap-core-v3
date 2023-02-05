@@ -8,7 +8,7 @@ import { accounts } from '../sandbox/accounts';
 import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
 import { poolsFixture } from './fixtures/poolFixture';
-
+import { confirmOperation } from '../scripts/confirmation';
 import {
   sendBatch,
   isInRangeNat,
@@ -450,7 +450,7 @@ describe('YtoX Tests', async () => {
           await pool_2.increaseObservationCount(new BigNumber(10)),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
 
         transferParams = [];
         transferParams.push(
@@ -669,7 +669,7 @@ describe('YtoX Tests', async () => {
           ),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
         let initialSt = await pool.getStorage(
           [new Nat(0)],

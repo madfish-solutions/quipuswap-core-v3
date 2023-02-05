@@ -7,7 +7,7 @@ import { InMemorySigner } from '@taquito/signer';
 import { accounts } from '../sandbox/accounts';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
 import { poolsFixture } from './fixtures/poolFixture';
-
+import { confirmOperation } from '../scripts/confirmation';
 import {
   sendBatch,
   initTimedCumulativesBuffer,
@@ -572,7 +572,7 @@ describe('Timed oracles tests', async function () {
           await pool.swapYX(new Int(2), validDeadline(), new Nat(0), alice.pkh),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         transferParams = [];
         let st = await pool.getRawStorage();
 
@@ -608,7 +608,7 @@ describe('Timed oracles tests', async function () {
           await pool.swapXY(new Int(4), validDeadline(), new Nat(0), alice.pkh),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
 
         st = await pool.getRawStorage();

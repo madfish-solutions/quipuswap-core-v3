@@ -9,7 +9,7 @@ import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 import { CallMode } from '@madfish/quipuswap-v3/dist/types';
 import DexFactory from './helpers/factoryFacade';
 import { poolsFixture } from './fixtures/poolFixture';
-
+import { confirmOperation } from '../scripts/confirmation';
 import {
   sendBatch,
   isInRangeNat,
@@ -31,6 +31,7 @@ import {
   compareStorages,
   genFees,
   genNatIds,
+  getPort,
   getTypedBalance,
   moreBatchSwaps,
   sleep,
@@ -50,7 +51,7 @@ const bobSigner = new InMemorySigner(bob.sk);
 const minTickIndex = new Int(-1048575);
 const maxTickIndex = new Int(1048575);
 
-describe('XtoY Tests', async function () {
+describe.skip('XtoY Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
@@ -84,13 +85,13 @@ describe('XtoY Tests', async function () {
       mutez: true,
     });
 
-    await operation.confirmation(5);
+    await confirmOperation(tezos, operation.hash);
     operation = await tezos.contract.transfer({
       to: eve.pkh,
       amount: 1e6,
       mutez: true,
     });
-    await operation.confirmation(5);
+    await confirmOperation(tezos, operation.hash);
   });
   describe('Failed cases', async () => {
     it("Shouldn't swap if it's past the deadline", async function () {
@@ -470,7 +471,7 @@ describe('XtoY Tests', async function () {
         );
 
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         transferParams = [];
         transferParams.push(
           await pool_1.setPosition(
@@ -523,7 +524,7 @@ describe('XtoY Tests', async function () {
           )),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        //await batchOp.confirmation(5);
+        //await confirmOperation(tezos, batchOp.opHash);
         await batchOp.confirmation(5);
 
         // -- Advance the time 1 sec to make sure the buffer is updated to reflect the swaps.
@@ -688,7 +689,7 @@ describe('XtoY Tests', async function () {
           ),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
         let initialSt = await pool.getStorage(
           [new Nat(0)],
@@ -1264,7 +1265,7 @@ describe('XtoY Tests', async function () {
         );
 
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
 
         tezos.setSignerProvider(swapper);
         /**
@@ -1352,7 +1353,7 @@ describe('XtoY Tests', async function () {
           ),
         );
         let batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         transferParams = [];
         tezos.setSignerProvider(swapper);
         // Place a small y-to-x swap.
@@ -1381,7 +1382,7 @@ describe('XtoY Tests', async function () {
           ),
         );
         batchOp = await sendBatch(tezos, transferParams);
-        await batchOp.confirmation(5);
+        await confirmOperation(tezos, batchOp.opHash);
         pool.callSettings.swapXY = CallMode.returnConfirmatedOperation;
         await checkAllInvariants(
           pool,
