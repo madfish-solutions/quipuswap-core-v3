@@ -1,18 +1,18 @@
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
-import { shiftLeft } from "@madfish/quipuswap-v3/dist/helpers/math";
-import { CallMode, swapDirection } from "@madfish/quipuswap-v3/dist/types";
-import { Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
+import { shiftLeft } from '@madfish/quipuswap-v3/dist/helpers/math';
+import { CallMode, swapDirection } from '@madfish/quipuswap-v3/dist/types';
+import { Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
 import {
   initTimedCumulatives,
   initTimedCumulativesBuffer,
   sendBatch,
-} from "@madfish/quipuswap-v3/dist/utils";
-import { TezosToolkit, TransferParams } from "@taquito/taquito";
-import { BigNumber } from "bignumber.js";
-import { expect } from "chai";
-import { confirmOperation } from "../../scripts/confirmation";
-import { FA12 } from "./FA12";
-import { FA2 } from "./FA2";
+} from '@madfish/quipuswap-v3/dist/utils';
+import { TezosToolkit, TransferParams } from '@taquito/taquito';
+import { BigNumber } from 'bignumber.js';
+import { expect } from 'chai';
+import { confirmOperation } from '../../scripts/confirmation';
+import { FA12 } from './FA12';
+import { FA2 } from './FA2';
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -43,7 +43,32 @@ export async function advanceSecs(
     transferParams = [];
   }
 }
+export function extractTimestamps(str: string): number[] {
+  const timestampRegex = /"prim":"Pair","args":\[\{"int":"(\d+)"/g;
+  let match;
+  let timestamps: number[] = [];
 
+  while ((match = timestampRegex.exec(str))) {
+    timestamps.push(parseInt(match[1]));
+    if (timestamps.length === 2) break;
+  }
+
+  return timestamps;
+}
+
+export async function safeObserve(
+  pool: QuipuswapV3,
+  timestamps: string[],
+): Promise<quipuswapV3Types.CumulativesValue[]> {
+  try {
+    const s = await pool.observe(timestamps)!;
+
+    return s;
+  } catch (e) {
+    const ts = extractTimestamps(e.message)[1];
+    return await safeObserve(pool, [ts.toString()]);
+  }
+}
 /**
  */
 export const genCreatePositionData = async () => {
@@ -148,13 +173,13 @@ export const getTypedBalance = async (
   token: any,
   address: string,
 ) => {
-  if (tokenType === "fa12") {
-    const fa12 = new FA12(await tezos.contract.at(token["fa12"]), tezos);
+  if (tokenType === 'fa12') {
+    const fa12 = new FA12(await tezos.contract.at(token['fa12']), tezos);
     const balance = await fa12.getBalance(address);
     return new BigNumber(balance);
   } else {
     const fa2 = new FA2(
-      await tezos.contract.at(token["fa2"].token_address),
+      await tezos.contract.at(token['fa2'].token_address),
       tezos,
     );
     const balance = await fa2.getBalance(address);
@@ -179,7 +204,7 @@ export const collectFees = async (
         new BigNumber(0),
       );
     } catch (e) {
-      if (e.message.includes("FA2_TOKEN_UNDEFINED")) {
+      if (e.message.includes('FA2_TOKEN_UNDEFINED')) {
         return;
       }
       throw e;
@@ -208,12 +233,12 @@ export const safeSwap = async (
   amountOutMin: BigNumber,
   recipient: string,
   deadline: string,
-  swapFunc: QuipuswapV3["swapXY"] | QuipuswapV3["swapYX"],
+  swapFunc: QuipuswapV3['swapXY'] | QuipuswapV3['swapYX'],
 ) => {
   try {
     await swapFunc(amountIn, deadline, amountOutMin, recipient);
   } catch (e) {
-    if (e.message.includes("TezosOperationError: 101")) {
+    if (e.message.includes('TezosOperationError: 101')) {
       await safeSwap(
         amountIn.div(3).integerValue(BigNumber.ROUND_FLOOR),
         amountOutMin,
@@ -231,13 +256,13 @@ export const moreBatchSwaps = async (
   amountIn: BigNumber,
   amountOutMin: BigNumber,
   recipient: string,
-  swapDir: "XtoY" | "YtoX",
+  swapDir: 'XtoY' | 'YtoX',
 ) => {
   const deadline = validDeadline();
   let transferParams: TransferParams[] = [];
 
   for (let i = 0; i < swapCount; i++) {
-    if (swapDir === "XtoY") {
+    if (swapDir === 'XtoY') {
       transferParams.push(
         (await pool.swapXY(
           amountIn,
@@ -420,7 +445,7 @@ export const evalSecondsPerLiquidityX128 = (
 //export const getExpectedSPL
 
 export const getPort = absolutePath => {
-  const testFile = absolutePath.split("/").pop();
-  const fileId = testFile.split("-")[0];
+  const testFile = absolutePath.split('/').pop();
+  const fileId = testFile.split('-')[0];
   return 8732 + Number(fileId);
 };

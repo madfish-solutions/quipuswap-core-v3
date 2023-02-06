@@ -9,12 +9,9 @@ import {
   tickAccumulatorsInside,
 } from '@madfish/quipuswap-v3/dist/helpers/math';
 import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
-import {
-  entries,
-  isMonotonic,
-  safeObserve,
-} from '@madfish/quipuswap-v3/dist/utils';
+import { entries, isMonotonic } from '@madfish/quipuswap-v3/dist/utils';
 import { Map } from 'immutable';
+import { safeObserve } from './utils';
 
 export async function checkAllInvariants(
   cfmm: QuipuswapV3,
@@ -61,10 +58,10 @@ export async function checkAccumulatorsInvariants(
   });
   const currentTime = sumInsideAccumulators.aSeconds;
 
-  const { tickCumulative, secondsPerLiquidity } = await safeObserve(
-    cfmm,
-    currentTime,
-  );
+  const {
+    tick_cumulative: tickCumulative,
+    seconds_per_liquidity_cumulative: secondsPerLiquidity,
+  } = (await safeObserve(cfmm, [currentTime.toString()]))[0];
 
   const globalAccumulators = {
     aSeconds: currentTime,

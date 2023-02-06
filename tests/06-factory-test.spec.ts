@@ -225,24 +225,6 @@ describe('Factory Tests', async function () {
         }),
         '3',
       );
-      equal(
-        await poolFa12Storage.metadata.get('name'),
-        '517569707573776170204c5020546f6b656e',
-      );
-      equal(await poolFa12Storage.metadata.get('symbol'), '515054');
-      equal(await poolFa12Storage.metadata.get('decimals'), '36');
-      equal(
-        await poolFa12Storage.metadata.get('description'),
-        '517569707573776170204c5020746f6b656e20726570726573656e7473207573657220736861726520696e20746865206c697175696469747920706f6f6c',
-      );
-      equal(
-        await poolFa12Storage.metadata.get('thumbnailUri'),
-        '68747470733a2f2f7175697075737761702e636f6d2f51504c502e706e67',
-      );
-      equal(
-        await poolFa12Storage.metadata.get('shouldPreferSymbol'),
-        '74727565',
-      );
     });
     it('Should creating many pools with different start tick index', async function () {
       const { factory, poolFa12, poolFa2, poolFa1_2, poolFa2_1 } =

@@ -21,6 +21,7 @@ import {
   evalSecondsPerLiquidityX128,
   genNatIds,
   groupAdjacent,
+  safeObserve,
   sleep,
   validDeadline,
 } from './helpers/utils';
@@ -401,8 +402,9 @@ describe('Timed oracles tests', async function () {
 
         await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
 
-        let now = Date.parse(ts) / 1000 + 2;
-        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        let now = Date.parse(ts) / 1000;
+        cumulativesValues.push((await safeObserve(pool, [now.toString()]))[0]);
+
         let st = await pool.getStorage([], [], genNatIds(10));
 
         timedCumulativesBuffers.push(
@@ -426,7 +428,7 @@ describe('Timed oracles tests', async function () {
         await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
         ts = (await tezos.rpc.getBlockHeader()).timestamp;
         now = Date.parse(ts) / 1000 + 1;
-        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        cumulativesValues.push((await safeObserve(pool, [now.toString()]))[0]);
         st = await pool.getStorage([], [], genNatIds(10));
 
         timedCumulativesBuffers.push(
@@ -460,7 +462,7 @@ describe('Timed oracles tests', async function () {
         await pool.swapXY(new Int(0), validDeadline(), new Nat(0), alice.pkh);
         ts = (await tezos.rpc.getBlockHeader()).timestamp;
         now = Date.parse(ts) / 1000 + 1;
-        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        cumulativesValues.push((await safeObserve(pool, [now.toString()]))[0]);
         st = await pool.getStorage([], [], genNatIds(10));
 
         timedCumulativesBuffers.push(
@@ -483,9 +485,11 @@ describe('Timed oracles tests', async function () {
 
         ts = (await tezos.rpc.getBlockHeader()).timestamp;
         now = Date.parse(ts) / 1000 + 1;
-        cumulativesValues.push((await pool.observe([now.toString()]))[0]);
+        console.log(4);
+        cumulativesValues.push((await safeObserve(pool, [now.toString()]))[0]);
+        console.log(5);
         st = await pool.getStorage([], [], genNatIds(10));
-
+        console.log(cumulativesValues);
         timedCumulativesBuffers.push(
           st.cumulativesBuffer.map.get(st.cumulativesBuffer.last),
         );
