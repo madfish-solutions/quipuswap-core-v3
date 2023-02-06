@@ -6,14 +6,14 @@ let claim_dev_fee (s : storage) (recipient : address) : result =
         else unit in
 
     let ops = [] in
-    let ops = if s.dev_fee.x > 0n then 
+    let ops = if s.dev_fee.x > 0n then
         let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
         op :: ops
     else
         ops
     in
-    
-    let ops = if s.dev_fee.y > 0n then 
+
+    let ops = if s.dev_fee.y > 0n then
         let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
         op :: ops
     else

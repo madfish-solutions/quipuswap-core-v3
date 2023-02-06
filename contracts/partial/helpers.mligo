@@ -323,25 +323,20 @@ let update_balances_after_position_change
             (high_tokens_err, (maximum_tokens_contributed.y, delta.y)) : unit)
         else unit in
 
-    let op_x = if delta.x >= 0 then
-        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x
-    else
-#if DEBUG
-        let _ : unit = if delta.x <> 0 && to_x = (Tezos.get_self_address ()) then failwith internal_unexpected_income_err else unit in
-#endif
-        wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x in
-
-    let op_y = if delta.y >= 0 then
-        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y
-    else
-#if DEBUG
-        let _ : unit = if delta.y <> 0 && to_x = (Tezos.get_self_address () ) then failwith internal_unexpected_income_err else unit in
-#endif
-        wrap_transfer (Tezos.get_self_address () ) to_y (abs delta.y) s.constants.token_y in
-
     let ops = [] in
-    let ops = if s.dev_fee.x > 0n then op_x :: ops else ops in
-    let ops = if s.dev_fee.y > 0n then op_y :: ops else ops in
+    let ops = if delta.x > 0 then
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x :: ops
+    else if delta.x < 0 then
+        wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x :: ops
+    else
+        ops in
+
+    let ops = if delta.y > 0 then
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y :: ops
+    else if delta.y < 0 then
+        wrap_transfer (Tezos.get_self_address ()) to_y (abs delta.y) s.constants.token_y :: ops
+    else
+        ops in
     (ops, s)
 
 (*  Checks if a new tick sits between `cur_tick_witness` and `cur_tick_index`.
