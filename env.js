@@ -14,6 +14,7 @@ export default {
       rpc: 'http://localhost:8732',
       network_id: '*',
       secretKey: accounts.alice.sk,
+      factoryOwner: 'tz1dNhPvn8KmnYGV97G55bzDqnvJt6K2dVwf',
       pools: {
         0: {
           name: 'USDt/wTEZ',
@@ -95,6 +96,7 @@ export default {
       port: 443,
       network_id: '*',
       secretKey: accounts.dev.sk,
+      factoryOwner: 'tz1dNhPvn8KmnYGV97G55bzDqnvJt6K2dVwf',
       pools: {
         0: {
           name: 'wTEZ/USDt',
@@ -173,6 +175,7 @@ export default {
       port: 443,
       network_id: '*',
       secretKey: accounts.mainnetDeployer.sk,
+      factoryOwner: 'tz1dNhPvn8KmnYGV97G55bzDqnvJt6K2dVwf',
       pools: {
         0: {
           name: 'USDt/wTEZ',
