@@ -87,7 +87,7 @@ export default {
       pools: {
         0: {
           name: 'USDt/wTEZ',
-          tickIndex: 485,
+          tickIndex: -1325,
           tokenX: {
             fa2: {
               token_id: 0,
@@ -107,7 +107,7 @@ export default {
         },
         1: {
           name: 'USDt/tzBTC',
-          tickIndex: -100455,
+          tickIndex: -100357,
           tokenX: {
             fa2: {
               token_id: 0,
@@ -123,7 +123,7 @@ export default {
         },
         2: {
           name: 'tzBTC/wTEZ',
-          tickIndex: -99873,
+          tickIndex: 98860,
           tokenX: {
             fa12: 'KT1LJ4YjQkDkiPhazyV7PizE1t59K5wNGxLA',
           },
@@ -140,7 +140,7 @@ export default {
         },
         3: {
           name: 'QUIPU/wTEZ',
-          tickIndex: -11712,
+          tickIndex: -11263,
           tokenX: {
             fa12: 'KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1',
           },
