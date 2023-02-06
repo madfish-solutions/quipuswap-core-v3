@@ -39,12 +39,6 @@ let sqrt_price_move_x (liquidity : nat) (sqrt_price_old : x80n) (dx : nat) : x80
             (Bitwise.shift_left (liquidity * sqrt_price_old.x80) 80n)
             ((Bitwise.shift_left liquidity 80n) + dx * sqrt_price_old.x80)
         } in
-#if DEBUG
-    let _ : unit =
-        if sqrt_price_new <= sqrt_price_old
-            then unit
-            else failwith "sqrt_price_move_x: sqrt_price moved in the wrong direction" in
-#endif
     sqrt_price_new
 
 
@@ -80,12 +74,6 @@ let sqrt_price_move_y (liquidity : nat) (sqrt_price_old : x80n) (dy : nat) : x80
         { x80 =
             floordiv (Bitwise.shift_left dy 80n) liquidity + sqrt_price_old.x80
         } in
-#if DEBUG
-    let _ : unit =
-        if sqrt_price_new >= sqrt_price_old
-            then unit
-            else failwith "sqrt_price_move_y: sqrt_price moved in the wrong direction" in
-#endif
     sqrt_price_new
 
 (* Helper function to grab a tick we know exists in the tick indexed state. *)
@@ -198,11 +186,6 @@ let garbage_collect_tick (s : storage) (tick_index : tick_index) : storage =
     let tick = get_tick s.ticks tick_index internal_tick_not_exist_err in
 
     if tick.n_positions = 0n then
-#if DEBUG
-        let _ : unit = if tick.liquidity_net <> 0 then
-            failwith internal_non_empty_position_gc_err
-            else unit in
-#endif
         let ticks = s.ticks in
         let prev = get_tick ticks tick.prev internal_tick_not_exist_err in
         let next = get_tick ticks tick.next internal_tick_not_exist_err in
