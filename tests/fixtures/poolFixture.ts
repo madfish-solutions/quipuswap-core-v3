@@ -17,17 +17,18 @@ const getTypedUpdateOperator = async (
   owner: string,
   operator: string,
   amount: BigNumber = new BigNumber(0),
+  tokenType: string,
   returnTransferParams: boolean = false,
 ) => {
-  const tokenType = token instanceof FA12 ? 'fa12' : 'fa2';
+  //const tokenType = token instanceof FA12 ? 'fa12' : 'fa2';
   if (tokenType === 'fa12') {
     if (returnTransferParams) {
-      return token.approve(operator, new BigNumber(amount), true);
+      return await token.approve(operator, new BigNumber(amount), true);
     }
-    return token.approve(operator, new BigNumber(amount));
+    return await token.approve(operator, new BigNumber(amount));
   } else {
     if (returnTransferParams) {
-      return token.updateOperators(
+      return await token.updateOperators(
         [
           {
             add_operator: {
@@ -199,8 +200,16 @@ export async function poolsFixture(
 
       const tokenXType = Object.keys(poolStorage.constants.token_x)[0];
       const tokenYType = Object.keys(poolStorage.constants.token_y)[0];
-      const xToken = tokenXType === 'fa12' ? fa12TokenX : fa2TokenX;
-      const yToken = tokenYType === 'fa12' ? fa12TokenY : fa2TokenY;
+      const xTokenAddr = poolStorage.constants.token_x[tokenXType];
+      const yTokenAddr = poolStorage.constants.token_y[tokenYType];
+      let xToken =
+        tokenXType.toLowerCase() === 'fa12'
+          ? await FA12.init(xTokenAddr, tezos)
+          : await FA2.init(xTokenAddr.token_address, tezos);
+      let yToken =
+        tokenYType.toLowerCase() === 'fa12'
+          ? await FA12.init(yTokenAddr, tezos)
+          : await FA2.init(yTokenAddr.token_address, tezos);
 
       approvesParamsList.push(
         await getTypedUpdateOperator(
@@ -209,6 +218,7 @@ export async function poolsFixture(
           signerAddress,
           pool.contract.address,
           new BigNumber(1e18),
+          tokenXType,
           true,
         ),
       );
@@ -220,6 +230,7 @@ export async function poolsFixture(
           signerAddress,
           pool.contract.address,
           new BigNumber(1e18),
+          tokenYType,
           true,
         ),
       );
