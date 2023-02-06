@@ -16,66 +16,77 @@ export default {
       secretKey: accounts.alice.sk,
       pools: {
         0: {
-          name: 'KUSD/KUSD',
-          tickIndex: 0,
+          name: 'USDt/wTEZ',
+          tickIndex: -1325,
           tokenX: {
-            fa12: 'KT1Q1qqJAzzxzGzQB6RmxnAKgxttf7Hntceg',
+            fa2: {
+              token_id: 0,
+              token_address: 'KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o',
+            },
           },
 
           tokenY: {
-            fa12: 'KT1EjAaRRQpaZrbDEcEG6aEGuydwUkAtXsBU',
+            fa2: {
+              token_id: 0,
+              token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
+            },
           },
-          feeBPS: 100,
-          extraSlots: 41,
+          feeBPS: 30,
+          extraSlots: 100,
+          tickSpacing: 60,
         },
         1: {
-          name: 'KUSD/Tea',
-          tickIndex: 10986,
-          tokenX: { fa12: 'KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1' },
-
-          tokenY: {
+          name: 'USDt/tzBTC',
+          tickIndex: -100357,
+          tokenX: {
             fa2: {
-              token_id: 1,
-              token_address: 'KT18uv7PtGedfudtG7QwFTrDBRjdLe5qj2my',
+              token_id: 0,
+              token_address: 'KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o',
             },
           },
-          feeBPS: 50,
-          extraSlots: 41,
+          tokenY: {
+            fa12: 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn',
+          },
+          feeBPS: 30,
+          extraSlots: 100,
+          tickSpacing: 60,
         },
         2: {
-          name: 'QUIPU/KUSD',
-          tickIndex: -6931,
+          name: 'wTEZ/tzBTC',
           tokenX: {
             fa2: {
               token_id: 0,
-              token_address: 'KT19363aZDTjeRyoDkSLZhCk62pS4xfvxo6c',
+              token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
             },
           },
-
+          tickIndex: -98860,
           tokenY: {
-            fa12: 'KT1Wgp6qSsDN7mCaDk5XDEQU52MezE8B9mr5',
+            fa12: 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn',
           },
-          feeBPS: 10,
-          extraSlots: 41,
+
+          feeBPS: 30,
+          extraSlots: 100,
+          tickSpacing: 60,
         },
         3: {
-          name: 'Grape/uUSD',
-          tickIndex: 19460,
+          name: 'wTEZ/QUIPU',
+          tickIndex: 11263,
           tokenX: {
             fa2: {
               token_id: 0,
-              token_address: 'KT18uv7PtGedfudtG7QwFTrDBRjdLe5qj2my',
+              token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
             },
           },
-
           tokenY: {
             fa2: {
               token_id: 0,
-              token_address: 'KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc',
+              token_address: 'KT193D4vozYnhGJQVtw7CoxxqphqUEEwK6Vb',
             },
           },
-          feeBPS: 500,
-          extraSlots: 41,
+
+          feeBPS: 30,
+          extraSlots: 100,
+          tickSpacing: 60,
         },
       },
     },
@@ -86,19 +97,19 @@ export default {
       secretKey: accounts.dev.sk,
       pools: {
         0: {
-          name: 'USDt/wTEZ',
-          tickIndex: -1325,
+          name: 'wTEZ/USDt',
+          tickIndex: 1325,
           tokenX: {
             fa2: {
               token_id: 0,
-              token_address: 'KT1Bm3wGXRYUnrmbUSBbosZDUSFaWuZeBCev',
+              token_address: 'KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK',
             },
           },
 
           tokenY: {
             fa2: {
               token_id: 0,
-              token_address: 'KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK',
+              token_address: 'KT1Bm3wGXRYUnrmbUSBbosZDUSFaWuZeBCev',
             },
           },
           feeBPS: 30,
@@ -122,13 +133,13 @@ export default {
           tickSpacing: 60,
         },
         2: {
-          name: 'tzBTC/wTEZ',
-          tickIndex: 98860,
-          tokenX: {
+          name: 'wTEZ/tzBTC',
+          tickIndex: -98860,
+          tokenY: {
             fa12: 'KT1LJ4YjQkDkiPhazyV7PizE1t59K5wNGxLA',
           },
 
-          tokenY: {
+          tokenX: {
             fa2: {
               token_id: 0,
               token_address: 'KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK',
@@ -139,13 +150,13 @@ export default {
           tickSpacing: 60,
         },
         3: {
-          name: 'QUIPU/wTEZ',
-          tickIndex: -11263,
-          tokenX: {
+          name: 'wTEZ/QUIPU',
+          tickIndex: 11263,
+          tokenY: {
             fa12: 'KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1',
           },
 
-          tokenY: {
+          tokenX: {
             fa2: {
               token_id: 0,
               token_address: 'KT1L8ujeb25JWKa4yPB61ub4QG2NbaKfdJDK',
@@ -200,38 +211,38 @@ export default {
           tickSpacing: 60,
         },
         2: {
-          name: 'tzBTC/wTEZ',
-          tickIndex: 98860,
+          name: 'wTEZ/tzBTC',
           tokenX: {
-            fa12: 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn',
-          },
-
-          tokenY: {
             fa2: {
               token_id: 0,
               token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
             },
           },
+          tickIndex: -98860,
+          tokenY: {
+            fa12: 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn',
+          },
+
           feeBPS: 30,
           extraSlots: 100,
           tickSpacing: 60,
         },
         3: {
-          name: 'QUIPU/wTEZ',
-          tickIndex: -11263,
+          name: 'wTEZ/QUIPU',
+          tickIndex: 11263,
           tokenX: {
+            fa2: {
+              token_id: 0,
+              token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
+            },
+          },
+          tokenY: {
             fa2: {
               token_id: 0,
               token_address: 'KT193D4vozYnhGJQVtw7CoxxqphqUEEwK6Vb',
             },
           },
 
-          tokenY: {
-            fa2: {
-              token_id: 0,
-              token_address: 'KT1UpeXdK6AJbX58GJ92pLZVCucn2DR8Nu4b',
-            },
-          },
           feeBPS: 30,
           extraSlots: 100,
           tickSpacing: 60,
