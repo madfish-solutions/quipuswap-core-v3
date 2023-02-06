@@ -53,7 +53,7 @@ describe('YtoX Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
+
   let tezos: TezosToolkit;
   let factory: any;
   before(async () => {
@@ -69,19 +69,18 @@ describe('YtoX Tests', async () => {
       poolFa12: _poolFa12,
       poolFa2: _poolFa2,
       poolFa1_2: _poolFa1_2,
-      poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
-    poolFa2_1 = _poolFa2_1;
+
     factory = _factory;
   });
   describe('Failed cases', async () => {
     it("Shouldn't swap if it's past the deadline", async () => {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const liquidity = new BigNumber(1e7);
 
         const lowerTickIndex = new Int(-1000);
@@ -117,7 +116,7 @@ describe('YtoX Tests', async () => {
     it("Shouldn't swap if the user would receiver less than min_dx", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const liquidity = new BigNumber(1e7);
 
         const lowerTickIndex = new Int(-1000);
@@ -153,7 +152,7 @@ describe('YtoX Tests', async () => {
     it("Shouldn't swap if swap is paused", async function () {
       tezos.setSignerProvider(aliceSigner);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await factory.setPause([{ y_to_x_pause: null }]);
         await rejects(
           pool.swapYX(
@@ -188,7 +187,7 @@ describe('YtoX Tests', async () => {
       const swapperAddr = bob.pkh;
       const swapReceiver = sara.pkh;
       const feeReceiver = carol.pkh;
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
@@ -204,7 +203,7 @@ describe('YtoX Tests', async () => {
         return swaps;
       };
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -411,11 +410,9 @@ describe('YtoX Tests', async () => {
         poolFa12,
         poolFa2,
         poolFa1_2,
-        poolFa2_1,
         poolFa12Dublicate,
         poolFa2Dublicate,
         poolFa1_2Dublicate,
-        poolFa2_1Dublicate,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
@@ -427,7 +424,6 @@ describe('YtoX Tests', async () => {
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
         [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
       ]) {
         const rawSt = await pools[0].getRawStorage();
         tezos.setSignerProvider(aliceSigner);
@@ -629,14 +625,14 @@ describe('YtoX Tests', async () => {
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         genFees(4, true),
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
         const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
@@ -770,11 +766,9 @@ describe('YtoX Tests', async () => {
         poolFa12,
         poolFa2,
         poolFa1_2,
-        poolFa2_1,
         poolFa12Dublicate,
         poolFa2Dublicate,
         poolFa1_2Dublicate,
-        poolFa2_1Dublicate,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
@@ -787,7 +781,6 @@ describe('YtoX Tests', async () => {
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
         [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
       ]) {
         const rawSt = await pools[0].getRawStorage();
         tezos.setSignerProvider(aliceSigner);
@@ -1182,14 +1175,14 @@ describe('YtoX Tests', async () => {
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         genFees(4, true),
       );
       console.log('4');
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
 
@@ -1286,14 +1279,14 @@ describe('YtoX Tests', async () => {
       const feeReceiver1 = sara.pkh;
       const feeReceiver2 = carol.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         [5000, 5000, 5000, 5000],
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
         const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];

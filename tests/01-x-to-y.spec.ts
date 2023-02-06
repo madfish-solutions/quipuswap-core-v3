@@ -55,7 +55,7 @@ describe('XtoY Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
+
   let tezos: TezosToolkit;
   let factory: DexFactory;
   before(async () => {
@@ -71,12 +71,11 @@ describe('XtoY Tests', async function () {
       poolFa12: _poolFa12,
       poolFa2: _poolFa2,
       poolFa1_2: _poolFa1_2,
-      poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
-    poolFa2_1 = _poolFa2_1;
+
     factory = _factory;
 
     let operation = await tezos.contract.transfer({
@@ -97,7 +96,7 @@ describe('XtoY Tests', async function () {
     it("Shouldn't swap if it's past the deadline", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const liquidity = new BigNumber(1e7);
 
         const lowerTickIndex = new Int(-1000);
@@ -133,7 +132,7 @@ describe('XtoY Tests', async function () {
     it("Shouldn't swap if the user would receiver less than min_dy", async function () {
       const liquidityProvider = aliceSigner;
       const swapper = bobSigner;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const liquidity = new BigNumber(1e7);
 
         const lowerTickIndex = new Int(-1000);
@@ -169,7 +168,7 @@ describe('XtoY Tests', async function () {
     it("Shouldn't swap if swap is paused", async function () {
       tezos.setSignerProvider(aliceSigner);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await factory.setPause([{ x_to_y_pause: null }]);
         await rejects(
           pool.swapXY(
@@ -207,7 +206,7 @@ describe('XtoY Tests', async function () {
       const swapperAddr = bob.pkh;
       const swapReceiver = sara.pkh;
       const feeReceiver = carol.pkh;
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
@@ -223,7 +222,7 @@ describe('XtoY Tests', async function () {
         return swaps;
       };
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -431,11 +430,9 @@ describe('XtoY Tests', async function () {
         poolFa12,
         poolFa2,
         poolFa1_2,
-        poolFa2_1,
         poolFa12Dublicate,
         poolFa2Dublicate,
         poolFa1_2Dublicate,
-        poolFa2_1Dublicate,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
@@ -447,7 +444,6 @@ describe('XtoY Tests', async function () {
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
         [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
       ]) {
         const rawSt = await pools[0].getRawStorage();
         tezos.setSignerProvider(aliceSigner);
@@ -650,14 +646,14 @@ describe('XtoY Tests', async function () {
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         genFees(4, true),
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
         const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
@@ -793,11 +789,9 @@ describe('XtoY Tests', async function () {
         poolFa12,
         poolFa2,
         poolFa1_2,
-        poolFa2_1,
         poolFa12Dublicate,
         poolFa2Dublicate,
         poolFa1_2Dublicate,
-        poolFa2_1Dublicate,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
@@ -810,7 +804,6 @@ describe('XtoY Tests', async function () {
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
         [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
       ]) {
         const rawSt = await pools[0].getRawStorage();
         tezos.setSignerProvider(aliceSigner);
@@ -1216,14 +1209,14 @@ describe('XtoY Tests', async function () {
       const swapper = bobSigner;
       const swapperAddr = bob.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         [200, 200, 200, 200],
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
         const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];
@@ -1316,14 +1309,14 @@ describe('XtoY Tests', async function () {
       const feeReceiver1 = sara.pkh;
       const feeReceiver2 = carol.pkh;
 
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         [5000, 5000, 5000, 5000],
       );
       await sleep(1000);
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const rawSt = await pool.getRawStorage();
         tezos.setSignerProvider(liquidityProvider);
         const tokenTypeX = Object.keys(rawSt.constants.token_x)[0];

@@ -61,7 +61,7 @@ describe('Position Tests', async () => {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
+
   let tezos: TezosToolkit;
   let factory: DexFactory;
   let fa12TokenX: FA12;
@@ -81,7 +81,6 @@ describe('Position Tests', async () => {
       poolFa12: _poolFa12,
       poolFa2: _poolFa2,
       poolFa1_2: _poolFa1_2,
-      poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
     factory = _factory;
     fa12TokenX = _fa12TokenX;
@@ -91,7 +90,6 @@ describe('Position Tests', async () => {
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
-    poolFa2_1 = _poolFa2_1;
 
     let operation = await tezos.contract.transfer({
       to: peter.pkh,
@@ -323,7 +321,7 @@ describe('Position Tests', async () => {
       );
     });
     it("Shouldn't setting a position if upper_tick > max_tick, for all tokens combinations", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await rejects(
           pool.setPosition(
             new BigNumber(-10),
@@ -359,7 +357,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't transfer more than maximum_tokens_contributed for all token combinations", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await rejects(
           pool.setPosition(
             new BigNumber(-10),
@@ -422,7 +420,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't withdrawing more liquidity from a position than it currently has", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const storage = await pool.getRawStorage();
         const liquidityDelta = 10_000;
         const lowerTickIndex = -10;
@@ -466,7 +464,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't updating a non-existing position properly fails", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await rejects(
           pool.updatePosition(
             new BigNumber(10),
@@ -485,7 +483,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't attempt to update a non-existing position properly fails", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await rejects(
           pool.updatePosition(
             new BigNumber(10),
@@ -504,7 +502,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't updating a someone else's positions", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const storage = await pool.getRawStorage();
         tezos.setSignerProvider(aliceSigner);
         await pool.setPosition(
@@ -537,7 +535,7 @@ describe('Position Tests', async () => {
       }
     });
     it("Shouldn't setting and updating position, if paused", async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const storage = await pool.getRawStorage();
         tezos.setSignerProvider(aliceSigner);
         await factory.setPause([
@@ -623,7 +621,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, eveSigner, bobSigner],
@@ -638,13 +635,13 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
+
       const swapData = [
         { swapDirection: 'XToY', swapAmt: new BigNumber(1000) },
         { swapDirection: 'YToX', swapAmt: new BigNumber(3000) },
         { swapDirection: 'XToY', swapAmt: new BigNumber(400) },
       ];
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
@@ -801,9 +798,8 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(tezos, [aliceSigner], 0, genFees(4, true));
-      for (const pool of [_poolFa12, _poolFa2, _poolFa1_2, _poolFa2_1]) {
+      for (const pool of [_poolFa12, _poolFa2, _poolFa1_2]) {
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
         const tokenTypeY = Object.keys(initialSt.constants.token_y)[0];
@@ -860,17 +856,15 @@ describe('Position Tests', async () => {
         poolFa12: poolFa12,
         poolFa2: poolFa2,
         poolFa1_2: poolFa1_2,
-        poolFa2_1: poolFa2_1,
+
         poolFa12Dublicate: poolFa12Dublicate,
         poolFa2Dublicate: poolFa2Dublicate,
         poolFa1_2Dublicate: poolFa1_2Dublicate,
-        poolFa2_1Dublicate: poolFa2_1Dublicate,
       } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
       for (const pools of [
         [poolFa12, poolFa12Dublicate],
         [poolFa2, poolFa2Dublicate],
         [poolFa1_2, poolFa1_2Dublicate],
-        [poolFa2_1, poolFa2_1Dublicate],
       ]) {
         const [pool1, pool2] = pools;
         const defaultCallSettings: CallSettings = {
@@ -981,11 +975,10 @@ describe('Position Tests', async () => {
         poolFa12: poolFa12,
         poolFa2: poolFa2,
         poolFa1_2: poolFa1_2,
-        poolFa2_1: poolFa2_1,
       } = await poolsFixture(tezos, [aliceSigner], 0, genFees(8, true), true);
       const sleep = (ms: number) =>
         new Promise(resolve => setTimeout(resolve, ms));
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const initialSt = await pool.getStorage(
           [],
           [new Int(minTickIndex), new Int(maxTickIndex)],
@@ -1061,7 +1054,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
@@ -1079,8 +1071,8 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -1193,7 +1185,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
@@ -1209,8 +1200,8 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
@@ -1319,7 +1310,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner, eveSigner],
@@ -1334,9 +1324,8 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
@@ -1519,7 +1508,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner, peterSigner],
@@ -1535,8 +1523,8 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const transferAmountB = new BigNumber(Math.floor(Math.random() * 1e4));
         const transferAmountA = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
@@ -1732,7 +1720,6 @@ describe('Position Tests', async () => {
         poolFa12: _poolFa12,
         poolFa2: _poolFa2,
         poolFa1_2: _poolFa1_2,
-        poolFa2_1: _poolFa2_1,
       } = await poolsFixture(
         tezos,
         [aliceSigner, peterSigner, bobSigner],
@@ -1748,8 +1735,8 @@ describe('Position Tests', async () => {
       poolFa12 = _poolFa12;
       poolFa2 = _poolFa2;
       poolFa1_2 = _poolFa1_2;
-      poolFa2_1 = _poolFa2_1;
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const transferAmount = new BigNumber(Math.floor(Math.random() * 1e4));
         const initialSt = await pool.getRawStorage();
         const tokenTypeX = Object.keys(initialSt.constants.token_x)[0];
@@ -1885,14 +1872,14 @@ describe('Position Tests', async () => {
       let ti2 = new Int(50);
       let ti3 = new Int(100);
       let ti4 = new Int(150);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         genFees(4),
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(liquidityProvider);
         pool.callSettings.setPosition = CallMode.returnParams;
         const setPositionParams = [
@@ -2008,14 +1995,14 @@ describe('Position Tests', async () => {
         { length: createPositionData.length },
         () => genSwapDirection(),
       );
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner, bobSigner],
         0,
         genFees(4),
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.increaseObservationCount(new BigNumber(1));
 
         const inSt = await pool.getRawStorage();

@@ -43,13 +43,13 @@ describe('Timed oracles tests', async function () {
   describe('Success cases', async function () {
     it('Setting large initial buffer works properly', async function () {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(
         tezos,
         [aliceSigner],
         10,
       );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         // Note: this also triggers the contract to record a value in the buffer
         await pool.setPosition(
           new Int(-100),
@@ -136,12 +136,11 @@ describe('Timed oracles tests', async function () {
     });
     it("Our initial buffer matches the ligo's one", async function () {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-      );
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(tezos, [
+        aliceSigner,
+      ]);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         const initCumulativeBuffer = await initTimedCumulativesBuffer(
           new Nat(0),
         );
@@ -177,12 +176,11 @@ describe('Timed oracles tests', async function () {
     });
     it('Returned cumulative values continuously grow over time', async function () {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-      );
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(tezos, [
+        aliceSigner,
+      ]);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.increaseObservationCount(new Nat(100));
         await sleep(3000);
 
@@ -257,12 +255,11 @@ describe('Timed oracles tests', async function () {
     });
     it('Observing time out of bounds', async function () {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-      );
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(tezos, [
+        aliceSigner,
+      ]);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.increaseObservationCount(new Nat(100));
 
         const now =
@@ -284,12 +281,11 @@ describe('Timed oracles tests', async function () {
     });
     it('Increasing observation count works as expected', async function () {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-      );
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(tezos, [
+        aliceSigner,
+      ]);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         /**
          * This helps to distinguish dummy and true values in the buffer
          * Note: this also triggers the contract to record a value in the buffer
@@ -392,10 +388,12 @@ describe('Timed oracles tests', async function () {
     it('Observed values are sane: Seconds per liquidity cumulative', async function () {
       this.retries(3);
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, consumer } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+      );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
         let timedCumulativesBuffers: quipuswapV3Types.TimedCumulative[] = [];
         let ts = (await tezos.rpc.getBlockHeader()).timestamp;
@@ -539,12 +537,11 @@ describe('Timed oracles tests', async function () {
     it('Observed values are sane: Tick cumulative', async function () {
       //this.retries(2);
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1 } = await poolsFixture(
-        tezos,
-        [aliceSigner],
-      );
+      const { poolFa12, poolFa2, poolFa1_2 } = await poolsFixture(tezos, [
+        aliceSigner,
+      ]);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         let cumulativesValues: quipuswapV3Types.CumulativesValue[] = [];
         let timedCumulativesBuffers: quipuswapV3Types.TimedCumulative[] = [];
         await pool.swapYX(new Int(0), validDeadline(), new Nat(0), alice.pkh);

@@ -161,7 +161,7 @@ export default {
       rpc: 'https://mainnet.api.tez.ie',
       port: 443,
       network_id: '*',
-      secretKey: accounts.deployer.sk,
+      secretKey: accounts.mainnetDeployer.sk,
       pools: {
         0: {
           name: 'USDt/wTEZ',

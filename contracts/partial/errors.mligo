@@ -156,5 +156,7 @@
 
 [@inline] let paused_etp_err = 600n
 
+[@inline] let wrong_pair_order_err = 700n
+
 
 #endif

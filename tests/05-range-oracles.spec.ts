@@ -32,10 +32,12 @@ describe('Range oracles tests', async function () {
   describe('Failed cases', async function () {
     it('Asking at uninitialized tick causes an error', async () => {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, consumer } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+      );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.setPosition(
           new Int(-100),
           new Int(100),
@@ -64,10 +66,12 @@ describe('Range oracles tests', async function () {
     it('Asking at empty range returns zeros', async function () {
       this.retries(3);
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, consumer } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+      );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
 
         await pool.setPosition(
@@ -104,10 +108,12 @@ describe('Range oracles tests', async function () {
     });
     it('Asking at reversed range causes an error', async () => {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, consumer } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+      );
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.setPosition(
           new Int(0),
           new Int(10),
@@ -137,12 +143,14 @@ describe('Range oracles tests', async function () {
   describe('Success cases', async () => {
     it('One position, jumping right', async () => {
       tezos.setSignerProvider(aliceSigner);
-      const { poolFa12, poolFa2, poolFa1_2, poolFa2_1, consumer } =
-        await poolsFixture(tezos, [aliceSigner]);
+      const { poolFa12, poolFa2, poolFa1_2, consumer } = await poolsFixture(
+        tezos,
+        [aliceSigner],
+      );
       const lowerTick = new Int(-100);
       const upperTick = new Int(100);
 
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.setPosition(
           lowerTick,
           upperTick,

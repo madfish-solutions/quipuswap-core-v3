@@ -52,6 +52,33 @@ const getTypedUpdateOperator = async (
   }
 };
 
+const sortPoolList = (poolList: any[]) => {
+  const sortedPoolList: any = [];
+  for (const pool of poolList) {
+    const xToken = pool[0];
+    const yToken = pool[1];
+    const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
+    const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
+    if (xTokenType === 'fa12' && yTokenType === 'fa12') {
+      if (xToken.contract.address > yToken.contract.address) {
+        sortedPoolList.push([xToken, yToken]);
+      } else {
+        sortedPoolList.push([yToken, xToken]);
+      }
+    } else if (xTokenType === 'fa12' && yTokenType === 'fa2') {
+      sortedPoolList.push([yToken, xToken]);
+    } else if (xTokenType === 'fa2' && yTokenType === 'fa12') {
+      sortedPoolList.push([yToken, xToken]);
+    } else {
+      if (xToken.contract.address > yToken.contract.address) {
+        sortedPoolList.push([xToken, yToken]);
+      } else {
+        sortedPoolList.push([yToken, xToken]);
+      }
+    }
+  }
+  return sortedPoolList;
+};
 export async function poolsFixture(
   tezos,
   signers: any[],
@@ -62,20 +89,24 @@ export async function poolsFixture(
   tickSpacing: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1],
   curTickIndexies: number[] = [0, 0, 0, 0],
 ) {
-  const fa12TokenX = await FA12.originate(tezos, fa12Storage);
+  let fa12TokenX = await FA12.originate(tezos, fa12Storage);
 
-  const fa12TokenY = await FA12.originate(tezos, fa12Storage);
-  const fa2TokenX = await FA2.originate(tezos, fa2Storage);
-  const fa2TokenY = await FA2.originate(tezos, fa2Storage);
+  let fa12TokenY = await FA12.originate(tezos, fa12Storage);
+  let fa2TokenX = await FA2.originate(tezos, fa2Storage);
+  let fa2TokenY = await FA2.originate(tezos, fa2Storage);
 
   const factory = await new DexFactory(tezos, 'development').initialize(devFee);
   let factory2;
-  let poolList: any[] = [
+  const poolList: any[] = sortPoolList([
     [fa12TokenX, fa12TokenY],
     [fa2TokenX, fa2TokenY],
     [fa12TokenX, fa2TokenY],
-    [fa2TokenX, fa12TokenY],
-  ];
+  ]);
+  fa12TokenX = poolList[0][0];
+  fa12TokenY = poolList[0][1];
+  fa2TokenX = poolList[1][0];
+  fa2TokenY = poolList[1][1];
+
   if (dublicate) {
     factory2 = await new DexFactory(tezos, 'development').initialize(devFee);
     const paramsList: TransferParams[] = [];
@@ -104,6 +135,7 @@ export async function poolsFixture(
 
     await operation.confirmation(1);
   }
+
   const paramsList: TransferParams[] = [];
   for (const pair of poolList) {
     const xToken = pair[0];
@@ -130,29 +162,24 @@ export async function poolsFixture(
   const operation = await sendBatch(tezos, paramsList);
 
   await operation.confirmation(1);
-
   const pools = await factory.getPools([0, 1, 2, 3, 4]);
   const poolFa12 = await new QuipuswapV3().init(tezos, pools[0]);
   const poolFa2 = await new QuipuswapV3().init(tezos, pools[1]);
   const poolFa1_2 = await new QuipuswapV3().init(tezos, pools[2]);
-  const poolFa2_1 = await new QuipuswapV3().init(tezos, pools[3]);
 
-  let deployedPoolList = [poolFa12, poolFa2, poolFa1_2, poolFa2_1];
+  let deployedPoolList = [poolFa12, poolFa2, poolFa1_2];
   let poolFa12Dublicate;
   let poolFa2Dublicate;
   let poolFa1_2Dublicate;
-  let poolFa2_1Dublicate;
   if (dublicate) {
     const pools2 = await factory2.getPools([0, 1, 2, 3, 4]);
     poolFa12Dublicate = await new QuipuswapV3().init(tezos, pools2[0]);
     poolFa2Dublicate = await new QuipuswapV3().init(tezos, pools2[1]);
     poolFa1_2Dublicate = await new QuipuswapV3().init(tezos, pools2[2]);
-    poolFa2_1Dublicate = await new QuipuswapV3().init(tezos, pools2[3]);
     deployedPoolList = deployedPoolList.concat([
       poolFa12Dublicate,
       poolFa2Dublicate,
       poolFa1_2Dublicate,
-      poolFa2_1Dublicate,
     ]);
   }
   const deployedConsumer = await migrate(
@@ -223,11 +250,9 @@ export async function poolsFixture(
     poolFa12,
     poolFa2,
     poolFa1_2,
-    poolFa2_1,
     poolFa12Dublicate,
     poolFa2Dublicate,
     poolFa1_2Dublicate,
-    poolFa2_1Dublicate,
     consumer,
   };
 }

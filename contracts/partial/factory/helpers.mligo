@@ -16,5 +16,3 @@ let deploy_pool_func : deploy_pool_func_t =
         ;
           PAIR } |}
  : deploy_pool_func_t)]
-
-

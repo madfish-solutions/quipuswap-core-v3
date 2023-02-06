@@ -31,7 +31,7 @@ describe('FA2 Tests', async function () {
   let poolFa12: QuipuswapV3;
   let poolFa2: QuipuswapV3;
   let poolFa1_2: QuipuswapV3;
-  let poolFa2_1: QuipuswapV3;
+
   let tezos: TezosToolkit;
   let factory: DexFactory;
   let fa12TokenX: FA12;
@@ -51,7 +51,6 @@ describe('FA2 Tests', async function () {
       poolFa12: _poolFa12,
       poolFa2: _poolFa2,
       poolFa1_2: _poolFa1_2,
-      poolFa2_1: _poolFa2_1,
     } = await poolsFixture(tezos, [aliceSigner, bobSigner]);
     factory = _factory;
     fa12TokenX = _fa12TokenX;
@@ -61,7 +60,6 @@ describe('FA2 Tests', async function () {
     poolFa12 = _poolFa12;
     poolFa2 = _poolFa2;
     poolFa1_2 = _poolFa1_2;
-    poolFa2_1 = _poolFa2_1;
 
     let operation = await tezos.contract.transfer({
       to: peter.pkh,
@@ -77,7 +75,7 @@ describe('FA2 Tests', async function () {
     });
     await confirmOperation(tezos, operation.hash);
     tezos.setSignerProvider(aliceSigner);
-    for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+    for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
       await pool.setPosition(
         new Int(-1000),
         new Int(1000),
@@ -228,7 +226,7 @@ describe('FA2 Tests', async function () {
   });
   describe('Success cases', async () => {
     it('Should allow get balance of', async function () {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         const balance = await pool.contract.views
           .balance_of([{ owner: alice.pkh, token_id: '0' }])
@@ -237,7 +235,7 @@ describe('FA2 Tests', async function () {
       }
     });
     it('Should allow selt-to-self transfer', async () => {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.transfer([
           {
@@ -259,7 +257,7 @@ describe('FA2 Tests', async function () {
     });
     it('Should allow transfer position', async function () {
       tezos.setSignerProvider(aliceSigner);
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         await pool.transfer([
           {
             from_: alice.pkh,
@@ -298,7 +296,7 @@ describe('FA2 Tests', async function () {
       }
     });
     it('Should allow update operator', async function () {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.updateOperators([
           {
@@ -373,7 +371,7 @@ describe('FA2 Tests', async function () {
       }
     });
     it('Should allow remove operator', async function () {
-      for (const pool of [poolFa12, poolFa2, poolFa1_2, poolFa2_1]) {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
         tezos.setSignerProvider(aliceSigner);
         await pool.updateOperators([
           {
