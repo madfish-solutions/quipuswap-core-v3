@@ -467,7 +467,6 @@ type get_position_info_param =
 {
     position_id : position_id;
     callback : position_info contract;
-    referral_code : nat option;
 }
 
 type result = (operation list) * storage
