@@ -53,21 +53,55 @@ const getTypedUpdateOperator = async (
 };
 
 const sortPoolList = (poolList: any[]) => {
-  return poolList.sort(([xToken, yToken]) => {
+  const sortedPoolList: any = [];
+  for (const pool of poolList) {
+    const xToken = pool[0];
+    const yToken = pool[1];
     const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
     const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
 
     if (xTokenType === 'fa12' && yTokenType === 'fa12') {
-      return xToken.contract.address - yToken.contract.address;
+      if (xToken.contract.address > yToken.contract.address) {
+        sortedPoolList.push([xToken, yToken]);
+      } else {
+        sortedPoolList.push([yToken, xToken]);
+      }
     }
     if (xTokenType === 'fa2' && yTokenType === 'fa2') {
-      return xToken.contract.address === yToken.contract.address
-        ? xToken.tokenId - yToken.tokenId
-        : xToken.contract.address - yToken.contract.address;
+      if (xToken.contract.address > yToken.contract.address) {
+        sortedPoolList.push([xToken, yToken]);
+      } else if (xToken.contract.address < yToken.contract.address) {
+        sortedPoolList.push([yToken, xToken]);
+      } else if (xToken.tokenId > yToken.tokenId) {
+        sortedPoolList.push([xToken, yToken]);
+      } else {
+        sortedPoolList.push([yToken, xToken]);
+      }
     }
-    return xTokenType === 'fa2' ? -1 : 1;
-  });
+    if (xTokenType === 'fa2' && yTokenType === 'fa12') {
+      sortedPoolList.push([xToken, yToken]);
+    } else {
+      sortedPoolList.push([yToken, xToken]);
+    }
+  }
+  return sortedPoolList;
 };
+// const sortPoolList = (poolList: any[]) => {
+//   return poolList.sort(([xToken, yToken]) => {
+//     const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
+//     const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
+
+//     if (xTokenType === 'fa12' && yTokenType === 'fa12') {
+//       return xToken.contract.address - yToken.contract.address;
+//     }
+//     if (xTokenType === 'fa2' && yTokenType === 'fa2') {
+//       return xToken.contract.address === yToken.contract.address
+//         ? xToken.tokenId - yToken.tokenId
+//         : xToken.contract.address - yToken.contract.address;
+//     }
+//     return xTokenType === 'fa2' ? -1 : 1;
+//   });
+// };
 
 export async function poolsFixture(
   tezos,
