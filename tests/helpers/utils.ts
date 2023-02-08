@@ -332,23 +332,6 @@ export const getCumulativesInsideDiff = async (
   };
 };
 
-/**
- * // Recursive helper for `get_cumulatives`
-let rec find_cumulatives_around (buffer, t, l, r : timed_cumulatives_buffer * timestamp * (nat * timed_cumulatives) * (nat * timed_cumulatives)) : (timed_cumulatives * timed_cumulatives * nat) =
-    let (l_i, l_v) = l in
-    let (r_i, r_v) = r in
-    // Binary search, invariant: l_v.time <= t && t < r_v.time
-    if l_i + 1n < r_i
-    then
-        let m_i = (l_i + r_i) / 2n in
-        let m_v = get_registered_cumulatives_unsafe buffer m_i in
-        let m = (m_i, m_v) in
-        let (new_l, new_r) = if m_v.time > t then (l, m) else (m, r) in
-        find_cumulatives_around (buffer, t, new_l, new_r)
-    else
-        (l_v, r_v, assert_nat (t - l_v.time, internal_observe_bin_search_failed))
- */
-
 export const findCumulativesAround = (
   buffer: quipuswapV3Types.TimedCumulativesBuffer,
   timestamp: BigNumber,
@@ -383,69 +366,4 @@ export const evalSecondsPerLiquidityX128 = (
   }
 
   return shiftLeft(duration, new BigNumber(128)).div(liquidity);
-};
-
-/**
- *  let sums = get_last_cumulatives s.cumulatives_buffer in
-    let cums_total =
-            { tick = sums.tick.sum
-            ; seconds = Tezos.get_now() - epoch_time
-            ; seconds_per_liquidity = {x128 = int sums.spl.sum.x128}
-            } in
-
-    [@inline]
-    let eval_cums (above, index, cums_outside : bool * tick_index * cumulatives_data) =
-        // Formulas 6.22 when 'above', 6.23 otherwise
-        if (s.cur_tick_index >= index) = above
-        then
-            { tick =
-                cums_total.tick - cums_outside.tick
-            ; seconds =
-                cums_total.seconds - cums_outside.seconds
-            ; seconds_per_liquidity = {x128 =
-                cums_total.seconds_per_liquidity.x128 - cums_outside.seconds_per_liquidity.x128
-                }
-            }
-        else
-            cums_outside
-        in
-
-    let lower_tick = get_tick s.ticks p.lower_tick_index tick_not_exist_err in
-    let upper_tick = get_tick s.ticks p.upper_tick_index tick_not_exist_err in
-
-    let lower_cums_outside =
-            { tick = lower_tick.tick_cumulative_outside
-            ; seconds = int lower_tick.seconds_outside
-            ; seconds_per_liquidity = {x128 = int lower_tick.seconds_per_liquidity_outside.x128}
-            } in
-    let upper_cums_outside =
-            { tick = upper_tick.tick_cumulative_outside
-            ; seconds = int upper_tick.seconds_outside
-            ; seconds_per_liquidity = {x128 = int upper_tick.seconds_per_liquidity_outside.x128}
-            } in
-
-    let cums_below_lower = eval_cums(false, p.lower_tick_index, lower_cums_outside) in
-    let cums_above_upper = eval_cums(true, p.upper_tick_index, upper_cums_outside) in
-    let res =
-            { tick_cumulative_inside =
-                cums_total.tick
-                    - cums_below_lower.tick
-                    - cums_above_upper.tick
-            ; seconds_inside =
-                cums_total.seconds
-                    - cums_below_lower.seconds
-                    - cums_above_upper.seconds
-            ; seconds_per_liquidity_inside = {x128 =
-                cums_total.seconds_per_liquidity.x128
-                    - cums_below_lower.seconds_per_liquidity.x128
-                    - cums_above_upper.seconds_per_liquidity.x128
-                }
-            }
- */
-//export const getExpectedSPL
-
-export const getPort = absolutePath => {
-  const testFile = absolutePath.split('/').pop();
-  const fileId = testFile.split('-')[0];
-  return 8732 + Number(fileId);
 };

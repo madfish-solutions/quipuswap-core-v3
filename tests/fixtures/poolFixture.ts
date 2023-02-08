@@ -6,7 +6,6 @@ import { fa12Storage } from './../../storage/test/FA12';
 import { fa2Storage } from './../../storage/test/FA2';
 import { FA2 } from './../helpers/FA2';
 import { FA12 } from './../helpers/FA12';
-import { confirmOperation } from './../../scripts/confirmation';
 
 import { BigNumber } from 'bignumber.js';
 import { migrate } from '../../scripts/helpers';
@@ -60,22 +59,29 @@ const sortPoolList = (poolList: any[]) => {
     const yToken = pool[1];
     const xTokenType = xToken instanceof FA12 ? 'fa12' : 'fa2';
     const yTokenType = yToken instanceof FA12 ? 'fa12' : 'fa2';
+
     if (xTokenType === 'fa12' && yTokenType === 'fa12') {
       if (xToken.contract.address > yToken.contract.address) {
         sortedPoolList.push([xToken, yToken]);
       } else {
         sortedPoolList.push([yToken, xToken]);
       }
-    } else if (xTokenType === 'fa12' && yTokenType === 'fa2') {
-      sortedPoolList.push([yToken, xToken]);
-    } else if (xTokenType === 'fa2' && yTokenType === 'fa12') {
-      sortedPoolList.push([yToken, xToken]);
-    } else {
+    }
+    if (xTokenType === 'fa2' && yTokenType === 'fa2') {
       if (xToken.contract.address > yToken.contract.address) {
+        sortedPoolList.push([xToken, yToken]);
+      } else if (xToken.contract.address < yToken.contract.address) {
+        sortedPoolList.push([yToken, xToken]);
+      } else if (xToken.tokenId > yToken.tokenId) {
         sortedPoolList.push([xToken, yToken]);
       } else {
         sortedPoolList.push([yToken, xToken]);
       }
+    }
+    if (xTokenType === 'fa2' && yTokenType === 'fa12') {
+      sortedPoolList.push([xToken, yToken]);
+    } else {
+      sortedPoolList.push([yToken, xToken]);
     }
   }
   return sortedPoolList;

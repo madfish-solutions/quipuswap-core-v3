@@ -1,5 +1,4 @@
 import {
-  OriginationOperation,
   TransactionOperation,
   TezosToolkit,
   Contract,
