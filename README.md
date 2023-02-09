@@ -1,11 +1,19 @@
-# Quipuswap Core V2
+# Quipuswap Core V3
 
-The second version ot the Quipuswap DEX.
+This repository contains the implementation of a constant product market making
+smart contract that allows the curve to be defined on price segments. This
+project is a fork of segmented-cfmm, based on the ideas described in the Uniswap
+V3 whitepaper.
 
-This version will support both TOKEN/TOKEN and TOKEN/СTEZ pools, implement more
-essential view methods, flash loans, referral and QUIPU buyback fees, better
-mechanics for voting and baker rewards distribution, time-weighted average price
-for oracles etc.
+Our smart contracts differ from segmented-cfmm in several ways:
+
+- We added a Pool Factory contract
+- We removed support for the CTEZ, we used the FA2 wXTZ
+- We fixed existing issues
+- We rewrited the Haskell part of the project to Typescript
+
+With these changes, our contracts provide a more robust and reliable solution
+for market making on the blockchain.
 
 # Contracts
 
@@ -19,6 +27,8 @@ for oracles etc.
   ```shell
     yarn install
   ```
+
+Rename the `.env.template` file to `.env` and fill it with the required.
 
 # Compiling
 
@@ -35,7 +45,7 @@ To compile all contracts run the next command:
 To run all the tests execute the next command:
 
 ```shell
-  yarn start-sandbox && yarn test
+  yarn test
 ```
 
 # Deploy
@@ -51,12 +61,6 @@ Docker container).
 
 Also, you can specify the network for deploying (possible networks: `ghostnet`,
 `mainnet`):
-
-```shell
-  yarn migrate -n [network_name]
-```
-
-Or just execute one of this commands:
 
 ```shell
   yarn migrate-ghostnet
