@@ -105,7 +105,7 @@ describe('Position Tests', async () => {
     });
     await confirmOperation(tezos, operation.hash);
   });
-  describe.skip('Failed cases', async () => {
+  describe('Failed cases', async () => {
     it("Shouldn't setting a position with lower_tick=upper_tick", async () => {
       await rejects(
         poolFa12.setPosition(
@@ -624,7 +624,7 @@ describe('Position Tests', async () => {
         const tokenInfo = metadata.token_info.get('');
         expect(metadata.token_id.toString()).to.be.equal(positionId.toString());
         expect(tokenInfo).to.be.equal(
-          '697066733a2f2f516d66574c3333474737485135635241726855347a4b4a7546416d685059366768694c4451326b76485652676672',
+          '697066733a2f2f516d5a554e69677261336a5655395254394d48585868434e456159754e74436f417739416a625839776132564253',
         );
 
         await pool.updatePosition(
