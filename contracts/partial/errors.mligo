@@ -158,5 +158,7 @@
 
 [@inline] let wrong_pair_order_err = 700n
 
+[@inline] let not_token_metadata_err = 800n
+
 
 #endif

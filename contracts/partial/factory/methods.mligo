@@ -55,3 +55,12 @@ let confirm_owner (s : factory_storage_t) : return_t =
             then failwith not_pending_owner_err in
 
         ([], { s with owner = Tezos.get_sender () ; pending_owner = None })
+
+let set_token_metadata (s, p : factory_storage_t * token_metadata) : return_t =
+    let _ = if s.owner <> (Tezos.get_sender ())
+        then failwith not_owner_err in
+
+    let s = { s with
+        token_metadata = Big_map.update p.token_id (Some p) s.token_metadata ;
+    } in
+    ([], s)

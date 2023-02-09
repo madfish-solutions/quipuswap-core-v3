@@ -5,6 +5,16 @@ type pool_key_t =
     token_y : asset_standard_t;
 }
 
+type token_info_map = (string, bytes) map
+
+type token_metadata = {
+  [@layout:comb]
+  token_id   : token_id ;
+  token_info : token_info_map ;
+}
+
+type token_metadata_map = (token_id, token_metadata) big_map
+
 type factory_storage_t = {
   owner: address;
   pending_owner: address option;
@@ -13,11 +23,13 @@ type factory_storage_t = {
   pool_ids: (pool_key_t, nat) big_map;
   dev_fee_bps : nat;
   pause_state: pause_etp set;
+  token_metadata: token_metadata_map;
 }
 
 type return_t = (operation list * factory_storage_t)
 
 type deploy_pool_func_t = (key_hash option * tez * storage) -> (operation * address)
+
 
 type create_dex_t =
   [@layout:comb]
@@ -31,6 +43,7 @@ type create_dex_t =
 
 type parameter_t =
 | Deploy_pool of create_dex_t
+| Set_metadata of token_metadata
 | Set_dev_fee of nat
 | Set_pause of pause_etp set
 | Set_owner of address
