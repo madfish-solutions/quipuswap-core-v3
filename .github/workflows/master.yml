@@ -7,6 +7,8 @@ on:
       - all-tests
 
   pull_request:
+    branches:
+      - master
 
 jobs:
   compile-and-test:
