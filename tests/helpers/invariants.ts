@@ -1,20 +1,17 @@
-import { deepEqual, equal, ok, rejects, strictEqual } from "assert";
-import { expect } from "chai";
-import { BigNumber } from "bignumber.js";
+import { deepEqual, equal, ok } from 'assert';
+import { BigNumber } from 'bignumber.js';
 
-import { QuipuswapV3 } from "@madfish/quipuswap-v3";
+import { QuipuswapV3 } from '@madfish/quipuswap-v3';
 
 import {
   adjustScale,
   sqrtPriceForTick,
   tickAccumulatorsInside,
-} from "@madfish/quipuswap-v3/dist/helpers/math";
-import { Int, Nat, quipuswapV3Types } from "@madfish/quipuswap-v3/dist/types";
-import {
-  isInRange,
-  entries,
-  isMonotonic,
-} from "@madfish/quipuswap-v3/dist/utils";
+} from '@madfish/quipuswap-v3/dist/helpers/math';
+import { Int, Nat, quipuswapV3Types } from '@madfish/quipuswap-v3/dist/types';
+import { entries, isMonotonic } from '@madfish/quipuswap-v3/dist/utils';
+import { Map } from 'immutable';
+import { safeObserve } from './utils';
 
 export async function checkAllInvariants(
   cfmm: QuipuswapV3,
@@ -24,13 +21,15 @@ export async function checkAllInvariants(
   bufferMapIndices: Nat[],
 ): Promise<void> {
   const st = await cfmm.getStorage(positionIds, tickIndices, bufferMapIndices);
+  const sortedTickIndices = tickIndices
+    .sort((a, b) => a.minus(b).toNumber())
+    .map(i => new Int(i));
+
   await checkTickMapInvariants(cfmm, st);
   await checkTickInvariants(cfmm, st);
-  await checkStorageInvariants(cfmm, st, tickIndices);
-  await checkAccumulatorsInvariants(cfmm, st, tickIndices);
+  await checkStorageInvariants(cfmm, st, sortedTickIndices);
+  await checkAccumulatorsInvariants(cfmm, st, sortedTickIndices);
   await checkCumulativesBufferInvariants(cfmm, st);
-
-  //await checkBalanceInvariants(cfmm, storage, positionIds, signers);
 }
 
 export async function checkAccumulatorsInvariants(
@@ -57,21 +56,20 @@ export async function checkAccumulatorsInvariants(
       ),
     };
   });
-  const currentTime = new BigNumber(Date.now() / 1000).integerValue(
-    BigNumber.ROUND_CEIL,
-  );
+  const currentTime = sumInsideAccumulators.aSeconds;
 
   const {
-    tick_cumulative: cvTickCumulative,
-    seconds_per_liquidity_cumulative: cvSecondsPerLiquidityCumulative,
-  } = (await cfmm.observe([currentTime.toString()]))[0];
+    tick_cumulative: tickCumulative,
+    seconds_per_liquidity_cumulative: secondsPerLiquidity,
+  } = (await safeObserve(cfmm, [currentTime.toString()]))[0];
 
   const globalAccumulators = {
     aSeconds: currentTime,
-    aTickCumulative: cvTickCumulative,
+    aTickCumulative: tickCumulative,
     aFeeGrowth: storage.feeGrowth.x.plus(storage.feeGrowth.y),
-    aSecondsPerLiquidity: cvSecondsPerLiquidityCumulative,
+    aSecondsPerLiquidity: secondsPerLiquidity,
   };
+
   equal(
     globalAccumulators.aSeconds.toFixed(),
     sumInsideAccumulators.aSeconds.toFixed(),
@@ -88,32 +86,6 @@ export async function checkAccumulatorsInvariants(
     globalAccumulators.aSecondsPerLiquidity.toFixed(),
     sumInsideAccumulators.aSecondsPerLiquidity.toFixed(),
   );
-}
-
-/**
- * Invariant:
- * The contract always has enough balance to liquidite all positions (and pay any fees due).
- */
-async function checkBalanceInvariants(
-  cfmm: QuipuswapV3,
-  storage: quipuswapV3Types.Storage,
-  positionIds: Nat[],
-  signers: Object,
-): Promise<void> {
-  for (const positionId of positionIds) {
-    const position = await storage.positions.get(positionId);
-    const liquidityProvider = position.owner.toString();
-    cfmm.tezos.setSignerProvider(signers[liquidityProvider]);
-    await cfmm.updatePosition(
-      positionId,
-      position.liquidity.negated(),
-      liquidityProvider.toString(),
-      liquidityProvider.toString(),
-      new Date("2025-01-01").toString(),
-      new BigNumber(0),
-      new BigNumber(0),
-    );
-  }
 }
 
 /**
@@ -136,7 +108,8 @@ export async function checkStorageInvariants(
   const expectedCurTickWitness = Int.max(
     ...tickIndices.filter(t => t.lte(curTickIndex)),
   );
-  deepEqual(storage.curTickWitness, expectedCurTickWitness);
+
+  equal(storage.curTickWitness.toFixed(), expectedCurTickWitness.toFixed());
   // Invariant 2.1
   const liquiditiyAfterPriorTicks = tickIndices
     .filter(t => t.lte(curTickIndex))
@@ -198,7 +171,7 @@ export async function checkTickInvariants(
     tickLiquidities
       .reduce((acc, cur) => acc.plus(cur), new BigNumber(0))
       .toFixed(),
-    "0",
+    '0',
   );
   // Invariant 2
   tickLiquidities
@@ -293,27 +266,52 @@ export async function checkCumulativesBufferInvariants(
   ok(isMonotonic(sums));
 }
 
+function merge<K, V>(
+  f: (key: K, val1: V, val2: V) => V,
+  map1: Map<K, V>,
+  map2: Map<K, V>,
+): Map<K, V> {
+  const result = Map<K, V>();
+  for (const [key, val1] of map1.entries()) {
+    if (map2.has(key)) {
+      result.set(key, f(key, val1, map2.get(key)!));
+    } else {
+      result.set(key, val1);
+    }
+  }
+  for (const [key, val2] of map2.entries()) {
+    if (!map1.has(key)) {
+      result.set(key, val2);
+    }
+  }
+  return result;
+}
+
 /**
  * -- | Invariants on storages separated in time.
-
  */
 export async function checkCumulativesBufferTimeInvariants(
   cfmm: QuipuswapV3,
   storages: [quipuswapV3Types.Storage, quipuswapV3Types.Storage],
 ): Promise<void> {
-  const [storage1, storage2] = storages;
-  const buffer1 = storage1.cumulativesBuffer;
-  const buffer2 = storage2.cumulativesBuffer;
-  const bufferMap1 = buffer1.map.map;
-  const bufferMap2 = buffer2.map.map;
+  const mapBoth =
+    (f: (x: quipuswapV3Types.Storage) => any) =>
+    ([a, b]: [quipuswapV3Types.Storage, quipuswapV3Types.Storage]): [
+      any,
+      any,
+    ] =>
+      [f(a), f(b)];
+
+  const bufferMaps = mapBoth(cb => entries(cb))(storages);
 
   const mergeEq = (k: string, v1: any, v2: any) => {
     if (v1 !== v2) {
       throw new Error(
         `Value for key ${k} has changed:\n\
-        \  Was:\n    ${v1}\n\
-        \  After:\n    ${v2}\n`,
+        \  Was:\n    ${JSON.stringify(v1)}\n\
+        \  After:\n    ${JSON.stringify(v2)}\n`,
       );
     }
   };
+  merge(mergeEq, Map(bufferMaps[0]), Map(bufferMaps[1]));
 }

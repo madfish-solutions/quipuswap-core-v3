@@ -1,17 +1,12 @@
-import {
-  OriginationOperation,
-  TransactionOperation,
-  TezosToolkit,
-  Contract,
-} from "@taquito/taquito";
+import { TransactionOperation, TezosToolkit, Contract } from '@taquito/taquito';
 
-import fs from "fs";
+import fs from 'fs';
 
-import { BigNumber } from "bignumber.js";
+import { BigNumber } from 'bignumber.js';
 
-import { confirmOperation } from "../../scripts/confirmation";
+import { confirmOperation } from '../../scripts/confirmation';
 
-import { fa12Types } from "@madfish/quipuswap-v3/dist/types";
+import { fa12Types } from '@madfish/quipuswap-v3/dist/types';
 
 export class FA12 {
   storage: fa12Types.FA12Storage;
@@ -55,25 +50,6 @@ export class FA12 {
     const storage: fa12Types.FA12Storage = await this.contract.storage();
 
     this.storage = storage;
-
-    // for (const key in maps) {
-    //   this.storage[key] = await maps[key].reduce(
-    //     async (prev: any, current: any) => {
-    //       try {
-    //         return {
-    //           ...(await prev),
-    //           [current]: await storage[key].get(current),
-    //         };
-    //       } catch (ex) {
-    //         return {
-    //           ...(await prev),
-    //           [current]: 0,
-    //         };
-    //       }
-    //     },
-    //     Promise.resolve({}),
-    //   );
-    // }
   }
 
   async transfer(
@@ -114,7 +90,6 @@ export class FA12 {
 
   async getBalance(user: string): Promise<BigNumber> {
     await this.updateStorage();
-    let balance = 0;
     try {
       const account = (await this.storage.ledger.get(user)) as any;
       return account.balance as BigNumber;

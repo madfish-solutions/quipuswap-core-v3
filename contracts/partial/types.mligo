@@ -85,6 +85,7 @@ type fa2_parameter =
 type balance_nat = {x : nat ; y : nat}
 type balance_nat_x128 = {x : x128n ; y : x128n}
 type balance_int_x128 = {x : x128 ; y : x128}
+type balance_int = {x : int ; y : int}
 
 (* Information stored for every initialized tick. *)
 type tick_state = {
@@ -292,7 +293,6 @@ type metadata_map = (string, bytes) big_map
 type constants = {
     factory_address : address ;
     fee_bps : nat ;
-    dev_fee_bps: nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
     tick_spacing : nat ;
@@ -401,7 +401,7 @@ type update_position_param =
     (* The maximum number of tokens to contribute.
         If a higher amount is required, the entrypoint fails.
     *)
-    maximum_tokens_contributed : balance_nat;
+    maximum_tokens_contributed : balance_int;
     referral_code : nat option ;
 }
 
@@ -467,11 +467,15 @@ type get_position_info_param =
 {
     position_id : position_id;
     callback : position_info contract;
-    referral_code : nat option;
 }
 
 type result = (operation list) * storage
 
+type pause_etp =
+  | Set_position_pause of unit
+  | Update_position_pause of unit
+  | X_to_y_pause of unit
+  | Y_to_x_pause of unit
 
 (* Entrypoints *)
 

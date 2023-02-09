@@ -1,10 +1,8 @@
-import { Contract, MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import { migrate } from "./../../scripts/helpers";
+import { Contract, TezosToolkit } from '@taquito/taquito';
+import { migrate } from './../../scripts/helpers';
 
-import factoryStorage from "./../../storage/factoryStorage";
-import { confirmOperation } from "./../../scripts/confirmation";
-import { BytesLiteral } from "@taquito/michel-codec";
-import { MichelsonMapKey } from "@taquito/michelson-encoder";
+import factoryStorage from './../../storage/factoryStorage';
+import { confirmOperation } from './../../scripts/confirmation';
 
 export default class Factory {
   contract: Contract;
@@ -18,7 +16,7 @@ export default class Factory {
       factoryStorage.owner = await this.tezos.signer.publicKeyHash();
       const deployedAddress = await migrate(
         this.tezos,
-        "factory",
+        'factory',
         factoryStorage,
         this.network,
       );
@@ -33,16 +31,18 @@ export default class Factory {
     yTokenType: string,
     feeBPS: number,
     tickSpacing: number,
-    metadata: MichelsonMap<MichelsonMapKey, unknown>,
+    extraSlots: number,
     xTokenId: number = 0,
     yTokenId: number = 0,
     returnParams: boolean = false,
+    currentTick: string = '0',
   ) {
     let op;
     if (returnParams) {
-      if (xTokenType === "fa2" && yTokenType === "fa2") {
+      if (xTokenType === 'fa2' && yTokenType === 'fa2') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -51,12 +51,13 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .toTransferParams();
-      } else if (xTokenType === "fa2" && yTokenType === "fa12") {
+      } else if (xTokenType === 'fa2' && yTokenType === 'fa12') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -64,12 +65,13 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .toTransferParams();
-      } else if (xTokenType === "fa12" && yTokenType === "fa2") {
+      } else if (xTokenType === 'fa12' && yTokenType === 'fa2') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
@@ -77,27 +79,29 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .toTransferParams();
-      } else if (xTokenType === "fa12" && yTokenType === "fa12") {
+      } else if (xTokenType === 'fa12' && yTokenType === 'fa12') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .toTransferParams();
       }
       return op;
     } else {
-      if (xTokenType === "fa2" && yTokenType === "fa2") {
+      if (xTokenType === 'fa2' && yTokenType === 'fa2') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -106,12 +110,13 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .send();
-      } else if (xTokenType === "fa2" && yTokenType === "fa12") {
+      } else if (xTokenType === 'fa2' && yTokenType === 'fa12') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenId,
             xTokenAddress,
@@ -119,12 +124,13 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .send();
-      } else if (xTokenType === "fa12" && yTokenType === "fa2") {
+      } else if (xTokenType === 'fa12' && yTokenType === 'fa2') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
@@ -132,19 +138,20 @@ export default class Factory {
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .send();
-      } else if (xTokenType === "fa12" && yTokenType === "fa12") {
+      } else if (xTokenType === 'fa12' && yTokenType === 'fa12') {
         op = await this.contract.methods
           .deploy_pool(
+            currentTick,
             xTokenType,
             xTokenAddress,
             yTokenType,
             yTokenAddress,
             feeBPS,
             tickSpacing,
-            metadata,
+            extraSlots,
           )
           .send();
       }
@@ -168,5 +175,9 @@ export default class Factory {
       }),
     );
     return pools;
+  }
+  async setPause(etps: Object[]) {
+    const op = await this.contract.methods.set_pause(etps).send();
+    await confirmOperation(this.tezos, op.hash);
   }
 }

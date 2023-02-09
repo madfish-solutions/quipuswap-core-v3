@@ -80,6 +80,7 @@ let default_ladder : ladder = Big_map.literal
 
 let default_storage
     (constants : constants)
+    (cur_tick_index : tick_index)
     (init_cumulatives_buffer_extra_slots : nat)
     (metadata_map : metadata_map) : storage =
   let min_tick_state =
@@ -112,8 +113,8 @@ let default_storage
   ] in
 
   { liquidity = 0n
-  ; sqrt_price = half_bps_pow (0, default_ladder)
-  ; cur_tick_index = { i = 0 }
+  ; sqrt_price = half_bps_pow (cur_tick_index.i, default_ladder)
+  ; cur_tick_index = cur_tick_index
   ; cur_tick_witness  = { i = -const_max_tick }
   ; fee_growth = { x = { x128 = 0n }; y = { x128 = 0n } }
   ; dev_fee = { x = 0n ; y = 0n }
@@ -137,3 +138,8 @@ let entrypoint (_param, store : parameter * storage) : result =
   (([] : operation list), store)
 
 let tick_spacing: nat = 1n
+
+let default_metadata = Big_map.literal [
+    ("", 0x74657a6f732d73746f726167653a636f7265) ;
+    ("core", 0x7b226e616d65223a225175697075537761702045786368616e676520332e30222c2276657273696f6e223a2276312e302e30222c226465736372697074696f6e223a22446563656e7472616c697a65642065786368616e676520666f72207468652054657a6f732062617365642d6173736574732077697468207468652068696768206361706974616c20656666696369656e63792e222c22617574686f7273223a5b224d6164666973682e536f6c7574696f6e73203c68747470733a2f2f7777772e6d6164666973682e736f6c7574696f6e733e225d2c22736f75726365223a7b22746f6f6c73223a5b224c69676f222c22466c657874657361225d7d2c22686f6d6570616765223a2268747470733a2f2f7175697075737761702e636f6d222c22696e7465726661636573223a5b22545a49502d303136225d7d)
+  ]

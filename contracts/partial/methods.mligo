@@ -5,10 +5,22 @@ let claim_dev_fee (s : storage) (recipient : address) : result =
             (not_owner_err : nat) : unit)
         else unit in
 
-    let op_withdraw_x = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
-    let op_withdraw_y = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
-    let updated_s = { s with dev_fee = { x = 0n; y = 0n } }
-    in ([op_withdraw_x; op_withdraw_y], updated_s)
+    let ops = [] in
+    let ops = if s.dev_fee.x > 0n then
+        let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.x s.constants.token_x in
+        op :: ops
+    else
+        ops
+    in
+
+    let ops = if s.dev_fee.y > 0n then
+        let op = wrap_transfer (Tezos.get_self_address ()) recipient s.dev_fee.y s.constants.token_y in
+        op :: ops
+    else
+        ops
+    in
+
+    (ops, {s with dev_fee = { x = 0n; y = 0n }})
 
 // Increase the number of stored accumulators.
 let increase_observation_count (s, p : storage * increase_observation_count_param) : result =
@@ -113,6 +125,7 @@ let snapshot_cumulatives_inside (s, p : storage * snapshot_cumulatives_inside_pa
     in ([Tezos.transaction res 0mutez p.callback], s)
 
 let set_position (s : storage) (p : set_position_param) : result =
+    let _: unit = check_pause (Set_position_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let allowed_tick_spacing = s.constants.tick_spacing in
     let _: unit = check_multiple_of_tick_spacing (p.lower_tick_index, allowed_tick_spacing) in
@@ -207,11 +220,12 @@ let set_position (s : storage) (p : set_position_param) : result =
 
     update_balances_after_position_change
         s p.lower_tick_index p.upper_tick_index
-        p.maximum_tokens_contributed
+        {x = int(p.maximum_tokens_contributed.x) ; y = int(p.maximum_tokens_contributed.y)}
         (Tezos.get_self_address ()) (Tezos.get_self_address ()) // Shouldn't be used
         (int p.liquidity) {x = 0n; y = 0n}
 
 let update_position (s : storage) (p : update_position_param) : result =
+    let _: unit = check_pause (Update_position_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
 
     (* Grab the existing position *)

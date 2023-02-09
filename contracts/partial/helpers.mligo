@@ -35,16 +35,10 @@
 let sqrt_price_move_x (liquidity : nat) (sqrt_price_old : x80n) (dx : nat) : x80n =
     (* floordiv because we want to overstate how much this trade lowers the price *)
     let sqrt_price_new =
-        {x80 = floordiv
+        {x80 = ceildiv
             (Bitwise.shift_left (liquidity * sqrt_price_old.x80) 80n)
             ((Bitwise.shift_left liquidity 80n) + dx * sqrt_price_old.x80)
         } in
-#if DEBUG
-    let _ : unit =
-        if sqrt_price_new <= sqrt_price_old
-            then unit
-            else failwith "sqrt_price_move_x: sqrt_price moved in the wrong direction" in
-#endif
     sqrt_price_new
 
 
@@ -78,14 +72,8 @@ let sqrt_price_move_y (liquidity : nat) (sqrt_price_old : x80n) (dy : nat) : x80
     (* ceildiv because we want to overstate how much this trade increases the price *)
     let sqrt_price_new =
         { x80 =
-            ceildiv (Bitwise.shift_left dy 80n) liquidity + sqrt_price_old.x80
+            floordiv (Bitwise.shift_left dy 80n) liquidity + sqrt_price_old.x80
         } in
-#if DEBUG
-    let _ : unit =
-        if sqrt_price_new >= sqrt_price_old
-            then unit
-            else failwith "sqrt_price_move_y: sqrt_price moved in the wrong direction" in
-#endif
     sqrt_price_new
 
 (* Helper function to grab a tick we know exists in the tick indexed state. *)
@@ -198,11 +186,6 @@ let garbage_collect_tick (s : storage) (tick_index : tick_index) : storage =
     let tick = get_tick s.ticks tick_index internal_tick_not_exist_err in
 
     if tick.n_positions = 0n then
-#if DEBUG
-        let _ : unit = if tick.liquidity_net <> 0 then
-            failwith internal_non_empty_position_gc_err
-            else unit in
-#endif
         let ticks = s.ticks in
         let prev = get_tick ticks tick.prev internal_tick_not_exist_err in
         let next = get_tick ticks tick.next internal_tick_not_exist_err in
@@ -278,7 +261,7 @@ let collect_fees (s : storage) (key : position_id) (position : position_state) :
 let update_balances_after_position_change
         (s : storage)
         (lower_tick_index : tick_index) (upper_tick_index : tick_index)
-        (maximum_tokens_contributed : balance_nat)
+        (maximum_tokens_contributed : balance_int)
         (to_x : address) (to_y : address)
         (liquidity_delta : int) (fees : balance_nat) : result =
     (* Compute how much should be deposited / withdrawn to change liquidity by liquidity_net *)
@@ -314,32 +297,30 @@ let update_balances_after_position_change
     let delta = {x = delta.x - fees.x ; y = delta.y - fees.y} in
 
     (* Check delta doesn't exceed maximum_tokens_contributed. *)
-    let _: unit = if delta.x > int(maximum_tokens_contributed.x) then
-        ([%Michelson ({| { FAILWITH } |} : nat * (nat * int) -> unit)]
+    let _: unit = if delta.x > maximum_tokens_contributed.x then
+        ([%Michelson ({| { FAILWITH } |} : nat * (int * int) -> unit)]
             (high_tokens_err, (maximum_tokens_contributed.x, delta.x)) : unit)
         else unit in
-    let _: unit = if delta.y > int(maximum_tokens_contributed.y) then
-        ([%Michelson ({| { FAILWITH } |} : nat * (nat * int) -> unit)]
+    let _: unit = if delta.y > maximum_tokens_contributed.y then
+        ([%Michelson ({| { FAILWITH } |} : nat * (int * int) -> unit)]
             (high_tokens_err, (maximum_tokens_contributed.y, delta.y)) : unit)
         else unit in
 
-    let op_x = if delta.x >= 0 then
-        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x
+    let ops = [] in
+    let ops = if delta.x > 0 then
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.x) s.constants.token_x :: ops
+    else if delta.x < 0 then
+        wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x :: ops
     else
-#if DEBUG
-        let _ : unit = if delta.x <> 0 && to_x = (Tezos.get_self_address ()) then failwith internal_unexpected_income_err else unit in
-#endif
-        wrap_transfer (Tezos.get_self_address ()) to_x (abs delta.x) s.constants.token_x in
+        ops in
 
-    let op_y = if delta.y >= 0 then
-        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y
+    let ops = if delta.y > 0 then
+        wrap_transfer (Tezos.get_sender ()) (Tezos.get_self_address ()) (abs delta.y) s.constants.token_y :: ops
+    else if delta.y < 0 then
+        wrap_transfer (Tezos.get_self_address ()) to_y (abs delta.y) s.constants.token_y :: ops
     else
-#if DEBUG
-        let _ : unit = if delta.y <> 0 && to_x = (Tezos.get_self_address () ) then failwith internal_unexpected_income_err else unit in
-#endif
-        wrap_transfer (Tezos.get_self_address () ) to_y (abs delta.y) s.constants.token_y in
-
-    ([op_x ; op_y], s )
+        ops in
+    (ops, s)
 
 (*  Checks if a new tick sits between `cur_tick_witness` and `cur_tick_index`.
     If it does, we need to move `cur_tick_witness` forward to maintain its invariant:
@@ -466,3 +447,16 @@ let update_timed_cumulatives (s : storage) : storage =
             reserved_length = buffer.reserved_length ;
         }
         in {s with cumulatives_buffer = new_buffer}
+
+[@inline]let check_pause (etp, factory_address: pause_etp * address) : unit =
+    let paused = unwrap
+        (Tezos.call_view "check_pause" etp factory_address : bool option )
+        "not check pause etp" in
+
+    if paused
+    then ([%Michelson ({| { FAILWITH } |} : nat * pause_etp -> unit)]
+         (paused_etp_err, etp) : unit)
+    else unit
+
+[@inline]let get_dev_fee (factory_address : address) : nat =
+    unwrap (Tezos.call_view "get_dev_fee" unit factory_address : nat option ) "not_get_dev_fee"

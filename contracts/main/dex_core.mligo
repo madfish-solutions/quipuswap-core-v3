@@ -18,9 +18,6 @@
 #include "../partial/swaps.mligo"
 
 #include "../partial/methods.mligo"
-#define DEBUG
-
-
 
 let main ((p, s) : parameter * storage) : result =
 let _: unit = if Tezos.get_amount () = 0tez then unit else failwith non_zero_transfer_err in

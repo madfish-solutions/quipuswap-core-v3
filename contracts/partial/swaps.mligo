@@ -125,15 +125,17 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
     if p.s.liquidity = 0n then
         p
     else
+        let constants = p.s.constants in
+        let dev_fee_bps = get_dev_fee(constants.factory_address) in
         (* The fee that would be extracted from selling dx. *)
-        let total_fee = ceildiv (p.dx * p.s.constants.fee_bps) 10000n in
-        let dev_fee = if p.s.constants.dev_fee_bps > 0n
-          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+        let total_fee = ceildiv (p.dx * constants.fee_bps) 10000n in
+        let dev_fee = if dev_fee_bps > 0n
+          then ceildiv (total_fee * dev_fee_bps) 10000n
           else 0n in
         let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
         (* What the new price will be, assuming it's within the current tick. *)
-        let sqrt_price_new = sqrt_price_move_x p.s.liquidity p.s.sqrt_price (assert_nat (p.dx - fee - dev_fee, internal_fee_more_than_100_percent_err)) in
+        let sqrt_price_new = sqrt_price_move_x p.s.liquidity p.s.sqrt_price (assert_nat (p.dx - total_fee, internal_fee_more_than_100_percent_err)) in
         (* What the new value of cur_tick_index will be. *)
         let cur_tick_index_new = calc_new_cur_tick_index p.s.cur_tick_index p.s.sqrt_price sqrt_price_new p.s.ladder in
         if cur_tick_index_new.i >= p.s.cur_tick_witness.i then
@@ -171,8 +173,8 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
             (* Deduct the fee we will actually be paying. *)
             let total_fee = assert_nat (dx_consumed - dx_for_dy, internal_impossible_err) in
 
-            let dev_fee = if p.s.constants.dev_fee_bps > 0n
-              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+            let dev_fee = if dev_fee_bps > 0n
+              then ceildiv (total_fee * dev_fee_bps) 10000n
               else 0n in
             let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
@@ -216,17 +218,19 @@ let rec x_to_y_rec (p : x_to_y_rec_param) : x_to_y_rec_param =
                 liquidity = assert_nat (p.s.liquidity - tick.liquidity_net, internal_liquidity_below_zero_err) ;
                 dev_fee = { p.s.dev_fee with x = p.s.dev_fee.x + dev_fee }
               } in
-            let p_new = {p with s = s_new ; dx = assert_nat (p.dx - dx_consumed - dev_fee, internal_307) ; dy = p.dy + dy} in
+            let p_new = {p with s = s_new ; dx = assert_nat (p.dx - dx_consumed, internal_307) ; dy = p.dy + dy} in
             x_to_y_rec p_new
 
 let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
     if p.s.liquidity = 0n then
         p
     else
+        let constants = p.s.constants in
+        let dev_fee_bps = get_dev_fee(constants.factory_address) in
         (* The fee that would be extracted from selling dy. *)
-        let total_fee = ceildiv (p.dy * p.s.constants.fee_bps) 10000n in
-        let dev_fee = if p.s.constants.dev_fee_bps > 0n
-          then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+        let total_fee = ceildiv (p.dy * constants.fee_bps) 10000n in
+        let dev_fee = if dev_fee_bps > 0n
+          then ceildiv (total_fee * dev_fee_bps) 10000n
           else 0n in
         let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
 
@@ -250,7 +254,7 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
                 sqrt_price = sqrt_price_new ;
                 cur_tick_index = cur_tick_index_new ;
                 fee_growth = {p.s.fee_growth with y = {x128 = p.s.fee_growth.y.x128 + Bitwise.shift_left fee 128n / p.s.liquidity}} ;
-                 dev_fee = {p.s.dev_fee with y = p.s.dev_fee.y + dev_fee}} in
+                dev_fee = {p.s.dev_fee with y = p.s.dev_fee.y + dev_fee}} in
             {p with s = s_new ; dy = 0n ; dx = p.dx + dx}
         else
             (* We did cross the tick. *)
@@ -280,8 +284,8 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
             (* Deduct the fee we will actually be paying. *)
             let total_fee = assert_nat (dy_consumed - dy_for_dx, internal_impossible_err) in
 
-            let dev_fee = if p.s.constants.dev_fee_bps > 0n
-              then ceildiv (total_fee * p.s.constants.dev_fee_bps) 10000n
+            let dev_fee = if dev_fee_bps > 0n
+              then ceildiv (total_fee * dev_fee_bps) 10000n
               else 0n in
 
             let fee = assert_nat (total_fee - dev_fee, internal_impossible_err) in
@@ -319,9 +323,9 @@ let rec y_to_x_rec (p : y_to_x_rec_param) : y_to_x_rec_param =
                 fee_growth = fee_growth_new ;
                 (* Update liquidity as we enter new tick region. *)
                 liquidity = assert_nat (p.s.liquidity + next_tick.liquidity_net, internal_liquidity_below_zero_err);
-                dev_fee = {p.s.dev_fee with x = p.s.dev_fee.x + dev_fee}
+                dev_fee = {p.s.dev_fee with y = p.s.dev_fee.y + dev_fee}
                 } in
-            let p_new = {p with s = s_new ; dy = assert_nat (p.dy - dy_consumed - dev_fee, internal_307) ; dx = p.dx + dx} in
+            let p_new = {p with s = s_new ; dy = assert_nat (p.dy - dy_consumed, internal_307) ; dx = p.dx + dx} in
             y_to_x_rec p_new
 
 (* Get amount of X spent, Y received, and updated storage. *)
@@ -335,6 +339,7 @@ let update_storage_x_to_y (s : storage) (dx : nat) : (nat * nat * storage) =
 
 (* Trade up to a quantity dx of asset x, receives dy *)
 let x_to_y (s : storage) (p : x_to_y_param) : result =
+    let _: unit = check_pause (X_to_y_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let (dx_spent, dy_received, s_new) = update_storage_x_to_y s p.dx in
     if dy_received < p.min_dy then
@@ -348,6 +353,7 @@ let x_to_y (s : storage) (p : x_to_y_param) : result =
 
 (* Trade up to a quantity dy of asset y, receives dx *)
 let y_to_x (s : storage) (p : y_to_x_param) : result =
+    let _: unit = check_pause (Y_to_x_pause, s.constants.factory_address) in
     let _: unit = check_deadline p.deadline in
     let r = y_to_x_rec {s = s ; dy = p.dy ; dx = 0n} in
     let dy_spent = assert_nat (p.dy - r.dy, internal_309) in
