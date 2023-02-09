@@ -290,6 +290,16 @@ let init_cumulatives_buffer (extra_reserved_slots : nat) : timed_cumulatives_buf
 // TZIP-16 metadata map
 type metadata_map = (string, bytes) big_map
 
+type token_info_map = (string, bytes) map
+
+type token_metadata = {
+  [@layout:comb]
+  token_id   : token_id ;
+  token_info : token_info_map ;
+}
+
+type token_metadata_map = (token_id, token_metadata) big_map
+
 type constants = {
     factory_address : address ;
     fee_bps : nat ;
@@ -298,11 +308,11 @@ type constants = {
     tick_spacing : nat ;
 }
 
-
 (* See defaults.mligo for more info *)
 type fixed_point = { v : nat ; offset : int }
 type ladder_key = { exp : nat ; positive : bool }
 type ladder = (ladder_key, fixed_point) big_map
+
 
 
 type storage = {
@@ -341,6 +351,9 @@ type storage = {
 
     (* TZIP-16 metadata. *)
     metadata : metadata_map ;
+
+    (* TZIP-12 token metadata *)
+    token_metadata : token_metadata_map ;
 
     (* Incremental position id to be assigned to new position. *)
     new_position_id : position_id ;
