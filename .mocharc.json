@@ -1,0 +1,4 @@
+{
+  "timeout": 700000,
+  "extension": ["ts"]
+}

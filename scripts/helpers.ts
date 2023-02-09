@@ -1,19 +1,19 @@
-import fs from "fs";
+import fs from 'fs';
 
-import { execSync } from "child_process";
+import { execSync } from 'child_process';
 
-import { OriginationOperation, TezosToolkit } from "@taquito/taquito";
-import { InMemorySigner } from "@taquito/signer";
+import { OriginationOperation, TezosToolkit } from '@taquito/taquito';
+import { InMemorySigner } from '@taquito/signer';
 
-import { confirmOperation } from "./confirmation";
+import { confirmOperation } from './confirmation';
 
-const env = require("../env");
+import env from './../env';
 
 export const getLigo = (
   isDockerizedLigo: boolean,
   ligoVersion: string = env.ligoVersion,
 ) => {
-  let path: string = "ligo";
+  let path: string = 'ligo';
 
   if (isDockerizedLigo) {
     path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${ligoVersion}`;
@@ -21,7 +21,7 @@ export const getLigo = (
     try {
       execSync(`${path}  --help`);
     } catch (err) {
-      path = "ligo";
+      path = 'ligo';
 
       execSync(`${path}  --help`);
     }
@@ -41,14 +41,14 @@ export const getLigo = (
 export const getContractsList = () => {
   return fs
     .readdirSync(env.contractsDir)
-    .filter(file => file.endsWith("mligo"))
+    .filter(file => file.endsWith('mligo'))
     .map(file => file.slice(0, file.length - 6));
 };
 
 export const getMigrationsList = () => {
   return fs
     .readdirSync(env.migrationsDir)
-    .filter(file => file.endsWith(".ts"))
+    .filter(file => file.endsWith('.ts'))
     .map(file => file.slice(0, file.length - 3));
 };
 
@@ -67,7 +67,7 @@ export const compile = async (
   contracts.forEach(contract => {
     const michelson: string = execSync(
       `${ligo} compile contract $PWD/${contractsDir}/${contract}.mligo ${
-        format === "json" ? "--michelson-format json" : ""
+        format === 'json' ? '--michelson-format json' : ''
       } --protocol kathmandu --syntax cameligo`,
       { maxBuffer: 8024 * 4000 },
     ).toString();
@@ -77,17 +77,17 @@ export const compile = async (
         fs.mkdirSync(outputDir);
       }
 
-      if (format === "json") {
+      if (format === 'json') {
         const artifacts: any = JSON.stringify(
           {
             contractName: contract,
             michelson: JSON.parse(michelson),
             networks: {},
             compiler: {
-              name: "ligo",
+              name: 'ligo',
               version: ligoVersion,
             },
-            networkType: "tezos",
+            networkType: 'tezos',
           },
           null,
           2,
@@ -108,20 +108,20 @@ export const compileLambdas = async (
   contract: string,
   ligoVersion: string = env.ligoVersion,
 ) => {
-  const ligo: string = getLigo(true, "0.40.0");
-  const pwd: string = execSync("echo $PWD").toString();
+  const ligo: string = getLigo(true, '0.40.0');
+  const pwd: string = execSync('echo $PWD').toString();
   const lambdas: any = JSON.parse(
     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString(),
   );
   let res: any[] = [];
 
   try {
-    let list: string = "list [";
+    let list: string = 'list [';
 
     for (const lambda of lambdas) {
       list += `Bytes.pack(${lambda.name});`;
     }
-    list += "]";
+    list += ']';
 
     const michelson: Buffer = execSync(
       `${ligo} compile expression pascaligo '${list}' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
@@ -174,7 +174,7 @@ export const migrate = async (
         return null;
       });
 
-    await confirmOperation(tezos, operation.hash);
+    await confirmOperation(tezos, operation!.hash);
 
     artifacts.networks[network] = { [contract]: operation.contractAddress };
 
@@ -208,7 +208,7 @@ export const getDeployedAddress = (contract: string, network: string) => {
 export const runMigrations = async (
   from: number = 0,
   to: number = getMigrationsList().length,
-  network: string = "development",
+  network: string = 'development',
 ) => {
   try {
     const migrations: string[] = getMigrationsList();

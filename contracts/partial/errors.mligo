@@ -7,9 +7,6 @@
 #if ERRORS_MLIGO
 #else
 #define ERRORS_MLIGO
-
-#include "types.mligo"
-
 // ---------------------------------------------------------------------------
 // -- Invalid input error codes
 // ---------------------------------------------------------------------------
@@ -70,8 +67,6 @@
 
 (* The `x_token_address` or `y_token_address` has no `approve` entrypoint. *)
 [@inline] let asset_approve_invalid_entrypoints_err = 202n
-
-
 
 // ---------------------------------------------------------------------------
 // -- Internal error codes
@@ -149,6 +144,19 @@
 (* Price became negative when crossing a tick *)
 [@inline] let internal_negative_price = 326n
 
+[@inline] let too_big_fee_bps_err = 402n
+
+[@inline] let pool_already_exists_err = 403
+
+[@inline] let not_owner_err = 420n
+
+[@inline] let no_pending_owner_err = 421n
+
+[@inline] let not_pending_owner_err = 422n
+
+[@inline] let paused_etp_err = 600n
+
+[@inline] let wrong_pair_order_err = 700n
 
 
 #endif

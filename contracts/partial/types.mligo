@@ -29,7 +29,7 @@ type transfer_destination =
   [@layout:comb]
   { to_ : address
   ; token_id : position_id
-  ; amount_ : nat
+  ; amount : nat
   }
 
 type transfer_item =
@@ -85,6 +85,7 @@ type fa2_parameter =
 type balance_nat = {x : nat ; y : nat}
 type balance_nat_x128 = {x : x128n ; y : x128n}
 type balance_int_x128 = {x : x128 ; y : x128}
+type balance_int = {x : int ; y : int}
 
 (* Information stored for every initialized tick. *)
 type tick_state = {
@@ -201,6 +202,7 @@ type position_state = {
 (* Map containing Liquidity providers. *)
 type position_map = (position_id, position_state) big_map
 
+type position_ids_map = (address, position_id set ) big_map
 // What we return when someone requests for the values of cumulatives.
 type cumulatives_value =
     { tick_cumulative : int
@@ -289,8 +291,8 @@ let init_cumulatives_buffer (extra_reserved_slots : nat) : timed_cumulatives_buf
 type metadata_map = (string, bytes) big_map
 
 type constants = {
+    factory_address : address ;
     fee_bps : nat ;
-    ctez_burn_fee_bps : nat ;
     token_x : asset_standard_t;
     token_y : asset_standard_t;
     tick_spacing : nat ;
@@ -324,11 +326,15 @@ type storage = {
     *)
     fee_growth : balance_nat_x128 ;
 
+    dev_fee : balance_nat;
+
     (* States of all initialized ticks. *)
     ticks : tick_map ;
 
     (* States of positions (with non-zero liquidity). *)
     positions : position_map ;
+
+    position_ids : position_ids_map ;
 
     (* Cumulative values stored for the recent timestamps. *)
     cumulatives_buffer : timed_cumulatives_buffer ;
@@ -395,7 +401,7 @@ type update_position_param =
     (* The maximum number of tokens to contribute.
         If a higher amount is required, the entrypoint fails.
     *)
-    maximum_tokens_contributed : balance_nat;
+    maximum_tokens_contributed : balance_int;
     referral_code : nat option ;
 }
 
@@ -461,11 +467,15 @@ type get_position_info_param =
 {
     position_id : position_id;
     callback : position_info contract;
-    referral_code : nat option;
 }
 
 type result = (operation list) * storage
 
+type pause_etp =
+  | Set_position_pause of unit
+  | Update_position_pause of unit
+  | X_to_y_pause of unit
+  | Y_to_x_pause of unit
 
 (* Entrypoints *)
 
@@ -478,6 +488,7 @@ type parameter =
   | Set_position of set_position_param
   | Update_position of update_position_param
   | Get_position_info of get_position_info_param
+  | Claim_dev_fee of address
   | Call_fa2 of fa2_parameter
   | Snapshot_cumulatives_inside of snapshot_cumulatives_inside_param
   | Observe of observe_param

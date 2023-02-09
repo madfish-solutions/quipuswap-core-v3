@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-MIT-Arthur-Breitman
 
 #include "../types.mligo"
+#include "../transfers.mligo"
+#include "../helpers.mligo"
 
 // -----------------------------------------------------------------
 // Helper
@@ -26,22 +28,36 @@ let check_sender (from_ , token_id, operators : address * token_id * operators):
 
 (* A function that combines the usual FA2's `debit_from` and `credit_to`. *)
 [@inline]
-let change_position_owner (from_, tx, positions: address * transfer_destination * position_map): position_map =
-  if tx.amount_ = 0n then
-    positions // We allow 0 transfer
+let change_position_owner (
+    from_,
+    tx,
+    positions,
+    position_ids: address * transfer_destination * position_map * position_ids_map):
+      position_map * position_ids_map =
+  if tx.amount = 0n or tx.to_ = from_ or tx.to_ = (Tezos.get_sender()) then
+    (positions, position_ids) // We allow 0 transfer, and do not update position if transfer is to itself
   else
     let position = get_position(tx.token_id, positions) in
 
     // Ensure `from_` is the owner of the position.
     let owned_amount = if position.owner = from_ then 1n else 0n in
     let _ : unit =
-        if (owned_amount = 1n && tx.amount_ = 1n) then unit
+        if (owned_amount = 1n && tx.amount = 1n) then unit
         else
           ([%Michelson ({| { FAILWITH } |} : string * (nat * nat) -> unit)]
-            ("FA2_INSUFFICIENT_BALANCE", (tx.amount_, owned_amount))) in
+            ("FA2_INSUFFICIENT_BALANCE", (tx.amount, owned_amount))) in
+
+    let prev_owner_ids = get_positions position_ids position.owner in
+    let next_owner_ids = get_positions position_ids tx.to_ in
+
+    let updated_prev_owner_ids = Set.remove tx.token_id prev_owner_ids in
+    let updated_next_owner_ids = Set.add tx.token_id next_owner_ids in
+
+    let updated_position_ids = Big_map.add position.owner updated_prev_owner_ids (Big_map.add tx.to_ updated_next_owner_ids position_ids) in
 
     let new_position = { position with owner = tx.to_ } in
-    Big_map.add tx.token_id new_position positions
+
+    (Big_map.add tx.token_id new_position positions, updated_position_ids)
 
 
 // -----------------------------------------------------------------
@@ -51,8 +67,9 @@ let change_position_owner (from_, tx, positions: address * transfer_destination 
 let transfer_item (store, ti : storage * transfer_item): storage =
   let transfer_one (store, tx : storage * transfer_destination): storage =
     let _ : unit = check_sender (ti.from_, tx.token_id, store.operators) in
-    let new_positions = change_position_owner (ti.from_, tx, store.positions) in
-    { store with positions = new_positions }
+    let new_positions, new_position_ids = change_position_owner (ti.from_, tx, store.positions, store.position_ids) in
+
+    { store with positions = new_positions; position_ids = new_position_ids }
   in List.fold transfer_one ti.txs store
 
 let transfer (params, store : transfer_params * storage): result =

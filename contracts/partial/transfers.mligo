@@ -52,11 +52,11 @@
 //     Tezos.transaction param 0mutez y_contract
 
 
-let wrap_fa2_transfer_trx (from_ : address) (to_ : address) (amount_ : nat) (token_id : nat) : transfer_params =
+let wrap_fa2_transfer_trx (from_ : address) (to_ : address) (amount : nat) (token_id : nat) : transfer_params =
     let transfer_destination : transfer_destination = {
         to_ = to_;
         token_id = token_id;
-        amount_ = amount_;
+        amount = amount;
     } in
     let transfer_param : transfer_item = {
         from_ = from_;
@@ -71,12 +71,12 @@ let get_fa12_transfer_entrypoint (contract_address : address) : fa12_transfer_t 
     | Some contract -> contract
 
 
-let fa2_transfer (from_ : address) (to_ : address) (amount_ : nat) (token_id : nat) (token_address : address) : operation =
+let fa2_transfer (from_ : address) (to_ : address) (amount : nat) (token_id : nat) (token_address : address) : operation =
     let fa2_contract =
     match (Tezos.get_entrypoint_opt "%transfer" token_address : transfer_params contract option) with
     | None -> (failwith asset_transfer_invalid_entrypoints_err : transfer_params contract)
     | Some contract -> contract in
-    Tezos.transaction (wrap_fa2_transfer_trx from_ to_ amount_ token_id) 0mutez fa2_contract
+    Tezos.transaction (wrap_fa2_transfer_trx from_ to_ amount token_id) 0mutez fa2_contract
 
 let wrap_transfer (from_ : address) (to_ : address) (amnt : nat) (token : asset_standard_t) : operation =
     match token with

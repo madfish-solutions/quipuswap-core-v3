@@ -6,7 +6,7 @@ venv/
 .idea/
 __pycache__/
 contracts/compiled/*.tz
-
+.env
 .DS_Store
 yarn.lock
 .pytest_cache
