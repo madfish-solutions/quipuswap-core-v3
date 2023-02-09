@@ -3,12 +3,11 @@ name: Contract Testing Pipeline
 on:
   push:
     branches:
-      - master
-      - all-tests
+      - main
 
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   compile-and-test:
