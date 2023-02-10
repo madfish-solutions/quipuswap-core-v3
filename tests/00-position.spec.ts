@@ -602,6 +602,48 @@ describe('Position Tests', async () => {
     beforeEach(async () => {
       await sleep(5000);
     });
+    it('Should setting and removing token metadata', async () => {
+      for (const pool of [poolFa12, poolFa2, poolFa1_2]) {
+        tezos.setSignerProvider(aliceSigner);
+        await pool.setPosition(
+          new BigNumber(-10),
+          new BigNumber(10),
+          new BigNumber(minTickIndex),
+          new BigNumber(minTickIndex),
+          new BigNumber(1e7),
+          validDeadline(),
+          new BigNumber(1e7),
+          new BigNumber(1e7),
+        );
+        const storage = await pool.getRawStorage();
+        const positionId = storage.new_position_id.minus(1);
+        const metadata = await storage.token_metadata.get(
+          positionId.toString(),
+        );
+
+        const tokenInfo = metadata.token_info.get('');
+        expect(metadata.token_id.toString()).to.be.equal(positionId.toString());
+        expect(tokenInfo).to.be.equal(
+          '697066733a2f2f516d5a554e69677261336a5655395254394d48585868434e456159754e74436f417739416a625839776132564253',
+        );
+
+        await pool.updatePosition(
+          positionId,
+          new BigNumber(-1e7),
+          bob.pkh,
+          bob.pkh,
+          validDeadline(),
+          new BigNumber(0),
+          new BigNumber(0),
+        );
+
+        const updatedStorage = await pool.getRawStorage();
+        const updatedMetadata = await updatedStorage.token_metadata.get(
+          positionId.toString(),
+        );
+        expect(updatedMetadata).to.be.equal(undefined);
+      }
+    });
     it('Should Liquidating a position in small steps is (mostly) equivalent to doing it all at once', async () => {
       tezos.setSignerProvider(aliceSigner);
       const lowerTickIndex = -10000;
@@ -2261,6 +2303,10 @@ describe('Position Tests', async () => {
 
           expect(position.lowerTickIndex).to.be.deep.eq(lowerTickIndex);
           expect(position.upperTickIndex).to.be.deep.eq(upperTickIndex);
+
+          const rawSt = await pool.getRawStorage();
+          const meta = rawSt.token_metadata.get(positionId.toString());
+          console.log(meta);
 
           const expectedFeeGrowthInside = await tickAccumulatorsInside(
             pool,

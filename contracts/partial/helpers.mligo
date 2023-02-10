@@ -217,6 +217,7 @@ let garbage_collection (s : storage) (position : position_state) (position_id : 
                     { s with
                         position_ids = Big_map.update (position.owner) (Some updated_owner_positions) s.position_ids;
                         positions = Big_map.remove position_id s.positions;
+                        token_metadata = Big_map.remove position_id s.token_metadata
                     }
                 else s in
     let s = garbage_collect_tick s position.lower_tick_index in
