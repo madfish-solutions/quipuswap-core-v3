@@ -1,13 +1,42 @@
-Scenario tests in Pytezos
+# Scenario tests in Pytezos
 
-## Running
+## Prerequisites
+
+Install cryptographic libraries according to your system following the instructions here:
+https://pytezos.org/quick_start.html#requirements
+
+## Requirements
 
 ```
-python3 -m pytest -svk
+python3 -m pip install pytezos pytest
+```
+
+## Building Contracts
+```
+yarn compile
+```
+
+## Running
+```
+python3 -m pytest -svk .
+```
+
+To run a specific test use:
+
+```
+python3 -m pytest -svk <test_name>
 ```
 
 ## Stateful tests
 
-Uncomment last lines in `test_no_negative_balance.py`
+For this test `hypothesis` has to be installed:
 
-And run as previously described.
+```
+python3 -m pip install hypothesis
+```
+
+Then uncomment last lines in `test_no_negative_balance.py`
+
+And run as described above. Be aware it might take a long time (30+ min)
+
+
